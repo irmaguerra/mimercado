@@ -1,6 +1,6 @@
 # Módulo 3 — Cuenta del vendedor y su tienda
 
-**Estado:** código publicado · falta configurar Supabase Auth y probar con una cuenta real · 8 de noviembre de 2026
+**Estado:** ✅ aprobado por Irma el 8 de noviembre de 2026. Probado con DORCAS: crear tienda, logo (18 KB), vista previa con logo en WhatsApp y botón de WhatsApp. Quedan pendientes el correo (Brevo) y Google.
 
 ## Pantallas
 
