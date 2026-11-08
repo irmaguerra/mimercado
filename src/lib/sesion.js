@@ -25,10 +25,15 @@ export function mensajeError(error) {
 
 /** Tienda del usuario con sesión, o null si todavía no la creó. */
 export async function miTienda(sb, usuarioId) {
-  const { data } = await sb
+  const { data, error } = await sb
     .from("vendedores")
-    .select("*, zonas(nombre, slug, activa, municipios(nombre, slug, estados(nombre, slug)))")
+    .select("*, zonas!vendedores_zona_id_fkey(nombre, slug, activa, municipios(nombre, slug, estados(nombre, slug)))")
     .eq("usuario_id", usuarioId)
     .maybeSingle();
+  if (error) {
+    // Si la consulta falla no se puede decir "no tiene tienda": se avisa en vez de mandarlo a crear otra.
+    console.error("miTienda", error);
+    throw new Error("No pudimos leer tu tienda: " + error.message);
+  }
   return data;
 }

@@ -18,7 +18,7 @@ let tienda = null;
 if (!estado) {
   const { data } = await supabasePublico()
     .from("vendedores")
-    .select("*, zonas(nombre, municipios(nombre, slug, estados(nombre, slug)))")
+    .select("*, zonas!vendedores_zona_id_fkey(nombre, municipios(nombre, slug, estados(nombre, slug)))")
     .eq("slug", slug)
     .eq("estado", "activo")
     .maybeSingle();
