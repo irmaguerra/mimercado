@@ -26,6 +26,6 @@
 1. **Authentication → URL Configuration**
    - Site URL: `https://lokl.usalokl-app.workers.dev`
    - Redirect URLs: `https://lokl.usalokl-app.workers.dev/**`, `https://*-lokl.usalokl-app.workers.dev/**`, `http://localhost:4321/**`
-2. **Correo propio (SMTP):** el correo de Supabase solo envía a los miembros del equipo del proyecto y unos pocos por hora. Para vendedores reales hace falta un servicio de correo (decisión pendiente).
+2. **Correo propio (SMTP):** el correo de Supabase solo envía a los miembros del equipo del proyecto y unos pocos por hora. Para vendedores reales hace falta un servicio de correo. Elegido: **Brevo** (gratis, 300 correos/día; solo agrega registros en Namecheap sin tocar el reenvío de correo de usalokl.com). Pendiente: Irma crea la cuenta cuando tenga el teléfono a mano (verificación). Mientras tanto, las cuentas de prueba se crean en Supabase → Authentication → Users → Add user → Create new user, con "Auto Confirm User" marcado.
 3. **Entrar con Google:** crear las credenciales en Google Cloud y pegarlas en Supabase (guía paso a paso cuando toque).
 4. Hacer admin a la cuenta de Irma (`sql/04`, después de que se registre).
