@@ -1,0 +1,68 @@
+---
+// Primer nivel de la dirección: usalokl.com/<algo>
+//  - Si <algo> es un estado (/apure, /zulia) → página del estado.
+//  - Más adelante (Módulo 3): si es el enlace de un vendedor (/queseria-la-macanilla) → su tienda.
+// Los slugs de los estados están reservados: ningún vendedor puede usarlos.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import Icono from "@/components/Icono.astro";
+import { supabasePublico } from "@/lib/supabase/servidor.js";
+import { buscarEstado, municipiosActivos } from "@/lib/ubicacion.js";
+import { PUBLICA } from "@/lib/cache.js";
+
+const estado = await buscarEstado(Astro.params.slug);
+if (!estado) return Astro.rewrite("/404"); // Módulo 3: aquí se buscará la tienda del vendedor
+Astro.cache.set(PUBLICA);
+
+const [{ data: municipios }, activos] = await Promise.all([
+  supabasePublico().from("municipios").select("nombre, slug, activo").eq("estado_id", estado.id).order("nombre"),
+  municipiosActivos(),
+]);
+const activosAqui = municipios.filter((m) => m.activo);
+const otrosLugares = activos.filter((c) => c.estado.slug !== estado.slug);
+---
+<Base titulo={estado.nombre} descripcion={`Lo que se vende y se ofrece en ${estado.nombre}, ordenado. Todo termina en WhatsApp.`}>
+  <main class="contenedor">
+    <Cabecera lugar={estado.nombre} />
+    <h1 style="font-size:24px;margin:20px 0 8px">{estado.nombre}</h1>
+
+    {activosAqui.length === 0 && (
+      <div class="tarjeta aviso">
+        <strong style="display:block">Lokl todavía no llega a {estado.nombre}.</strong>
+        Pero puedes ver lo que se vende en otros lugares, y pronto los productores que envían a todo el país.
+      </div>
+    )}
+
+    {otrosLugares.length > 0 && activosAqui.length === 0 && (
+      <>
+        <h2 style="font-size:18px;margin:24px 0 10px">Mira lo que se vende en</h2>
+        <ul class="lista-opciones">
+          {otrosLugares.map((c) => (
+            <li>
+              <a href={`/${c.estado.slug}/${c.slug}`} class="tarjeta enlace-tarjeta opcion-grande">
+                <span style="color:var(--marca)"><Icono nombre="ubicacion" tam={28} /></span>
+                <span>
+                  <strong style="display:block;font-size:18px">{c.nombre}</strong>
+                  <span class="texto-2">{c.estado.nombre}</span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </>
+    )}
+
+    {municipios.length > 0 && (
+      <>
+        <h2 style="font-size:18px;margin:24px 0 10px">Municipios</h2>
+        <ul class="rejilla-estados">
+          {municipios.map((m) => (
+            <li>
+              <a href={`/${estado.slug}/${m.slug}`}>{m.nombre}{m.activo && <span class="punto-activo" title="Lokl activo"> ●</span>}</a>
+            </li>
+          ))}
+        </ul>
+      </>
+    )}
+  </main>
+</Base>

@@ -119,3 +119,18 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .campo-limpio { flex: 1; min-height: 48px; border: 0; background: transparent; outline: none; }
 .franja-super { gap: 12px; margin-top: 16px; padding: 16px; border: 2px solid var(--marca); }
 .rejilla-secciones { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ───────── Ubicación ───────── */
+.chip-ubicacion {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 12px;
+  border: 1px solid var(--borde); border-radius: 999px; background: var(--tarjeta);
+  color: var(--texto); font-size: 14px; font-weight: 600; text-decoration: none;
+}
+.lista-opciones { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.opcion-grande { display: flex; align-items: center; gap: 12px; padding: 16px; min-height: 64px; }
+.otro-lugar { margin-top: 16px; padding: 4px 16px 12px; }
+.otro-lugar summary { min-height: 48px; display: flex; align-items: center; font-weight: 700; cursor: pointer; }
+.rejilla-estados { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+.rejilla-estados a { display: flex; align-items: center; min-height: 44px; }
+.aviso { padding: 14px 16px; margin-top: 16px; }
+.punto-activo { color: var(--acento); }

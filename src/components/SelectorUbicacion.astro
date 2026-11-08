@@ -1,0 +1,41 @@
+---
+// "¿Dónde estás?": un toque, sin GPS. Primero las ciudades donde Lokl ya funciona;
+// después "Otro lugar de Venezuela" con los 24 estados.
+import Icono from "./Icono.astro";
+import { municipiosActivos, todosLosEstados } from "@/lib/ubicacion.js";
+
+const [ciudades, estados] = await Promise.all([municipiosActivos(), todosLosEstados()]);
+const elegir = (estado, municipio) =>
+  `/ubicacion/elegir?estado=${estado}${municipio ? `&municipio=${municipio}` : ""}`;
+---
+<section>
+  <h1 style="font-size:24px;margin:20px 0 4px">¿Dónde estás?</h1>
+  <p class="texto-2" style="margin:0 0 16px">Así te mostramos primero lo que está cerca. Lo puedes cambiar cuando quieras.</p>
+
+  <ul class="lista-opciones">
+    {ciudades.map((c) => (
+      <li>
+        <a href={elegir(c.estado.slug, c.slug)} class="tarjeta enlace-tarjeta opcion-grande">
+          <span style="color:var(--marca)"><Icono nombre="ubicacion" tam={28} /></span>
+          <span>
+            <strong style="display:block;font-size:18px">{c.nombre}</strong>
+            <span class="texto-2">{c.estado.nombre}</span>
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+
+  <details class="tarjeta otro-lugar">
+    <summary>Otro lugar de Venezuela</summary>
+    <p class="texto-2" style="margin:4px 0 12px;font-size:14px">
+      Si Lokl todavía no llega a tu ciudad, igual puedes ver lo que se vende en otros lugares
+      y a los productores que envían a todo el país.
+    </p>
+    <ul class="rejilla-estados">
+      {estados.map((e) => (
+        <li><a href={elegir(e.slug)}>{e.nombre}</a></li>
+      ))}
+    </ul>
+  </details>
+</section>

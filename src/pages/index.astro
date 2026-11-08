@@ -1,74 +1,19 @@
 ---
-// Portada provisional del Módulo 1 (Cimientos): HTML puro, 0 KB de JavaScript.
-// En el Módulo 5 se convierte en el buscador real con "lo nuevo" de tu zona.
+// Entrada a usalokl.com:
+//  - Si la persona ya eligió dónde está → la lleva a la portada de su ciudad (o estado).
+//  - Si es su primera vez → "¿Dónde estás?" (un toque, sin GPS).
+// No se cachea: la respuesta depende de la cookie de cada persona.
 import Base from "@/layouts/Base.astro";
-import Logo from "@/components/Logo.astro";
-import Icono from "@/components/Icono.astro";
-import { supabaseConfigurado, supabasePublico } from "@/lib/supabase/servidor.js";
-import { PUBLICA } from "@/lib/cache.js";
+import Cabecera from "@/components/Cabecera.astro";
+import SelectorUbicacion from "@/components/SelectorUbicacion.astro";
+import { leerUbicacion, rutaUbicacion } from "@/lib/ubicacion.js";
 
-Astro.cache.set(PUBLICA);
-
-const SECCIONES = [
-  { slug: "tiendas", icono: "tiendas", nombre: "Tiendas", detalle: "Negocios de tu zona" },
-  { slug: "comida", icono: "comida", nombre: "Comida", detalle: "La feria de comida" },
-  { slug: "al-mayor", icono: "al-mayor", nombre: "Al mayor", detalle: "Precios de origen" },
-  { slug: "servicios", icono: "servicios", nombre: "Servicios", detalle: "Oficios, salud, transporte…" },
-  { slug: "clasificados", icono: "clasificados", nombre: "Clasificados", detalle: "Ventas de una vez" },
-];
-
-let estadoBD = "Falta configurar Supabase (.env)";
-if (supabaseConfigurado) {
-  try {
-    const { count, error } = await supabasePublico()
-      .from("estados")
-      .select("id", { count: "exact", head: true });
-    estadoBD = error
-      ? `Supabase responde, pero con error: ${error.message}`
-      : `Base de datos conectada · ${count ?? 0} estados cargados`;
-  } catch {
-    estadoBD = "No se pudo conectar con Supabase";
-  }
-}
+const ubicacion = leerUbicacion(Astro.cookies);
+if (ubicacion) return Astro.redirect(rutaUbicacion(ubicacion), 302);
 ---
 <Base>
-  <main class="contenedor" style="padding-top:20px">
-    <header class="fila-entre">
-      <Logo alto={34} />
-      <span class="texto-2 fila" style="font-size:14px"><Icono nombre="ubicacion" tam={18} /> San Fernando</span>
-    </header>
-
-    <form action="/buscar" style="margin-top:18px">
-      <label for="q" class="texto-2" style="font-size:14px">¿Qué buscas?</label>
-      <div class="tarjeta fila" style="padding:0 12px;margin-top:6px">
-        <Icono nombre="buscar" tam={20} class="texto-2" />
-        <input id="q" name="q" type="search" class="campo-limpio" placeholder="Queso, moto taxi, pizza, plomero…" />
-      </div>
-    </form>
-
-    <a href="/super" class="tarjeta enlace-tarjeta fila franja-super">
-      <span style="color:var(--marca)"><Icono nombre="super" tam={36} /></span>
-      <span>
-        <strong style="display:block;font-size:18px">Lokl Súper</strong>
-        <span class="texto-2">En 30 min a tu puerta</span>
-      </span>
-    </a>
-
-    <h2 style="font-size:18px;margin:24px 0 10px">Explora</h2>
-    <ul class="rejilla-secciones">
-      {SECCIONES.map((s) => (
-        <li>
-          <a href={`/buscar?seccion=${s.slug}`} class="tarjeta enlace-tarjeta" style="display:block;padding:14px;height:100%">
-            <span style="color:var(--marca)"><Icono nombre={s.icono} tam={28} /></span>
-            <strong style="display:block;margin-top:8px">{s.nombre}</strong>
-            <span class="texto-2" style="font-size:14px">{s.detalle}</span>
-          </a>
-        </li>
-      ))}
-    </ul>
-
-    <p class="texto-2" style="font-size:13px;margin-top:28px;text-align:center">
-      Versión en construcción · {estadoBD}
-    </p>
+  <main class="contenedor">
+    <Cabecera />
+    <SelectorUbicacion />
   </main>
 </Base>

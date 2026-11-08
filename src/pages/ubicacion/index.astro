@@ -1,0 +1,15 @@
+---
+// Cambiar de ubicación (el "📍 … ▾" de la cabecera lleva aquí). Igual para todos: se cachea.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import SelectorUbicacion from "@/components/SelectorUbicacion.astro";
+import { PUBLICA } from "@/lib/cache.js";
+
+Astro.cache.set(PUBLICA);
+---
+<Base titulo="¿Dónde estás?">
+  <main class="contenedor">
+    <Cabecera />
+    <SelectorUbicacion />
+  </main>
+</Base>

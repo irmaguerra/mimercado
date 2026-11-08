@@ -1,0 +1,72 @@
+---
+// Portada de un municipio: /apure/san-fernando
+// HTML puro, 0 KB de JavaScript. Funciona para cualquier municipio de Venezuela que exista en la base.
+// En el Módulo 5 se llena con "lo nuevo" y el buscador real.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import Icono from "@/components/Icono.astro";
+import { buscarMunicipio } from "@/lib/ubicacion.js";
+import { PUBLICA } from "@/lib/cache.js";
+
+const { estado, municipio } = Astro.params;
+const m = await buscarMunicipio(estado, municipio);
+if (!m) return Astro.rewrite("/404");
+Astro.cache.set(PUBLICA);
+
+const base = `/${m.estado.slug}/${m.slug}`;
+const SECCIONES = [
+  { slug: "tiendas", icono: "tiendas", nombre: "Tiendas", detalle: "Negocios de la zona" },
+  { slug: "comida", icono: "comida", nombre: "Comida", detalle: "La feria de comida" },
+  { slug: "al-mayor", icono: "al-mayor", nombre: "Al mayor", detalle: "Precios de origen" },
+  { slug: "servicios", icono: "servicios", nombre: "Servicios", detalle: "Oficios, salud, transporte…" },
+  { slug: "clasificados", icono: "clasificados", nombre: "Clasificados", detalle: "Ventas de una vez" },
+];
+---
+<Base
+  titulo={`${m.nombre}, ${m.estado.nombre}`}
+  descripcion={`Tiendas, comida, servicios, productores y clasificados de ${m.nombre}, ${m.estado.nombre}. Todo termina en WhatsApp.`}
+>
+  <main class="contenedor">
+    <Cabecera lugar={m.nombre} />
+
+    <form action="/buscar" style="margin-top:18px">
+      <label for="q" class="texto-2" style="font-size:14px">¿Qué buscas en {m.nombre}?</label>
+      <div class="tarjeta fila" style="padding:0 12px;margin-top:6px">
+        <Icono nombre="buscar" tam={20} class="texto-2" />
+        <input id="q" name="q" type="search" class="campo-limpio" placeholder="Queso, moto taxi, pizza, plomero…" />
+        <input type="hidden" name="lugar" value={`${m.estado.slug}/${m.slug}`} />
+      </div>
+    </form>
+
+    {m.activo ? (
+      <a href="/super" class="tarjeta enlace-tarjeta fila franja-super">
+        <span style="color:var(--marca)"><Icono nombre="super" tam={36} /></span>
+        <span>
+          <strong style="display:block;font-size:18px">Lokl Súper</strong>
+          <span class="texto-2">En 30 min a tu puerta</span>
+        </span>
+      </a>
+    ) : (
+      <p class="tarjeta aviso">
+        Lokl está empezando en {m.nombre}. Aquí verás a los vendedores y productores de la zona a medida que se registren.
+      </p>
+    )}
+
+    <h2 style="font-size:18px;margin:24px 0 10px">Explora {m.nombre}</h2>
+    <ul class="rejilla-secciones">
+      {SECCIONES.map((s) => (
+        <li>
+          <a href={`${base}/${s.slug}`} class="tarjeta enlace-tarjeta" style="display:block;padding:14px;height:100%">
+            <span style="color:var(--marca)"><Icono nombre={s.icono} tam={28} /></span>
+            <strong style="display:block;margin-top:8px">{s.nombre}</strong>
+            <span class="texto-2" style="font-size:14px">{s.detalle}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <p class="texto-2" style="font-size:14px;margin-top:24px">
+      <a href={`/${m.estado.slug}`}>Ver todo {m.estado.nombre}</a>
+    </p>
+  </main>
+</Base>

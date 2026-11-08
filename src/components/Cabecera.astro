@@ -1,0 +1,15 @@
+---
+// Cabecera: logo + "📍 San Fernando ▾" para cambiar de ubicación en cualquier momento.
+import Logo from "./Logo.astro";
+import Icono from "./Icono.astro";
+
+const { lugar } = Astro.props; // texto a mostrar, ej. "San Fernando"; vacío = "Elegir ubicación"
+---
+<header class="fila-entre" style="padding-top:16px">
+  <a href="/" aria-label="Lokl, inicio" style="color:var(--texto)"><Logo alto={34} /></a>
+  <a href="/ubicacion" class="chip-ubicacion">
+    <Icono nombre="ubicacion" tam={18} />
+    <span>{lugar || "Elegir ubicación"}</span>
+    <span aria-hidden="true">▾</span>
+  </a>
+</header>
