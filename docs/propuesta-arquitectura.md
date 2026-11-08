@@ -393,9 +393,9 @@ Meta: **tienda lista en menos de 2 minutos**, desde el teléfono.
 | # | Decisión | Estado |
 |---|---|---|
 | 1 | Propuesta general | **Aprobada** (8/11/2026) |
-| 2 | Proyecto Supabase nuevo | Pendiente (recomendado) |
+| 2 | Proyecto Supabase nuevo en la misma cuenta de Lokl, región East US | **Aprobado** |
 | 3 | Enlace del vendedor en la raíz (`usalokl.com/su-nombre`) | **Aprobado** |
-| 4 | Inicio de sesión: Google + correo y contraseña | Pendiente (recomendado) |
+| 4 | Inicio de sesión: Google + correo y contraseña con confirmación de correo (SMTP propio) | **Aprobado** |
 | 5 | Clasificados abiertos a cualquier persona | **Aprobado** |
 | 6 | Súper con máxima visibilidad (pestaña fija, portada, buscador) | **Aprobado** |
 | 7 | Comida como Feria de comida (incluye "desde casa" y cocinas ocultas) | **Aprobado** |
