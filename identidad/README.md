@@ -15,6 +15,14 @@ Abre `index.html` en el navegador (doble clic) para ver la guía completa.
 | `logo/lokl-simbolo.svg` | El pin solo |
 | `app/icono-app.svg`, `icon-192.png`, `icon-512.png` | Ícono de la app instalada (los que pide `manifest.json`) |
 | `app/favicon.svg` | Ícono de la pestaña del navegador |
+| `redes/perfil-pin-1080.png` | Foto de perfil Instagram / Facebook (pin, se ve bien en círculo) |
+| `redes/perfil-pin-640.png` | Foto de perfil WhatsApp |
+| `redes/perfil-palabra-1080.png` | Perfil con la palabra lokl (blanco sobre Atardecer) |
+| `redes/perfil-palabra-arena-1080.png` | Perfil con la palabra lokl (sobre Arena) |
+| `redes/historia-1080x1920.png` | Historia de Instagram / estado de WhatsApp |
+| `redes/portada-1640x624.png` | Portada de Facebook / WhatsApp Business |
+| `redes/logo-*-transparente.png` | Logo en alta resolución con fondo transparente (para flyers, videos, Canva) |
+| `redes/simbolo-transparente.png` | Pin solo, transparente |
 | `iconos/*.svg` | Íconos propios de Lokl para secciones y categorías (reemplazan los emojis) |
 
 ## Paleta
