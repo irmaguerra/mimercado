@@ -1,26 +1,44 @@
 ---
 // Primer nivel de la dirección: usalokl.com/<algo>
 //  - Si <algo> es un estado (/apure, /zulia) → página del estado.
-//  - Más adelante (Módulo 3): si es el enlace de un vendedor (/queseria-la-macanilla) → su tienda.
-// Los slugs de los estados están reservados: ningún vendedor puede usarlos.
+//  - Si es el enlace de un vendedor (/queseria-la-macanilla) → su tienda.
+// Los slugs de los estados están reservados en la base: ningún vendedor puede usarlos.
 import Base from "@/layouts/Base.astro";
 import Cabecera from "@/components/Cabecera.astro";
 import Icono from "@/components/Icono.astro";
+import PaginaTienda from "@/components/PaginaTienda.astro";
 import { supabasePublico } from "@/lib/supabase/servidor.js";
 import { buscarEstado, municipiosActivos } from "@/lib/ubicacion.js";
 import { PUBLICA } from "@/lib/cache.js";
 
-const estado = await buscarEstado(Astro.params.slug);
-if (!estado) return Astro.rewrite("/404"); // Módulo 3: aquí se buscará la tienda del vendedor
+const slug = Astro.params.slug;
+const estado = await buscarEstado(slug);
+
+let tienda = null;
+if (!estado) {
+  const { data } = await supabasePublico()
+    .from("vendedores")
+    .select("*, zonas(nombre, municipios(nombre, slug, estados(nombre, slug)))")
+    .eq("slug", slug)
+    .eq("estado", "activo")
+    .maybeSingle();
+  tienda = data;
+  if (!tienda) return Astro.rewrite("/404");
+}
 Astro.cache.set(PUBLICA);
 
-const [{ data: municipios }, activos] = await Promise.all([
-  supabasePublico().from("municipios").select("nombre, slug, activo").eq("estado_id", estado.id).order("nombre"),
-  municipiosActivos(),
-]);
-const activosAqui = municipios.filter((m) => m.activo);
-const otrosLugares = activos.filter((c) => c.estado.slug !== estado.slug);
+let municipios = [], activosAqui = [], otrosLugares = [];
+if (estado) {
+  const [{ data }, activos] = await Promise.all([
+    supabasePublico().from("municipios").select("nombre, slug, activo").eq("estado_id", estado.id).order("nombre"),
+    municipiosActivos(),
+  ]);
+  municipios = data ?? [];
+  activosAqui = municipios.filter((m) => m.activo);
+  otrosLugares = activos.filter((c) => c.estado.slug !== estado.slug);
+}
 ---
+{tienda ? <PaginaTienda t={tienda} /> : (
 <Base titulo={estado.nombre} descripcion={`Lo que se vende y se ofrece en ${estado.nombre}, ordenado. Todo termina en WhatsApp.`}>
   <main class="contenedor">
     <Cabecera lugar={estado.nombre} />
@@ -66,3 +84,4 @@ const otrosLugares = activos.filter((c) => c.estado.slug !== estado.slug);
     )}
   </main>
 </Base>
+)}

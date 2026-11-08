@@ -1,0 +1,36 @@
+---
+// /panel/lista — "¡Lista!": el enlace de la tienda, compartirlo y probar el WhatsApp.
+import Base from "@/layouts/Base.astro";
+import Icono from "@/components/Icono.astro";
+import { miTienda } from "@/lib/sesion.js";
+import { enlaceCompartir, enlaceWhatsApp } from "@/lib/whatsapp.js";
+
+const { sb, usuario } = Astro.locals;
+const t = await miTienda(sb, usuario.id);
+if (!t) return Astro.redirect("/panel/crear", 302);
+
+const url = `${Astro.url.origin}/${t.slug}`;
+const textoCompartir = `¡Ya estoy en Lokl! Mira ${t.tipo === "persona" ? "lo que vendo" : "mi tienda"} y escríbeme por WhatsApp: ${url}`;
+---
+<Base titulo="¡Tu tienda está lista!">
+  <main class="contenedor angosto" style="padding-top:28px;text-align:center">
+    <span style="color:var(--acento);display:inline-flex"><Icono nombre="verificado" tam={56} /></span>
+    <h1 style="font-size:26px;margin:12px 0 6px">¡Lista, {t.nombre}!</h1>
+    <p class="texto-2" style="margin:0 0 16px">Este es tu enlace. Compártelo en tus grupos y estados de WhatsApp:</p>
+    <p class="tarjeta enlace-tienda"><a href={`/${t.slug}`}>{url.replace(/^https?:\/\//, "")}</a></p>
+
+    <div class="pila-botones">
+      <a class="boton ancho" href={enlaceCompartir(textoCompartir)}>
+        <Icono nombre="whatsapp" tam={20} /> Compartir mi tienda en WhatsApp
+      </a>
+      <a class="boton boton-claro ancho" href={enlaceWhatsApp(t.whatsapp, "Probando mi WhatsApp de Lokl ✅")}>
+        Probar mi WhatsApp
+      </a>
+      <a class="boton boton-claro ancho" href="/panel">Ir a mi tienda</a>
+    </div>
+    <p class="texto-2" style="font-size:14px;margin-top:16px">
+      "Probar" abre tu propio chat: si se abre bien, tus clientes también podrán escribirte.
+      Pronto podrás publicar tus productos desde tu panel.
+    </p>
+  </main>
+</Base>

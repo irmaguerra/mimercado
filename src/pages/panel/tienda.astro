@@ -1,0 +1,141 @@
+---
+// /panel/tienda — Editar mi tienda: logo, nombre, enlace, contacto, zona, horario y envíos.
+import Base from "@/layouts/Base.astro";
+import CampoZona from "@/components/CampoZona.astro";
+import SubirLogo from "@/components/islas/SubirLogo.jsx";
+import { miTienda } from "@/lib/sesion.js";
+import { MODALIDAD_COCINA, ALCANCE_ENVIO, resolverZona } from "@/lib/vendedor.js";
+import { crearSlug, esSlugValido } from "@/lib/slug.js";
+import { normalizarNumero, esCelularValido } from "@/lib/whatsapp.js";
+
+const { sb, usuario } = Astro.locals;
+let t = await miTienda(sb, usuario.id);
+if (!t) return Astro.redirect("/panel/crear", 302);
+
+let error = Astro.url.searchParams.get("error") || "";
+let ok = Astro.url.searchParams.get("ok") ? "Cambios guardados." : "";
+
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  const txt = (k, max = 200) => String(f.get(k) || "").trim().slice(0, max);
+  const cambios = {
+    nombre: txt("nombre", 60),
+    descripcion: txt("descripcion", 500) || null,
+    whatsapp: txt("whatsapp"),
+    telefono: txt("telefono", 30) || null,
+    direccion: txt("direccion", 160) || null,
+    maps_url: txt("maps_url", 300) || null,
+    hora_desde: txt("hora_desde", 5) || null,
+    hora_hasta: txt("hora_hasta", 5) || null,
+    alcance_envio: ALCANCE_ENVIO[txt("alcance_envio")] ? txt("alcance_envio") : "municipio",
+    envio_detalle: txt("envio_detalle", 200) || null,
+    a_domicilio: f.get("a_domicilio") === "on",
+  };
+  if (t.seccion_principal === "comida" && MODALIDAD_COCINA[txt("modalidad")]) cambios.modalidad_cocina = txt("modalidad");
+  if (cambios.modalidad_cocina === "desde_casa" || t.modalidad_cocina === "desde_casa") cambios.direccion = null;
+  const slugNuevo = crearSlug(txt("slug", 60));
+
+  if (cambios.nombre.length < 2) error = "Escribe el nombre de tu tienda.";
+  else if (!esCelularValido(cambios.whatsapp)) error = "Revisa tu número de WhatsApp (ej. 0414 123 4567).";
+  else if (!!cambios.hora_desde !== !!cambios.hora_hasta) error = "Pon la hora de abrir y la de cerrar, o deja las dos vacías.";
+  else if (cambios.maps_url && !/^https:\/\/(maps\.app\.goo\.gl|goo\.gl\/maps|(www\.)?google\.[a-z.]+\/maps)/.test(cambios.maps_url)) error = "El enlace de ubicación debe ser de Google Maps.";
+  else if (slugNuevo !== t.slug) {
+    if (!esSlugValido(slugNuevo)) error = "Ese enlace no se puede usar. Usa letras, números y guiones (mínimo 3).";
+    else {
+      const { data: libre } = await sb.rpc("slug_disponible", { s: slugNuevo });
+      if (!libre) error = "Ese enlace ya lo tiene otra tienda. Prueba otro.";
+      else cambios.slug = slugNuevo;
+    }
+  }
+
+  if (!error) {
+    const zona = await resolverZona(sb, usuario.id, f);
+    if (zona.error) error = zona.error;
+    else {
+      cambios.zona_id = zona.zonaId;
+      cambios.whatsapp = normalizarNumero(cambios.whatsapp);
+      const { error: e } = await sb.from("vendedores").update(cambios).eq("id", t.id);
+      if (e) error = "No pudimos guardar. Intenta de nuevo.";
+      else return Astro.redirect("/panel/tienda?ok=1", 303);
+    }
+  }
+  t = { ...t, ...Object.fromEntries([...f.entries()].map(([k, v]) => [k, typeof v === "string" ? v : t[k]])) };
+}
+const hora = (h) => (h ? String(h).slice(0, 5) : "");
+const local = (n) => (/^58\d{10}$/.test(n || "") ? "0" + n.slice(2) : n || "");
+---
+<Base titulo="Editar mi tienda">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/panel">‹ Mi tienda</a></p>
+    <h1 style="font-size:24px;margin:8px 0 16px">Editar mi tienda</h1>
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+    {ok && <p class="mensaje ok" role="status">{ok}</p>}
+
+    <section class="tarjeta bloque">
+      <SubirLogo client:visible logoActual={t.logo_url} nombre={t.nombre} />
+    </section>
+
+    <form method="post" class="formulario">
+      <label>Nombre
+        <input type="text" name="nombre" value={t.nombre} required maxlength="60" />
+      </label>
+      <label>Tu enlace
+        <span class="campo-prefijo"><span>{Astro.url.host}/</span><input type="text" name="slug" value={t.slug} required maxlength="40" pattern="[a-z0-9-]{3,40}" /></span>
+        <small class="texto-2">Si lo cambias, el enlace viejo deja de funcionar.</small>
+      </label>
+      <label>Descripción
+        <textarea name="descripcion" rows="3" maxlength="500" placeholder="Qué vendes, desde cuándo, qué te hace especial">{t.descripcion}</textarea>
+      </label>
+      <label>WhatsApp
+        <input type="tel" name="whatsapp" value={local(t.whatsapp)} required inputmode="tel" />
+      </label>
+      <label>Teléfono para llamadas (opcional)
+        <input type="tel" name="telefono" value={t.telefono} inputmode="tel" />
+      </label>
+
+      {t.seccion_principal === "comida" && (
+        <fieldset class="opciones-radio">
+          <legend>¿Cómo vendes?</legend>
+          {Object.entries(MODALIDAD_COCINA).map(([v, txt]) => (
+            <label class="radio"><input type="radio" name="modalidad" value={v} checked={t.modalidad_cocina === v} /> {txt}</label>
+          ))}
+        </fieldset>
+      )}
+
+      <CampoZona sb={sb} actual={t.zona_id} />
+
+      {t.modalidad_cocina !== "desde_casa" && (
+        <>
+          <label>Dirección (opcional)
+            <input type="text" name="direccion" value={t.direccion} maxlength="160" placeholder="Ej. Calle Comercio, frente a la plaza" />
+          </label>
+          <label>Enlace de Google Maps (opcional)
+            <input type="url" name="maps_url" value={t.maps_url} placeholder="https://maps.app.goo.gl/…" />
+          </label>
+        </>
+      )}
+
+      <fieldset class="opciones-radio">
+        <legend>Horario</legend>
+        <div class="fila" style="gap:12px">
+          <label>Abro <input type="time" name="hora_desde" value={hora(t.hora_desde)} /></label>
+          <label>Cierro <input type="time" name="hora_hasta" value={hora(t.hora_hasta)} /></label>
+        </div>
+        <small class="texto-2">Si cierras después de medianoche (ej. 6:00 p. m. a 2:00 a. m.) también funciona. Vacío = siempre abierto.</small>
+      </fieldset>
+
+      <fieldset class="opciones-radio">
+        <legend>¿Hasta dónde envías?</legend>
+        {Object.entries(ALCANCE_ENVIO).map(([v, txt]) => (
+          <label class="radio"><input type="radio" name="alcance_envio" value={v} checked={t.alcance_envio === v} /> {txt}</label>
+        ))}
+        <label>Detalles del envío (opcional)
+          <input type="text" name="envio_detalle" value={t.envio_detalle} maxlength="200" placeholder="Ej. Por MRW o Zoom, cobro a destino" />
+        </label>
+        <label class="radio"><input type="checkbox" name="a_domicilio" checked={t.a_domicilio} /> Atiendo o entrego a domicilio</label>
+      </fieldset>
+
+      <button class="boton ancho" type="submit">Guardar cambios</button>
+    </form>
+  </main>
+</Base>

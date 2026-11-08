@@ -1,0 +1,109 @@
+---
+// /panel/crear — Crear la tienda en 2 pasos: "¿Qué haces?" y "Tu tienda". Sin JavaScript.
+import Base from "@/layouts/Base.astro";
+import Logo from "@/components/Logo.astro";
+import Icono from "@/components/Icono.astro";
+import CampoZona from "@/components/CampoZona.astro";
+import { miTienda } from "@/lib/sesion.js";
+import { QUE_HACES, MODALIDAD_COCINA, resolverZona } from "@/lib/vendedor.js";
+import { slugDisponible } from "@/lib/slug.js";
+import { normalizarNumero, esCelularValido } from "@/lib/whatsapp.js";
+
+const { sb, usuario } = Astro.locals;
+if (await miTienda(sb, usuario.id)) return Astro.redirect("/panel", 302);
+
+let que = Astro.url.searchParams.get("que");
+if (!QUE_HACES[que]) que = null;
+
+let error = "";
+let valores = { nombre: "", whatsapp: "", modalidad: "" };
+
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  que = QUE_HACES[f.get("que")] ? String(f.get("que")) : null;
+  valores = {
+    nombre: String(f.get("nombre") || "").trim().slice(0, 60),
+    whatsapp: String(f.get("whatsapp") || "").trim(),
+    modalidad: String(f.get("modalidad") || ""),
+  };
+
+  if (!que) error = "Elige qué haces.";
+  else if (valores.nombre.length < 2) error = que === "clasificados" ? "Escribe tu nombre." : "Escribe el nombre de tu tienda.";
+  else if (!esCelularValido(valores.whatsapp)) error = "Escribe un número de WhatsApp de Venezuela, por ejemplo 0414 123 4567.";
+  else if (que === "comida" && !MODALIDAD_COCINA[valores.modalidad]) error = "Cuéntanos cómo vendes tu comida.";
+
+  if (!error) {
+    const zona = await resolverZona(sb, usuario.id, f);
+    if (zona.error) error = zona.error;
+    else {
+      const slug = await slugDisponible(valores.nombre, async (s) => {
+        const { data } = await sb.rpc("slug_disponible", { s });
+        return data === false;
+      });
+      const { error: e } = await sb.from("vendedores").insert({
+        usuario_id: usuario.id,
+        slug,
+        nombre: valores.nombre,
+        tipo: QUE_HACES[que].tipo,
+        seccion_principal: que,
+        whatsapp: normalizarNumero(valores.whatsapp),
+        zona_id: zona.zonaId,
+        modalidad_cocina: que === "comida" ? valores.modalidad : null,
+      });
+      if (e) error = "No pudimos crear tu tienda. Intenta de nuevo.";
+      else return Astro.redirect("/panel/lista", 303);
+    }
+  }
+}
+const opcion = que ? QUE_HACES[que] : null;
+---
+<Base titulo="Crea tu tienda" barra={false}>
+  <main class="contenedor angosto" style="padding-top:20px">
+    <Logo alto={30} />
+
+    {!que ? (
+      <>
+        <p class="texto-2" style="margin:20px 0 0">Paso 1 de 2</p>
+        <h1 style="font-size:24px;margin:4px 0 16px">¿Qué haces?</h1>
+        <ul class="lista-opciones">
+          {Object.entries(QUE_HACES).map(([clave, o]) => (
+            <li>
+              <a href={`/panel/crear?que=${clave}`} class="tarjeta enlace-tarjeta opcion-grande">
+                <span style="color:var(--marca)"><Icono nombre={o.icono} tam={30} /></span>
+                <span><strong style="display:block;font-size:17px">{o.texto}</strong><span class="texto-2">{o.detalle}</span></span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </>
+    ) : (
+      <>
+        <p class="texto-2" style="margin:20px 0 0">Paso 2 de 2 · <a href="/panel/crear">{opcion.texto} (cambiar)</a></p>
+        <h1 style="font-size:24px;margin:4px 0 16px">{que === "clasificados" ? "Tus datos" : "Tu tienda"}</h1>
+        {error && <p class="mensaje error" role="alert">{error}</p>}
+        <form method="post" class="formulario">
+          <input type="hidden" name="que" value={que} />
+          <label>{que === "clasificados" ? "Tu nombre" : "Nombre de tu tienda"}
+            <input type="text" name="nombre" value={valores.nombre} required maxlength="60"
+              placeholder={que === "comida" ? "Ej. Arepera Doña Ana" : que === "al_mayor" ? "Ej. Quesera La Macanilla" : ""} />
+          </label>
+          <label>Tu WhatsApp
+            <input type="tel" name="whatsapp" value={valores.whatsapp} required inputmode="tel" placeholder="0414 123 4567" autocomplete="tel" />
+            <small class="texto-2">Aquí te escribirán los clientes. En el siguiente paso lo puedes probar.</small>
+          </label>
+          {que === "comida" && (
+            <fieldset class="opciones-radio">
+              <legend>¿Cómo vendes?</legend>
+              {Object.entries(MODALIDAD_COCINA).map(([v, t]) => (
+                <label class="radio"><input type="radio" name="modalidad" value={v} checked={valores.modalidad === v} required /> {t}</label>
+              ))}
+              <small class="texto-2">Si cocinas desde casa, solo se muestra tu zona, nunca tu dirección.</small>
+            </fieldset>
+          )}
+          <CampoZona sb={sb} />
+          <button class="boton ancho" type="submit">Crear mi tienda</button>
+        </form>
+      </>
+    )}
+  </main>
+</Base>

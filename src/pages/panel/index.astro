@@ -1,0 +1,85 @@
+---
+// /panel — "Mi tienda": enlace, abierto/cerrado, contador de contactos y accesos.
+import Base from "@/layouts/Base.astro";
+import Icono from "@/components/Icono.astro";
+import { miTienda } from "@/lib/sesion.js";
+import { estaAbiertoAhora, dentroDeHorario } from "@/lib/horario.js";
+import { enlaceCompartir } from "@/lib/whatsapp.js";
+
+const { sb, usuario } = Astro.locals;
+const t = await miTienda(sb, usuario.id);
+if (!t) return Astro.redirect("/panel/crear", 302);
+
+const hace7dias = new Date(Date.now() - 7 * 864e5).toISOString();
+const [{ count: contactos }, { data: esAdmin }] = await Promise.all([
+  sb.from("contactos").select("id", { count: "exact", head: true }).eq("vendedor_id", t.id).gte("creado_en", hace7dias),
+  sb.rpc("es_admin"),
+]);
+
+const abierto = estaAbiertoAhora(t);
+const enHorario = dentroDeHorario(t.hora_desde, t.hora_hasta);
+const textoBoton = t.forzar_abierto === true ? "Volver a mi horario" : abierto ? "Cerrar ahora" : "Abrir ahora";
+const explicacion =
+  t.forzar_abierto === true ? "Abriste a mano. Se mantiene abierto hasta que toques el botón."
+  : t.forzar_abierto === false ? "Cerraste a mano. Se mantiene cerrado hasta que toques el botón."
+  : t.hora_desde ? `Sigue tu horario: ${t.hora_desde.slice(0, 5)} a ${t.hora_hasta.slice(0, 5)}.`
+  : "Sin horario: se muestra siempre abierto. Puedes poner tu horario en \"Editar mi tienda\".";
+
+const url = `${Astro.url.origin}/${t.slug}`;
+const zonaPendiente = t.zonas && t.zonas.activa === false;
+const suspendida = t.estado !== "activo";
+---
+<Base titulo="Mi tienda">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <header class="fila" style="gap:12px">
+      {t.logo_url ? <img src={t.logo_url} alt="" width="56" height="56" class="logo-tienda" />
+        : <span class="logo-tienda logo-vacio">{t.nombre.slice(0, 1)}</span>}
+      <div style="min-width:0">
+        <h1 style="font-size:22px;margin:0">{t.nombre}</h1>
+        <a href={`/${t.slug}`} class="texto-2" style="font-size:14px;word-break:break-all">{url.replace(/^https?:\/\//, "")}</a>
+      </div>
+    </header>
+
+    {suspendida && <p class="mensaje error">Tu tienda está suspendida y no aparece en Lokl. {t.motivo_suspension} Escríbenos para revisarlo.</p>}
+    {zonaPendiente && <p class="mensaje ok">Tu zona "{t.zonas.nombre}" está en revisión. Tu tienda ya funciona.</p>}
+
+    <section class="tarjeta bloque">
+      <div class="fila-entre">
+        <strong class:list={["estado-abierto", { cerrado: !abierto }]}>● {abierto ? "Abierto" : "Cerrado"}</strong>
+        <form method="post" action="/panel/abrir"><button class="boton boton-claro" type="submit">{textoBoton}</button></form>
+      </div>
+      <p class="texto-2" style="font-size:14px;margin:8px 0 0">{explicacion}</p>
+    </section>
+
+    <section class="tarjeta bloque">
+      <p style="margin:0;font-size:15px">Esta semana</p>
+      <p style="margin:2px 0 0"><strong style="font-size:30px">{contactos ?? 0}</strong> {contactos === 1 ? "persona te contactó" : "personas te contactaron"} desde Lokl</p>
+    </section>
+
+    <div class="pila-botones" style="margin-top:16px">
+      <a class="boton ancho" href={enlaceCompartir(`Mira ${t.tipo === "persona" ? "lo que vendo" : "mi tienda"} en Lokl y escríbeme por WhatsApp: ${url}`)}>
+        <Icono nombre="whatsapp" tam={20} /> Compartir mi tienda
+      </a>
+      <button class="boton boton-claro ancho" type="button" data-copiar={url} hidden>Copiar mi enlace</button>
+    </div>
+
+    <nav class="menu-panel" aria-label="Opciones de mi tienda">
+      <a href="/panel/tienda">Editar mi tienda <span aria-hidden="true">›</span></a>
+      <a href="/panel/publicar" aria-disabled="true">Publicar un producto <span class="texto-2">próximamente</span></a>
+      <a href={`/${t.slug}`}>Ver mi tienda como la ven los clientes <span aria-hidden="true">›</span></a>
+      {esAdmin && <a href="/admin">Administración de Lokl <span aria-hidden="true">›</span></a>}
+    </nav>
+
+    <form method="post" action="/salir" style="margin-top:20px;text-align:center">
+      <button type="submit" class="boton-texto">Salir de mi cuenta</button>
+    </form>
+  </main>
+  <script is:inline>
+    // Botón "Copiar": solo aparece si el teléfono lo permite.
+    document.querySelectorAll("[data-copiar]").forEach((b) => {
+      if (!navigator.clipboard) return;
+      b.hidden = false;
+      b.addEventListener("click", () => navigator.clipboard.writeText(b.dataset.copiar).then(() => { b.textContent = "¡Enlace copiado!"; }));
+    });
+  </script>
+</Base>

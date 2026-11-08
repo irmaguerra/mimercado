@@ -1,0 +1,33 @@
+---
+// Selector de zona sin JavaScript: lista agrupada por municipio + "No está mi zona".
+import { zonasAgrupadas, municipiosParaProponer } from "@/lib/vendedor.js";
+
+const { sb, actual } = Astro.props;
+const [grupos, municipios] = await Promise.all([zonasAgrupadas(sb), municipiosParaProponer(sb)]);
+---
+<label>Tu zona
+  <select name="zona_id">
+    <option value="">Elige tu zona…</option>
+    {grupos.map(([nombre, g]) => (
+      <optgroup label={nombre}>
+        {g.zonas.map((z) => (
+          <option value={z.id} selected={z.id === actual}>{z.nombre}{!z.activa && " (en revisión)"}</option>
+        ))}
+      </optgroup>
+    ))}
+  </select>
+  <small class="texto-2">Sector, barrio, urbanización o pueblo. Tu dirección exacta no se muestra si no quieres.</small>
+</label>
+<details class="caja-suave">
+  <summary>No está mi zona</summary>
+  <label>Municipio
+    <select name="municipio_id">
+      <option value="">Elige…</option>
+      {municipios.map((m) => <option value={m.id}>{m.nombre}, {m.estados.nombre}</option>)}
+    </select>
+  </label>
+  <label>Nombre de tu sector o pueblo
+    <input type="text" name="zona_nueva" maxlength="60" placeholder="Ej. Barrio La Ceiba" />
+  </label>
+  <small class="texto-2">La revisamos y la agregamos. Mientras tanto tu tienda ya funciona.</small>
+</details>

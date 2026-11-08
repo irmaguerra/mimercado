@@ -1,0 +1,34 @@
+---
+// /entrar/nueva-clave — Después de tocar el enlace de "Olvidé mi contraseña".
+import Base from "@/layouts/Base.astro";
+import Logo from "@/components/Logo.astro";
+import { mensajeError } from "@/lib/sesion.js";
+
+const { sb, usuario } = Astro.locals;
+if (!usuario) return Astro.redirect("/entrar?modo=olvide&aviso=" + encodeURIComponent("El enlace venció. Pide uno nuevo."), 302);
+
+let error = "";
+if (Astro.request.method === "POST") {
+  const clave = String((await Astro.request.formData()).get("clave") || "");
+  if (clave.length < 8) error = "La contraseña debe tener al menos 8 caracteres.";
+  else {
+    const { error: e } = await sb.auth.updateUser({ password: clave });
+    if (e) error = mensajeError(e);
+    else return Astro.redirect("/panel", 303);
+  }
+}
+---
+<Base titulo="Nueva contraseña" barra={false}>
+  <main class="contenedor angosto" style="padding-top:28px">
+    <Logo alto={36} />
+    <h1 style="font-size:24px;margin:20px 0 12px">Crea tu contraseña nueva</h1>
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+    <form method="post" class="formulario">
+      <label>Contraseña nueva
+        <input type="password" name="clave" required minlength="8" autocomplete="new-password" />
+        <small class="texto-2">Mínimo 8 caracteres.</small>
+      </label>
+      <button class="boton ancho" type="submit">Guardar y entrar</button>
+    </form>
+  </main>
+</Base>

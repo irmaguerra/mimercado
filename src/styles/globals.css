@@ -134,3 +134,53 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .rejilla-estados a { display: flex; align-items: center; min-height: 44px; }
 .aviso { padding: 14px 16px; margin-top: 16px; }
 .punto-activo { color: var(--acento); }
+
+/* ───────── Formularios y cuenta ───────── */
+.angosto { max-width: 480px; }
+.ancho { width: 100%; }
+.boton-claro { background: var(--tarjeta); color: var(--texto); border: 1px solid var(--borde); }
+.boton-whatsapp { background: var(--acento); color: #fff; }
+.boton-texto { background: none; border: 0; color: var(--acento); text-decoration: underline; cursor: pointer; padding: 8px; min-height: 44px; }
+.pila-botones { display: grid; gap: 10px; }
+.formulario { display: grid; gap: 14px; margin-top: 8px; }
+.formulario label { display: grid; gap: 4px; font-weight: 600; font-size: 15px; }
+.formulario input:not([type=radio]):not([type=checkbox]), .formulario select, .formulario textarea {
+  width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid var(--borde); border-radius: 10px;
+  background: var(--tarjeta); font-weight: 400;
+}
+.formulario small { font-weight: 400; }
+.opciones-radio { border: 1px solid var(--borde); border-radius: 12px; padding: 10px 14px; margin: 0; display: grid; gap: 6px; }
+.opciones-radio legend { font-weight: 700; padding: 0 4px; }
+.formulario label.radio { display: flex; align-items: center; gap: 10px; font-weight: 400; min-height: 40px; }
+.radio input { width: 20px; height: 20px; accent-color: var(--primario); }
+.caja-suave { border: 1px dashed var(--borde); border-radius: 12px; padding: 4px 14px 12px; display: grid; gap: 10px; }
+.caja-suave summary { min-height: 44px; display: flex; align-items: center; color: var(--acento); font-weight: 600; cursor: pointer; }
+.campo-prefijo { display: flex; align-items: center; border: 1px solid var(--borde); border-radius: 10px; background: var(--tarjeta); overflow: hidden; }
+.campo-prefijo span { padding-left: 12px; color: var(--texto-2); font-weight: 400; font-size: 14px; white-space: nowrap; }
+.campo-prefijo input { border: 0 !important; padding-left: 2px !important; }
+.mensaje { padding: 12px 14px; border-radius: 12px; margin: 12px 0; }
+.mensaje.error { background: color-mix(in srgb, var(--lokl-error) 12%, var(--tarjeta)); border: 1px solid var(--lokl-error); }
+.mensaje.ok { background: color-mix(in srgb, var(--acento) 12%, var(--tarjeta)); border: 1px solid var(--acento); }
+.separador { display: flex; align-items: center; gap: 10px; color: var(--texto-2); font-size: 14px; margin: 16px 0 4px; }
+.separador::before, .separador::after { content: ""; flex: 1; height: 1px; background: var(--borde); }
+.enlaces-pie { display: grid; gap: 4px; margin-top: 18px; text-align: center; }
+.enlaces-pie a { min-height: 44px; display: flex; align-items: center; justify-content: center; }
+.oculto-visual { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ───────── Tienda ───────── */
+.logo-tienda { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; border: 1px solid var(--borde); flex-shrink: 0; background: var(--tarjeta); }
+.logo-tienda.grande { width: 88px; height: 88px; border-radius: 20px; }
+.logo-vacio { display: inline-flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; color: #fff; background: var(--marca); }
+.cabecera-tienda { display: flex; gap: 14px; align-items: center; margin-top: 20px; }
+.insignia-verificado { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 13px; font-weight: 700; color: var(--acento); text-decoration: none; }
+.estado-abierto { color: var(--acento); }
+.estado-abierto.cerrado { color: var(--texto-2); }
+.datos-tienda { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 6px; color: var(--texto-2); font-size: 15px; }
+.datos-tienda li::before { content: "· "; }
+.enlace-tienda { padding: 14px; font-weight: 700; word-break: break-all; }
+.bloque { padding: 14px 16px; margin-top: 14px; }
+.subir-logo { display: flex; align-items: center; gap: 14px; }
+.subir-logo label.boton { position: relative; }
+.menu-panel { display: grid; margin-top: 18px; border-top: 1px solid var(--borde); }
+.menu-panel a { display: flex; justify-content: space-between; align-items: center; min-height: 52px; border-bottom: 1px solid var(--borde); color: var(--texto); text-decoration: none; }
+.menu-panel a[aria-disabled="true"] { color: var(--texto-2); pointer-events: none; }
