@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identidad Lokl</title>
+<link rel="icon" href="app/favicon.svg">
+<link rel="stylesheet" href="paleta.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fondo); color: var(--texto); font-family: var(--fuente); line-height: 1.5; }
+  main { max-width: 960px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  h2 { font-size: 20px; margin: 48px 0 12px; color: var(--acento); }
+  p.lead { color: var(--texto-2); margin: 0 0 8px; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .card { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; padding: 16px; }
+  .logo-box { display: flex; align-items: center; justify-content: center; min-height: 140px; border-radius: 12px; }
+  .logo-box img { width: 70%; max-width: 220px; }
+  .cap { font-size: 13px; color: var(--texto-2); margin-top: 8px; }
+  .sw { height: 84px; border-radius: 10px; display: flex; align-items: flex-end; padding: 8px; font-weight: 600; font-size: 13px; }
+  .sw-name { font-weight: 700; margin-top: 8px; }
+  .sw-hex { font-family: ui-monospace, Consolas, monospace; font-size: 13px; color: var(--texto-2); }
+  .icons { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+  .ic { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 12px 6px; text-align: center; font-size: 12px; color: var(--texto-2); }
+  .ic span.t { display: inline-flex; width: 48px; height: 48px; border-radius: 12px; align-items: center; justify-content: center; margin-bottom: 6px; }
+  .ic img { width: 28px; height: 28px; }
+  .ficha .foto img { filter: none; }
+  .demo { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .btn { background: var(--primario); color: var(--primario-texto); border: 0; border-radius: 12px; padding: 12px 18px; font: 600 15px var(--fuente); }
+  .btn2 { background: transparent; color: var(--acento); border: 2px solid var(--acento); border-radius: 12px; padding: 10px 16px; font: 600 15px var(--fuente); }
+  .precio { background: var(--precio-fondo); color: var(--precio-texto); border-radius: 8px; padding: 4px 10px; font-weight: 700; }
+  .badge { display: inline-flex; gap: 6px; align-items: center; color: var(--acento); font-weight: 600; font-size: 14px; }
+  .badge img { width: 20px; }
+  .abierto { color: var(--acento); font-weight: 600; font-size: 14px; }
+  .ficha { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 16px; overflow: hidden; max-width: 340px; }
+  .ficha .foto { height: 150px; background: linear-gradient(135deg, #F3E3C8, #E9CFA4); display: flex; align-items: center; justify-content: center; }
+  .ficha .foto img { width: 64px; opacity: .55; }
+  .ficha .body { padding: 14px; }
+  .ficha h3 { margin: 0 0 2px; font-size: 17px; }
+  .muted { color: var(--texto-2); font-size: 14px; }
+  ul.reglas { padding-left: 18px; margin: 0; }
+  ul.reglas li { margin-bottom: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  td, th { text-align: left; padding: 8px; border-bottom: 1px solid var(--borde); }
+  .ok { color: var(--acento); font-weight: 700; }
+  .no { color: var(--lokl-error); font-weight: 700; }
+  .tablewrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+  <picture><source srcset="logo/lokl-logo-oscuro.svg" media="(prefers-color-scheme: dark)"><img src="logo/lokl-logo.svg" alt="lokl" style="width:120px;margin-bottom:12px"></picture>
+  <h1>Identidad visual de Lokl</h1>
+  <p class="lead">Propuesta v1 · noviembre 2026 · rama <code>rediseno-modular</code></p>
+  <p>Lokl es lo de aquí: lo que vende tu vecino, el productor del pueblo y el servicio de la esquina, ordenado y fácil de encontrar. La identidad se inspira en el llano apureño: el <b>atardecer</b>, la <b>sabana</b> y el <b>araguaney</b>.</p>
+
+  <h2>1. Logo</h2>
+  <p>La palabra <b>lokl</b> en minúsculas, trazo grueso y redondeado. La “o” es un <b>pin de ubicación</b>: dice “local” y “cerca de ti” sin explicar nada. Está dibujado a mano en SVG (sin fuentes), pesa menos de 1 KB y se ve nítido en cualquier tamaño.</p>
+  <div class="grid">
+    <div class="card"><div class="logo-box" style="background:#FAF6EF"><img src="logo/lokl-logo.svg" alt="Logo principal"></div><div class="cap">Principal · fondos claros</div></div>
+    <div class="card"><div class="logo-box" style="background:#1C1A17"><img src="logo/lokl-logo-oscuro.svg" alt="Logo sobre oscuro"></div><div class="cap">Sobre fondos oscuros</div></div>
+    <div class="card"><div class="logo-box" style="background:#E8590C"><img src="logo/lokl-logo-blanco.svg" alt="Logo blanco"></div><div class="cap">Blanco sobre Atardecer</div></div>
+    <div class="card"><div class="logo-box" style="background:#fff"><img src="logo/lokl-logo-una-tinta.svg" alt="Logo una tinta"></div><div class="cap">Una tinta · sellos, impresión barata, fotocopias</div></div>
+  </div>
+
+  <h2>2. Símbolo e ícono de la app</h2>
+  <p>El pin solo es el ícono de la app instalada, el favicon y la marca de agua en fotos compartidas.</p>
+  <div class="grid">
+    <div class="card"><div class="logo-box" style="background:#FAF6EF"><img src="app/icono-app.svg" alt="Ícono de app" style="width:120px;border-radius:28px"></div><div class="cap">Ícono de app (512 px, también en PNG 192/512)</div></div>
+    <div class="card"><div class="logo-box" style="background:#FAF6EF"><img src="app/favicon.svg" alt="Favicon" style="width:48px"></div><div class="cap">Favicon (pestaña del navegador)</div></div>
+    <div class="card"><div class="logo-box" style="background:#FAF6EF"><img src="logo/lokl-simbolo.svg" alt="Símbolo" style="width:60px"></div><div class="cap">Símbolo suelto</div></div>
+  </div>
+
+  <h2>3. Paleta propia</h2>
+  <p>Tres colores de marca y neutros cálidos (arena en vez de gris frío), para que se sienta cercana y no “de banco”.</p>
+  <div class="grid">
+    <div class="card"><div class="sw" style="background:#E8590C;color:#fff">Aa</div><div class="sw-name">Atardecer</div><div class="sw-hex">#E8590C</div><div class="cap">Color de marca: logo, íconos, detalles grandes.</div></div>
+    <div class="card"><div class="sw" style="background:#B5450B;color:#fff">Aa 5.5:1</div><div class="sw-name">Atardecer oscuro</div><div class="sw-hex">#B5450B</div><div class="cap">Botones principales con texto blanco.</div></div>
+    <div class="card"><div class="sw" style="background:#14614A;color:#fff">Aa 7.4:1</div><div class="sw-name">Sabana</div><div class="sw-hex">#14614A</div><div class="cap">Confianza: encabezados, enlaces, “Abierto”, Verificado.</div></div>
+    <div class="card"><div class="sw" style="background:#FFC233;color:#1C1A17">Aa 10.8:1</div><div class="sw-name">Araguaney</div><div class="sw-hex">#FFC233</div><div class="cap">Precios, ofertas, “Al mayor”, “Nuevo”. Siempre con texto Tinta.</div></div>
+    <div class="card"><div class="sw" style="background:#1C1A17;color:#FAF6EF">Aa</div><div class="sw-name">Tinta</div><div class="sw-hex">#1C1A17</div><div class="cap">Texto principal.</div></div>
+    <div class="card"><div class="sw" style="background:#6B655C;color:#fff">Aa</div><div class="sw-name">Piedra</div><div class="sw-hex">#6B655C</div><div class="cap">Texto secundario.</div></div>
+    <div class="card"><div class="sw" style="background:#FAF6EF;color:#1C1A17;border:1px solid #E8E1D5">Aa</div><div class="sw-name">Arena</div><div class="sw-hex">#FAF6EF</div><div class="cap">Fondo de la app.</div></div>
+    <div class="card"><div class="sw" style="background:#E8E1D5;color:#1C1A17">Aa</div><div class="sw-name">Línea</div><div class="sw-hex">#E8E1D5</div><div class="cap">Bordes y separadores.</div></div>
+  </div>
+
+  <h3 style="margin-top:24px">Combinaciones permitidas (legibilidad)</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Texto</th><th>Fondo</th><th>Contraste</th><th></th></tr>
+    <tr><td>Blanco</td><td>Atardecer oscuro</td><td>5.5 : 1</td><td class="ok">Sí</td></tr>
+    <tr><td>Blanco</td><td>Sabana</td><td>7.4 : 1</td><td class="ok">Sí</td></tr>
+    <tr><td>Tinta</td><td>Araguaney</td><td>10.8 : 1</td><td class="ok">Sí</td></tr>
+    <tr><td>Sabana</td><td>Arena</td><td>6.9 : 1</td><td class="ok">Sí</td></tr>
+    <tr><td>Blanco</td><td>Atardecer</td><td>3.6 : 1</td><td class="ok">Solo títulos grandes y logo</td></tr>
+    <tr><td>Blanco</td><td>Araguaney</td><td>1.6 : 1</td><td class="no">Nunca</td></tr>
+  </table></div>
+
+  <h2>4. Íconos propios de Lokl</h2>
+  <p>En vez de emojis (que se ven distintos en cada teléfono), un juego de íconos propios: mismo trazo redondeado que el logo, una línea, pesan unos 300 bytes cada uno y toman el color que les demos. Los nuevos se dibujan con la misma regla: cuadrícula 24×24, trazo 1.8, puntas redondas.</p>
+  <div class="icons" id="icons"></div>
+
+  <h2>5. Así se vería en la app</h2>
+  <div class="demo" style="margin-bottom:16px">
+    <button class="btn">Pedir por WhatsApp</button>
+    <button class="btn2">Ver tienda</button>
+    <span class="precio">$4,50 / kg</span>
+    <span class="badge"><img src="iconos/verificado-sello.svg" alt="">Verificado por Lokl</span>
+    <span class="abierto">● Abierto ahora</span>
+  </div>
+  <div class="ficha">
+    <div class="foto"><img src="iconos/queso.svg" alt=""></div>
+    <div class="body">
+      <h3>Queso llanero duro</h3>
+      <div class="muted">Quesera Doña Carmen · La Macanilla, Pedro Camejo</div>
+      <div style="margin:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="precio">$3,80 / kg</span><span class="muted">Al mayor · mínimo 20 kg</span>
+      </div>
+      <span class="badge"><img src="iconos/verificado-sello.svg" alt="">Verificado por Lokl</span>
+      <div style="margin-top:12px"><button class="btn" style="width:100%">Pedir por WhatsApp</button></div>
+    </div>
+  </div>
+  <p class="cap">Ejemplo ilustrativo; nombre y precio inventados.</p>
+
+  <h2>6. Tipografía</h2>
+  <p>Fuentes del sistema del teléfono (Roboto en Android, San Francisco en iPhone). <b>Cero kilobytes de descarga</b> y se leen perfecto en pantallas pequeñas. El único elemento con letra propia es el logo, que va dibujado.</p>
+
+  <h2>7. Reglas rápidas</h2>
+  <ul class="reglas">
+    <li>Atardecer es para llamar la atención: un solo botón principal por pantalla.</li>
+    <li>Sabana es confianza: todo lo que dice “esto es seguro” (Verificado, Abierto, enlaces).</li>
+    <li>Araguaney solo para precios y ofertas, siempre con letra oscura.</li>
+    <li>Fondo Arena y tarjetas blancas; nada de grises fríos.</li>
+    <li>No deformar, rotar ni cambiarle los colores al logo; dejar a su alrededor un espacio libre del alto de la “l”.</li>
+    <li>La insignia “Verificado por Lokl” solo la otorga Lokl: es el sello de que el negocio existe.</li>
+  </ul>
+</main>
+<script>
+  const iconos = [
+    ["tiendas","Tiendas","#FDE5D6"],["comida","Comida","#FDE5D6"],["al-mayor","Al mayor","#FFF1C7"],
+    ["queso","Queso / origen","#FFF1C7"],["servicios","Servicios","#DCEFE6"],["clasificados","Clasificados","#FDE5D6"],
+    ["super","Lokl Súper","#FDE5D6"],["transporte","Transporte","#DCEFE6"],["salud","Salud","#DCEFE6"],
+    ["hospedaje","Hospedaje","#DCEFE6"],["hogar-oficios","Hogar y oficios","#DCEFE6"],["belleza","Belleza","#DCEFE6"],
+    ["educacion","Educación","#DCEFE6"],["presupuesto","Pedir presupuesto","#FFF1C7"],["verificado","Verificado","#DCEFE6"],
+    ["ubicacion","Zona","#FDE5D6"],["whatsapp","WhatsApp","#DCEFE6"]
+  ];
+  const cont = document.getElementById("icons");
+  iconos.forEach(([f, n, bg]) => {
+    const d = document.createElement("div");
+    d.className = "ic";
+    d.innerHTML = `<span class="t" style="background:${bg}"><img src="iconos/${f}.svg" alt=""></span><div>${n}</div>`;
+    cont.appendChild(d);
+  });
+</script>
+</body>
+</html>

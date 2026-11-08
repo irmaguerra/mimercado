@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" role="img" aria-label="lokl">
+<g fill="none" stroke="#FFFFFF" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 16V84"/>
+<path d="M116 16V84"/>
+<path d="M146 44L118 68"/>
+<path d="M129 59L149 84"/>
+<path d="M176 16V84"/>
+</g>
+<path fill="#FFFFFF" fill-rule="evenodd" d="M66 98C66 98 40 74 40 54a26 26 0 1 1 52 0C92 74 66 98 66 98ZM66 43a11 11 0 1 0 0 22a11 11 0 1 0 0-22Z"/>
+</svg>
