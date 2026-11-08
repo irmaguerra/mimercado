@@ -17,6 +17,7 @@ Cada archivo se corre **una sola vez** y nunca se modifica después de correrlo:
 | 01 | `01-esquema-inicial.sql` | Crea todas las tablas, reglas, seguridad (RLS), el buscador y la tarea nocturna de caducidad | ✅ 8/11/2026 |
 | 02 | `02-modulo-2-zonas-categorias.sql` | Campo "Hasta dónde envías", ajuste de categorías, y datos iniciales: 24 estados, 7 municipios de Apure, 28 zonas, 91 categorías, 20 sinónimos | ✅ 8/11/2026 |
 | 03 | `03-modulo-3-cuentas-vendedor.sql` | Corrige el hueco del sello de verificado, enlaces reservados, zonas propuestas por vendedores, permisos de lo que es de cada vendedor y la carpeta de fotos | ✅ 8/11/2026 |
+| 04 | `04-admin-usalokl.sql` | La cuenta usalokl.app@gmail.com pasa a ser administradora de Lokl | ⏳ pendiente |
 
 ## Para quien programa
 

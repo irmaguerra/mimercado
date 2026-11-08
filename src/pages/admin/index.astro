@@ -1,0 +1,74 @@
+---
+// /admin — Administración de Lokl (solo cuentas en la tabla `admins`; lo verifica el middleware).
+// Por ahora: resumen y zonas propuestas por vendedores. Moderación, verificaciones y Súper llegan en sus módulos.
+import Base from "@/layouts/Base.astro";
+import Icono from "@/components/Icono.astro";
+import { miTienda } from "@/lib/sesion.js";
+
+const { sb, usuario } = Astro.locals;
+let aviso = "";
+
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  const id = Number(f.get("zona_id"));
+  const nombre = String(f.get("nombre") || "").trim().slice(0, 60);
+  if (id > 0 && nombre.length >= 2) {
+    const { error } = await sb.from("zonas").update({ nombre, activa: true }).eq("id", id);
+    aviso = error ? "No se pudo aprobar la zona." : `Zona "${nombre}" aprobada.`;
+  }
+}
+
+const [{ count: vendedores }, { data: zonasPendientes }, { count: sugeridas }, tienda] = await Promise.all([
+  sb.from("vendedores").select("id", { count: "exact", head: true }).eq("estado", "activo"),
+  sb.from("zonas").select("id, nombre, creado_en, municipios(nombre)").eq("activa", false).order("creado_en"),
+  sb.from("categorias_sugeridas").select("id", { count: "exact", head: true }).is("resuelta_en", null),
+  miTienda(sb, usuario.id),
+]);
+---
+<Base titulo="Administración">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <h1 style="font-size:24px;margin:0">Administración de Lokl</h1>
+    <p class="texto-2" style="margin:4px 0 0;font-size:14px">{usuario.email}</p>
+    {aviso && <p class="mensaje ok" role="status">{aviso}</p>}
+
+    <div class="rejilla-secciones" style="margin-top:16px">
+      <div class="tarjeta bloque" style="margin:0"><strong style="font-size:28px">{vendedores ?? 0}</strong><br /><span class="texto-2">tiendas activas</span></div>
+      <div class="tarjeta bloque" style="margin:0"><strong style="font-size:28px">{zonasPendientes?.length ?? 0}</strong><br /><span class="texto-2">zonas por revisar</span></div>
+    </div>
+
+    <section style="margin-top:22px">
+      <h2 style="font-size:18px;margin:0 0 8px">Zonas propuestas</h2>
+      {!zonasPendientes?.length ? <p class="texto-2">No hay zonas por revisar.</p> : (
+        <ul class="lista-opciones">
+          {zonasPendientes.map((z) => (
+            <li class="tarjeta bloque" style="margin:0">
+              <form method="post" class="formulario" style="margin:0">
+                <input type="hidden" name="zona_id" value={z.id} />
+                <label>{z.municipios?.nombre} · corrige el nombre si hace falta
+                  <input type="text" name="nombre" value={z.nombre} required maxlength="60" />
+                </label>
+                <button class="boton" type="submit">Aprobar</button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+
+    <section class="tarjeta bloque fila" style="gap:12px;margin-top:22px">
+      <span style="color:var(--marca)"><Icono nombre="super" tam={32} /></span>
+      <span><strong>Lokl Súper</strong><br /><span class="texto-2" style="font-size:14px">Catálogo, precios, costos, aliados y pedidos. Se construye en el Módulo 10.</span></span>
+    </section>
+
+    <nav class="menu-panel" aria-label="Más opciones">
+      <span class="texto-2" style="padding:14px 0;font-size:14px">
+        Próximamente: moderación y reportes, verificaciones, categorías sugeridas ({sugeridas ?? 0}), palabras prohibidas y búsquedas sin resultado.
+      </span>
+      {tienda && <a href="/panel">Mi tienda ({tienda.nombre}) <span aria-hidden="true">›</span></a>}
+    </nav>
+
+    <form method="post" action="/salir" style="margin-top:20px;text-align:center">
+      <button type="submit" class="boton-texto">Salir de mi cuenta</button>
+    </form>
+  </main>
+</Base>

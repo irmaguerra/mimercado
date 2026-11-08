@@ -8,7 +8,11 @@ import { enlaceCompartir } from "@/lib/whatsapp.js";
 
 const { sb, usuario } = Astro.locals;
 const t = await miTienda(sb, usuario.id);
-if (!t) return Astro.redirect("/panel/crear", 302);
+if (!t) {
+  // La cuenta administradora no necesita tienda: va a la administración.
+  const { data: admin } = await sb.rpc("es_admin");
+  return Astro.redirect(admin ? "/admin" : "/panel/crear", 302);
+}
 
 const hace7dias = new Date(Date.now() - 7 * 864e5).toISOString();
 const [{ count: contactos }, { data: esAdmin }] = await Promise.all([
