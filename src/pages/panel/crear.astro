@@ -16,6 +16,8 @@ let que = Astro.url.searchParams.get("que");
 if (!QUE_HACES[que]) que = null;
 
 let error = "";
+let detalle = "";
+let zonaElegida = null;
 let valores = { nombre: "", whatsapp: "", modalidad: "" };
 
 if (Astro.request.method === "POST") {
@@ -26,6 +28,7 @@ if (Astro.request.method === "POST") {
     whatsapp: String(f.get("whatsapp") || "").trim(),
     modalidad: String(f.get("modalidad") || ""),
   };
+  zonaElegida = Number(f.get("zona_id")) || null;
 
   if (!que) error = "Elige qué haces.";
   else if (valores.nombre.length < 2) error = que === "clasificados" ? "Escribe tu nombre." : "Escribe el nombre de tu tienda.";
@@ -50,7 +53,13 @@ if (Astro.request.method === "POST") {
         zona_id: zona.zonaId,
         modalidad_cocina: que === "comida" ? valores.modalidad : null,
       });
-      if (e) error = "No pudimos crear tu tienda. Intenta de nuevo.";
+      if (e) {
+        console.error("crear tienda", e);
+        detalle = [e.code, e.message].filter(Boolean).join(" · ");
+        error = e.code === "23505" && /slug/.test(e.message || "")
+          ? "Ya hay una tienda con ese nombre. Prueba con otro nombre, por ejemplo agregando tu zona."
+          : "No pudimos crear tu tienda. Intenta de nuevo.";
+      }
       else return Astro.redirect("/panel/lista", 303);
     }
   }
@@ -59,7 +68,11 @@ const opcion = que ? QUE_HACES[que] : null;
 ---
 <Base titulo="Crea tu tienda" barra={false}>
   <main class="contenedor angosto" style="padding-top:20px">
-    <Logo alto={30} />
+    <div class="fila-entre">
+      <Logo alto={30} />
+      <form method="post" action="/salir" style="margin:0"><button type="submit" class="boton-texto">Salir</button></form>
+    </div>
+    <p class="texto-2" style="margin:8px 0 0;font-size:14px">Entraste como {usuario.email}</p>
 
     {!que ? (
       <>
@@ -80,7 +93,7 @@ const opcion = que ? QUE_HACES[que] : null;
       <>
         <p class="texto-2" style="margin:20px 0 0">Paso 2 de 2 · <a href="/panel/crear">{opcion.texto} (cambiar)</a></p>
         <h1 style="font-size:24px;margin:4px 0 16px">{que === "clasificados" ? "Tus datos" : "Tu tienda"}</h1>
-        {error && <p class="mensaje error" role="alert">{error}</p>}
+        {error && <p class="mensaje error" role="alert">{error}{detalle && <><br /><small>Código para soporte: {detalle}</small></>}</p>}
         <form method="post" class="formulario">
           <input type="hidden" name="que" value={que} />
           <label>{que === "clasificados" ? "Tu nombre" : "Nombre de tu tienda"}
@@ -100,7 +113,7 @@ const opcion = que ? QUE_HACES[que] : null;
               <small class="texto-2">Si cocinas desde casa, solo se muestra tu zona, nunca tu dirección.</small>
             </fieldset>
           )}
-          <CampoZona sb={sb} />
+          <CampoZona sb={sb} actual={zonaElegida} />
           <button class="boton ancho" type="submit">Crear mi tienda</button>
         </form>
       </>
