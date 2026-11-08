@@ -205,7 +205,7 @@ erDiagram
   municipios ||--o| super_operadores : "futuro franquicia"
 ```
 
-### Tablas (32): de 20 tablas con datos duplicados a un modelo normalizado
+### Tablas (33): de 20 tablas con datos duplicados a un modelo normalizado
 
 | Grupo | Tablas | Para qué |
 |---|---|---|
@@ -217,7 +217,7 @@ erDiagram
 | Moderación | `palabras_prohibidas`, `reportes`, `moderacion_log` | Control posterior, sin aprobaciones |
 | Métricas | `contactos`, `busquedas` | Contador para el vendedor; búsquedas sin resultado para ti |
 | Presupuestos | `presupuestos`, `presupuesto_respuestas`, `push_suscripciones` | "Pedir presupuesto a varios" |
-| Súper | `super_zonas`, `super_productos`, `super_pedidos` (públicas o del cliente) · `super_aliados`, `super_costos` (**solo admin**) · `super_operadores` (futuro) | El cliente nunca ve costos ni aliados |
+| Súper | `super_zonas`, `super_productos`, `super_pedidos`, `super_lista_espera` (públicas o del cliente) · `super_aliados`, `super_costos` (**solo admin**) · `super_operadores` (futuro) | El cliente nunca ve costos ni aliados |
 | Sistema | `configuracion`, `admins` | Ajustes (súper abierto, límites) y quién es admin |
 
 El detalle de cada columna está comentado en el archivo SQL. Cuando apruebes la propuesta preparo `docs/base-de-datos.md` con el diccionario de datos completo y las políticas RLS tabla por tabla.
@@ -298,11 +298,26 @@ Es un solo clic para el cliente y ninguna vuelta por la ciudad. Más adelante, s
 **Al mayor / precios de origen**
 Una publicación marcada "al mayor" tiene precio por unidad (kg, pieza, bulto…), cantidad mínima y disponibilidad. `/precios` muestra la tabla pública "producto · zona · precio · fecha". El formulario de publicar funciona con mala señal: guarda en el teléfono y envía cuando hay conexión.
 
-**Lokl Súper**
-- El cliente ve "Lokl Súper · entrega en 30 min" **solo si su zona está en `super_zonas`**.
+**Lokl Súper: la fuente de ingresos, siempre a la vista** *(aprobado 8/11/2026)*
+- **Pestaña fija en la barra inferior**: Inicio · **Súper** · Buscar · Publicar · Mi cuenta.
+- **Portada**: franja destacada "Lokl Súper · en 30 min a tu puerta" con las ofertas del día, arriba de todo, cuando la zona tiene cobertura.
+- **En el buscador**: si alguien busca "harina", "aceite" o "pañales", el primer bloque es "En Lokl Súper · llega en 30 min", antes que los demás resultados.
+- **Repetir mi último pedido** con un toque, y **listas armadas** ("Desayuno", "Parrilla del domingo", "Lo básico de la semana").
+- **Envío gratis desde $X** y aviso de horario ("pide antes de las 8 pm").
+- **Zona sin cobertura**: en vez de esconder el Súper, se muestra "Avísame cuando llegue a mi zona". Esa lista de espera por zona te dice dónde expandirte (tabla nueva `super_lista_espera`).
 - Catálogo por municipio, carrito, pedido guardado en `super_pedidos` y confirmación por WhatsApp.
 - El admin ve los pedidos por estado (nuevo → confirmado → comprando → en camino → entregado), con el aliado de cada producto para armar la ruta de compra.
 - Futuro: un operador exclusivo por municipio (`super_operadores`).
+
+**Comida = Feria de comida** *(aprobado 8/11/2026)*
+- Se siente como una feria: cada vendedor es un **puesto** con su logo, sus platos y si está "Abierto ahora". Los abiertos y los cercanos van primero.
+- Caben todos: restaurantes, food trucks, puestos de calle, **cocinas desde casa** (postres, tortas, comida casera) y **cocinas ocultas** (solo delivery).
+- Campo nuevo `vendedores.modalidad_cocina`: restaurante · puesto/food truck · desde casa · cocina oculta. Los que cocinan desde casa muestran **solo su zona, nunca su dirección**.
+- **Botones por antojo** con íconos Lokl: Pizza, Hamburguesas, Perros, Arepas, Empanadas, Parrilla, Pollo, Comida casera, Postres y tortas, Saludable, Bebidas… (son subcategorías de Comida que tú manejas).
+- **Buscar "pizza"** da "Pizza: 8 puestos", y cada puesto se muestra con sus pizzas y su rango de precios ("desde $6"). Funciona por la subcategoría del vendedor y por los títulos de sus platos.
+- **Por encargo**: postres y tortas con "pide con 24 h de anticipación"; **menú del día** que se renueva solo cada día.
+
+**Clasificados abiertos a cualquier persona** *(aprobado 8/11/2026)*: con una cuenta sencilla tipo "persona" (ver creación de cuenta).
 
 ---
 
@@ -356,10 +371,31 @@ Durante todo el proceso, `main` y `usalokl.com` siguen con la versión actual. V
 
 ---
 
-## 10. Decisiones que necesito de ti
+## 10. Creación de cuenta del vendedor (propuesta)
 
-1. **¿Apruebas la propuesta en general?** (secciones, sin aprobaciones, mapa de páginas)
-2. **¿Proyecto Supabase nuevo** (recomendado) o reiniciar el actual?
-3. **¿Te parece bien que el enlace del vendedor vaya en la raíz** (`usalokl.com/queseria-la-macanilla`)?
-4. **Inicio de sesión del vendedor**: ¿correo + contraseña (recomendado, gratis) o enlace mágico por correo? El SMS tiene costo por mensaje.
-5. **Clasificados**: ¿cualquier persona puede publicar uno creando una cuenta sencilla (tipo "persona"), o solo los vendedores?
+Meta: **tienda lista en menos de 2 minutos**, desde el teléfono.
+
+| Paso | Pantalla | Detalle |
+|---|---|---|
+| 0 | `/vende` | "Crea tu tienda gratis" + 3 beneficios + botón |
+| 1 | **Entrar** | **"Continuar con Google"** (un toque: casi todo Android ya tiene cuenta Google) o **correo + contraseña**. Ambos gratis en Supabase |
+| 2 | **¿Qué haces?** | 5 botones grandes con ícono: Vendo productos · Vendo comida · Ofrezco un servicio · Produzco al mayor · Solo quiero vender algo (clasificados) |
+| 3 | **Tu tienda** | Nombre · WhatsApp (con botón "Probar" que abre su propio chat) · Zona (buscador estado → municipio → zona, o "No está mi zona" para proponerla) · Logo (opcional, se puede saltar) |
+| 4 | **¡Lista!** | Muestra `usalokl.com/su-nombre` (se genera del nombre y se puede editar) · "Compartir mi tienda en WhatsApp" · "Publicar mi primer producto" |
+
+- La categoría, el horario, la galería y lo demás se completan después, desde el panel, sin obligar.
+- "Olvidé mi contraseña" por correo, automático. Se acaba el "escríbele a Lokl por WhatsApp".
+- **Cuenta "persona"** (clasificados): mismos pasos 1 a 3, sin logo. Tiene su página, pero no aparece como tienda en la feria ni en los servicios.
+- **Cuenta asistida** (futuro): tú o un promotor de zona crean la tienda de un productor que no maneja el teléfono, con su WhatsApp. Cuando quiera, el productor la reclama y queda como dueño.
+
+## 11. Decisiones
+
+| # | Decisión | Estado |
+|---|---|---|
+| 1 | Propuesta general | **Aprobada** (8/11/2026) |
+| 2 | Proyecto Supabase nuevo | Pendiente (recomendado) |
+| 3 | Enlace del vendedor en la raíz (`usalokl.com/su-nombre`) | **Aprobado** |
+| 4 | Inicio de sesión: Google + correo y contraseña | Pendiente (recomendado) |
+| 5 | Clasificados abiertos a cualquier persona | **Aprobado** |
+| 6 | Súper con máxima visibilidad (pestaña fija, portada, buscador) | **Aprobado** |
+| 7 | Comida como Feria de comida (incluye "desde casa" y cocinas ocultas) | **Aprobado** |

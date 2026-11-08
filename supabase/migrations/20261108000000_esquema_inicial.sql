@@ -93,6 +93,8 @@ create table sinonimos (
 -- ---------------------------------------------------------------------
 
 create type tipo_vendedor as enum ('negocio', 'servicio', 'productor', 'persona');
+-- Feria de comida: cómo cocina el vendedor. 'desde_casa' y 'cocina_oculta' nunca muestran dirección.
+create type modalidad_cocina as enum ('restaurante', 'puesto', 'desde_casa', 'cocina_oculta');
 create type estado_vendedor as enum ('activo', 'suspendido');
 
 create table vendedores (
@@ -122,6 +124,9 @@ create table vendedores (
   disponible_ahora boolean,                           -- botón rápido del servicio
   formas_pago      text[] not null default '{}',      -- pago_movil, efectivo_usd, efectivo_bs, zelle, binance
   precios_referencia text,
+  -- Feria de comida
+  modalidad_cocina modalidad_cocina,
+  pedido_anticipado_horas smallint,                  -- postres/tortas por encargo: "pide con 24 h"
   -- Verificación (ver tabla verificaciones)
   verificado_en    timestamptz,
   -- Búsqueda
@@ -380,6 +385,15 @@ create table super_zonas (
   activa         boolean not null default true,
   costo_envio    numeric(10,2) not null default 0,
   minutos_promesa smallint not null default 30
+);
+
+-- "Avísame cuando llegue a mi zona": demanda por zona sin cobertura (te dice dónde expandirte)
+create table super_lista_espera (
+  cliente_id uuid not null,
+  zona_id    integer not null references zonas(id),
+  whatsapp   text,
+  creado_en  timestamptz not null default now(),
+  primary key (cliente_id, zona_id)
 );
 
 -- Catálogo público (lo que ve el cliente)
@@ -733,6 +747,7 @@ alter table super_productos      enable row level security;
 alter table super_aliados        enable row level security;
 alter table super_costos         enable row level security;
 alter table super_pedidos        enable row level security;
+alter table super_lista_espera   enable row level security;
 alter table super_operadores     enable row level security;
 alter table configuracion        enable row level security;
 alter table admins               enable row level security;
@@ -769,6 +784,8 @@ create policy anon_crear on resenas    for insert with check (estado = 'publicad
 create policy anon_crear on reportes   for insert with check (resuelto_en is null);
 create policy anon_crear on contactos  for insert with check (true);
 create policy anon_crear on presupuestos for insert with check (estado = 'abierto');
+create policy anon_crear on super_lista_espera for insert with check (true);
+create policy solo_admin on super_lista_espera for select using (es_admin());
 create policy ver_resenas on resenas   for select using (estado = 'publicada' or es_admin());
 
 -- Internas del Súper y moderación: SOLO admin
