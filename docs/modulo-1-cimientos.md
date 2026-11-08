@@ -1,6 +1,6 @@
 # Módulo 1 — Cimientos
 
-**Estado:** código listo en la rama `rediseno-modular` · falta conectar el proyecto Supabase nuevo · 8 de noviembre de 2026
+**Estado:** ✅ terminado, pendiente de tu visto bueno · publicado en https://lokl.usalokl-app.workers.dev · 8 de noviembre de 2026
 
 ## Decisión: Astro en vez de Next.js
 
@@ -71,7 +71,7 @@ Cuando la portada diga "Base de datos conectada", el Módulo 1 está terminado y
 - ✅ Esquema aplicado **desde el SQL Editor**, porque `supabase db push` no logró conectarse a la base desde esta red ("Connection timed out" / "terminated unexpectedly"). Verificado: tablas creadas, buscador y tarea nocturna funcionando.
 - ⏳ El historial de migraciones de la CLI no sabe que ya se aplicaron. Cuando la conexión funcione (otra red o sin Cloudflare WARP), correr una vez:
   `npx.cmd supabase migration repair --status applied 20261108000000 20261108000100 --linked`
-- ⏳ Cuenta de Cloudflare y conexión con el repositorio (ver abajo).
+- ✅ Cloudflare (`usalokl.app@gmail.com`): proyecto `lokl` conectado a `irmaguerra/mimercado`, rama de producción `rediseno-modular`. Publicado en https://lokl.usalokl-app.workers.dev (portada 3,2 KB comprimida, 0 JS, base conectada).
 - Nota: en Windows PowerShell usar `npx.cmd` en vez de `npx`.
 
 ## Cloudflare (decisión #9)
