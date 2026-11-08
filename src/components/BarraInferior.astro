@@ -1,0 +1,27 @@
+---
+// Barra fija de abajo: Inicio · Súper · Buscar · Publicar · Mi cuenta (propuesta, sección 7).
+// Enlaces simples: 0 KB de JavaScript.
+import Icono from "./Icono.astro";
+
+const PESTANAS = [
+  { href: "/", icono: "inicio", texto: "Inicio" },
+  { href: "/super", icono: "super", texto: "Súper", destacada: true },
+  { href: "/buscar", icono: "buscar", texto: "Buscar" },
+  { href: "/panel/publicar", icono: "publicar", texto: "Publicar" },
+  { href: "/panel", icono: "cuenta", texto: "Mi cuenta" },
+];
+const ruta = Astro.url.pathname;
+const activa = (href) => (href === "/" ? ruta === "/" : ruta.startsWith(href));
+---
+<nav class="barra-inferior" aria-label="Navegación principal">
+  {PESTANAS.map((p) => (
+    <a
+      href={p.href}
+      class:list={{ destacada: p.destacada }}
+      aria-current={activa(p.href) ? "page" : undefined}
+    >
+      <Icono nombre={p.icono} tam={24} />
+      <span>{p.texto}</span>
+    </a>
+  ))}
+</nav>

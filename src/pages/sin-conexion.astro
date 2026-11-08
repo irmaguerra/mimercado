@@ -1,0 +1,17 @@
+---
+// La muestra el service worker cuando no hay señal y la página pedida no estaba guardada.
+import Base from "@/layouts/Base.astro";
+import Logo from "@/components/Logo.astro";
+
+export const prerender = true;
+---
+<Base titulo="Sin conexión" barra={false}>
+  <main class="contenedor" style="padding-top:48px;text-align:center">
+    <div style="display:flex;justify-content:center"><Logo alto={40} /></div>
+    <h1 style="font-size:22px">No hay señal</h1>
+    <p class="texto-2">
+      Esta página todavía no estaba guardada en tu teléfono. Las que ya visitaste sí se pueden ver sin conexión.
+    </p>
+    <a href="/" class="boton" style="margin-top:12px">Volver a intentar</a>
+  </main>
+</Base>

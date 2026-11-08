@@ -1,0 +1,46 @@
+---
+import "@/styles/globals.css";
+import BarraInferior from "@/components/BarraInferior.astro";
+
+const {
+  titulo,
+  descripcion = "Tiendas, comida, servicios, productores y clasificados de tu zona, ordenados y fáciles de encontrar. Todo termina en WhatsApp.",
+  imagen = "/icon-512.png", // vista previa en WhatsApp: cada tienda pasará su logo
+  barra = true,
+} = Astro.props;
+
+const tituloCompleto = titulo ? `${titulo} · Lokl` : "Lokl — lo que se vende cerca de ti";
+const urlImagen = new URL(imagen, Astro.site).href;
+---
+<!doctype html>
+<html lang="es-VE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{tituloCompleto}</title>
+    <meta name="description" content={descripcion} />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).href} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#FAF6EF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14130F" media="(prefers-color-scheme: dark)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Lokl" />
+    <meta property="og:site_name" content="Lokl" />
+    <meta property="og:locale" content="es_VE" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={tituloCompleto} />
+    <meta property="og:description" content={descripcion} />
+    <meta property="og:image" content={urlImagen} />
+  </head>
+  <body class:list={{ "con-barra": barra }}>
+    <slot />
+    {barra && <BarraInferior />}
+    <script is:inline>
+      if ("serviceWorker" in navigator && location.hostname !== "localhost") {
+        addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+      }
+    </script>
+  </body>
+</html>

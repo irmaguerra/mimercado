@@ -1,0 +1,26 @@
+---
+// Ícono Lokl en línea (~300 bytes, sin peticiones). Toma el color del texto (currentColor).
+// Nombres: ver identidad/iconos/. Para agregar uno: dibujar el SVG ahí y correr `npm run iconos`.
+import { ICONOS } from "./iconos-datos.js";
+
+const { nombre, tam = 24, titulo, class: clase, style } = Astro.props;
+const interior = ICONOS[nombre];
+---
+{interior && (
+  <svg
+    viewBox="0 0 24 24"
+    width={tam}
+    height={tam}
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={clase}
+    style={style}
+    role={titulo ? "img" : undefined}
+    aria-label={titulo}
+    aria-hidden={titulo ? undefined : "true"}
+    set:html={interior}
+  />
+)}

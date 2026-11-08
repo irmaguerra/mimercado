@@ -1,0 +1,9 @@
+// Configuración de Cloudflare Workers para Lokl.
+// El adaptador de Astro completa lo demás (punto de entrada y archivos estáticos).
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "lokl",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true }
+}

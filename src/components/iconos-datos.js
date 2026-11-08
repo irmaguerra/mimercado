@@ -1,0 +1,25 @@
+// Archivo generado por scripts/generar-iconos.mjs. No editar a mano.
+export const ICONOS = {
+  "al-mayor": "<rect x=\"3\" y=\"13\" width=\"8\" height=\"7\" rx=\"1\"/><rect x=\"13\" y=\"13\" width=\"8\" height=\"7\" rx=\"1\"/><rect x=\"8\" y=\"5\" width=\"8\" height=\"7\" rx=\"1\"/>",
+  "belleza": "<circle cx=\"6\" cy=\"6\" r=\"2.5\"/><circle cx=\"6\" cy=\"18\" r=\"2.5\"/><path d=\"M8 7.5L20 18\"/><path d=\"M8 16.5L20 6\"/>",
+  "buscar": "<circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\"/><path d=\"m15.5 15.5 5 5\"/>",
+  "clasificados": "<path d=\"M12 3H4a1 1 0 0 0-1 1v8l9 9 9-9Z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\"1.5\"/>",
+  "comida": "<path d=\"M3 12h18a9 8 0 0 1-18 0Z\"/><path d=\"M9 8.5c-1.2-1.4 1.2-2.6 0-4.5\"/><path d=\"M15 8.5c-1.2-1.4 1.2-2.6 0-4.5\"/>",
+  "cuenta": "<circle cx=\"12\" cy=\"8.5\" r=\"4\"/><path d=\"M4.5 20.5c1.2-3.6 4.1-5.5 7.5-5.5s6.3 1.9 7.5 5.5\"/>",
+  "educacion": "<path d=\"M12 6.5C10 5 7 4.5 3 5v13c4-.5 7 0 9 1.5 2-1.5 5-2 9-1.5V5c-4-.5-7 0-9 1.5Z\"/><path d=\"M12 6.5v13\"/>",
+  "hogar-oficios": "<path d=\"M3.5 11L12 4l8.5 7\"/><path d=\"M6 9.5V20h12V9.5\"/><path d=\"M10 20v-5h4v5\"/>",
+  "hospedaje": "<path d=\"M3 19V6\"/><path d=\"M3 15h18v4\"/><path d=\"M21 15v-3a2 2 0 0 0-2-2h-8v5\"/><circle cx=\"7\" cy=\"11.5\" r=\"1.8\"/>",
+  "inicio": "<path d=\"M3.5 10.5 12 3.5l8.5 7\"/><path d=\"M5.5 9v10.5h4.5v-6h4v6h4.5V9\"/>",
+  "presupuesto": "<path d=\"M4 4h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H9l-4 3v-3H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z\"/><path d=\"M19 9h1a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1v3l-4-3h-3a2 2 0 0 1-1.5-.7\"/>",
+  "publicar": "<rect x=\"3.5\" y=\"3.5\" width=\"17\" height=\"17\" rx=\"4.5\"/><path d=\"M12 8v8M8 12h8\"/>",
+  "queso": "<path d=\"M3 11l15-6 3 6v8H3Z\"/><path d=\"M3 11h18\"/><circle cx=\"8\" cy=\"15\" r=\"1.3\"/><circle cx=\"15.5\" cy=\"15.5\" r=\"1.6\"/><circle cx=\"16\" cy=\"8.4\" r=\".8\"/>",
+  "salud": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"5\"/><path d=\"M12 8v8M8 12h8\"/>",
+  "servicios": "<rect x=\"3\" y=\"9\" width=\"18\" height=\"11\" rx=\"2\"/><path d=\"M9 9V6h6v3\"/><path d=\"M3 14h18\"/><path d=\"M11 14v2h2v-2\"/>",
+  "super": "<path d=\"M2 4h3l2.5 11h11l2-8H6\"/><circle cx=\"9.5\" cy=\"19.5\" r=\"1.5\"/><circle cx=\"17.5\" cy=\"19.5\" r=\"1.5\"/>",
+  "tiendas": "<path d=\"M3 9l1.6-5h14.8L21 9\"/><path d=\"M3 9a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0\"/><path d=\"M5 11.5V20h14v-8.5\"/><path d=\"M10 20v-5h4v5\"/>",
+  "transporte": "<circle cx=\"5.5\" cy=\"16.5\" r=\"3.5\"/><circle cx=\"18.5\" cy=\"16.5\" r=\"3.5\"/><path d=\"M5.5 16.5l4-6h5l4 6\"/><path d=\"M14.5 10.5L13 6.5h3\"/><path d=\"M9.5 10.5h-3\"/>",
+  "ubicacion": "<path d=\"M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z\"/><circle cx=\"12\" cy=\"10\" r=\"2.5\"/>",
+  "verificado-sello": "<path fill=\"#14614A\" d=\"M12 2.5l7.5 3.2v5.3c0 5.3-3.2 9.1-7.5 10.7-4.3-1.6-7.5-5.4-7.5-10.7V5.7Z\"/><path fill=\"none\" stroke=\"#FFC233\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M8.4 12l2.5 2.5 4.7-5\"/>",
+  "verificado": "<path d=\"M12 3l7 3v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6Z\"/><path d=\"M8.7 12l2.3 2.3 4.3-4.6\"/>",
+  "whatsapp": "<path d=\"M4 20l1.3-4A8 8 0 1 1 8 18.7Z\"/><path d=\"M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 1c-1-.5-1.5-1-2-2l1-1-1-2Z\"/>"
+};

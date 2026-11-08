@@ -1,0 +1,121 @@
+/* Paleta oficial de Lokl — propuesta v1 (rama rediseno-modular)
+   Copiar estas variables al CSS global de la app. Todo color de la app debe salir de aquí. */
+
+:root {
+  /* Marca */
+  --lokl-atardecer: #E8590C;       /* Logo, íconos, detalles grandes. NO para texto pequeño sobre blanco */
+  --lokl-atardecer-osc: #B5450B;   /* Botones principales con texto blanco (contraste 5.5:1) */
+  --lokl-sabana: #14614A;          /* Encabezados, enlaces, "Abierto", Verificado (7.4:1 sobre blanco) */
+  --lokl-sabana-clara: #2F8F6B;    /* Fondos de chips/insignias, gráficos */
+  --lokl-araguaney: #FFC233;       /* Precios, ofertas, "Al mayor", "Nuevo". Siempre con texto Tinta */
+
+  /* Neutros cálidos */
+  --lokl-tinta: #1C1A17;           /* Texto principal */
+  --lokl-piedra: #6B655C;          /* Texto secundario (5.8:1) */
+  --lokl-linea: #E8E1D5;           /* Bordes y separadores */
+  --lokl-arena: #FAF6EF;           /* Fondo de la app */
+  --lokl-blanco: #FFFFFF;          /* Tarjetas */
+
+  /* Estados */
+  --lokl-error: #C62828;
+  --lokl-cerrado: #6B655C;
+
+  /* Tokens de uso (la app usa ESTOS, no los de arriba) */
+  --fondo: var(--lokl-arena);
+  --tarjeta: var(--lokl-blanco);
+  --texto: var(--lokl-tinta);
+  --texto-2: var(--lokl-piedra);
+  --borde: var(--lokl-linea);
+  --primario: var(--lokl-atardecer-osc);
+  --primario-texto: #FFFFFF;
+  --acento: var(--lokl-sabana);
+  --precio-fondo: var(--lokl-araguaney);
+  --precio-texto: var(--lokl-tinta);
+  --marca: var(--lokl-atardecer);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fondo: #14130F;
+    --tarjeta: #1F1D19;
+    --texto: #FAF6EF;
+    --texto-2: #B8B0A3;
+    --borde: #34302A;
+    --primario: #F0702A;
+    --primario-texto: #14130F;
+    --acento: #4FBF92;
+  }
+}
+:root[data-theme="dark"] {
+  --fondo: #14130F;
+  --tarjeta: #1F1D19;
+  --texto: #FAF6EF;
+  --texto-2: #B8B0A3;
+  --borde: #34302A;
+  --primario: #F0702A;
+  --primario-texto: #14130F;
+  --acento: #4FBF92;
+}
+
+/* Tipografía: fuentes del sistema = 0 KB de descarga */
+:root {
+  --fuente: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ───────── Base ───────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font-family: var(--fuente);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--texto);
+  background: var(--fondo);
+}
+body.con-barra {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom)); /* espacio para la barra inferior */
+}
+a { color: var(--acento); }
+img, svg { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--marca); outline-offset: 2px; }
+
+.contenedor { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+.tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; }
+.texto-2 { color: var(--texto-2); }
+
+.boton {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 0 20px; border: 0; border-radius: 12px;
+  background: var(--primario); color: var(--primario-texto);
+  font-weight: 700; text-decoration: none; cursor: pointer;
+}
+.precio {
+  display: inline-block; padding: 2px 8px; border-radius: 8px;
+  background: var(--precio-fondo); color: var(--precio-texto); font-weight: 800;
+}
+
+/* ───────── Barra inferior ───────── */
+.barra-inferior {
+  position: fixed; inset: auto 0 0 0; z-index: 50;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  height: calc(64px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--tarjeta); border-top: 1px solid var(--borde);
+}
+.barra-inferior a {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  font-size: 11px; font-weight: 600; color: var(--texto-2); text-decoration: none;
+}
+.barra-inferior a.destacada { color: var(--marca); }
+.barra-inferior a[aria-current="page"] { color: var(--texto); }
+.barra-inferior a.destacada[aria-current="page"] { color: var(--marca); }
+
+/* ───────── Utilidades ───────── */
+.fila { display: flex; align-items: center; gap: 8px; }
+.fila-entre { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.enlace-tarjeta { text-decoration: none; color: var(--texto); }
+.campo-limpio { flex: 1; min-height: 48px; border: 0; background: transparent; outline: none; }
+.franja-super { gap: 12px; margin-top: 16px; padding: 16px; border: 2px solid var(--marca); }
+.rejilla-secciones { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

@@ -1,16 +1,33 @@
 {
-  "name": "mimercado",
-  "version": "1.0.0",
+  "name": "lokl",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "node --test \"src/lib/**/*.test.js\"",
+    "iconos": "node scripts/generar-iconos.mjs"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
-    "next": "14.2.3",
-    "react": "^18",
-    "react-dom": "^18",
-    "@supabase/supabase-js": "^2.39.0"
+    "@astrojs/cloudflare": "^14.4.6",
+    "@astrojs/preact": "^6.1.2",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.0",
+    "astro": "^7.4.7",
+    "preact": "^11.2.0"
+  },
+  "type": "module",
+  "devDependencies": {
+    "supabase": "^3.0.0",
+    "wrangler": "^4.158.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "workerd@1.20261101.1": true,
+    "workerd@1.20261104.1": true
   }
 }

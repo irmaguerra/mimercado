@@ -93,7 +93,7 @@ Las tres serían HTML puro, sin JavaScript.
 
 ## 4. Mapa de páginas (un módulo = una ruta)
 
-**Público.** Todas se generan en el servidor (Server Components), salen en buscadores y muestran la vista previa en WhatsApp.
+**Público.** Todas se generan en el servidor como HTML puro (Astro, 0 KB de JavaScript), salen en buscadores y muestran la vista previa en WhatsApp.
 
 | Ruta | Qué muestra |
 |---|---|
@@ -107,7 +107,7 @@ Las tres serían HTML puro, sin JavaScript.
 | `/super` | Lokl Súper (solo si hay cobertura en tu zona) |
 | `/conoce`, `/vende`, `/verificado` | Páginas informativas estáticas |
 
-**Interactivas.** Llevan `"use client"` solo donde hace falta y se descargan solo al entrar.
+**Interactivas.** Son páginas Astro con una "isla" de Preact (~10 KB) solo donde hace falta, y se descargan solo al entrar.
 
 | Ruta | Quién | Qué hace |
 |---|---|---|
@@ -129,36 +129,36 @@ Las tres serían HTML puro, sin JavaScript.
 ### Estructura de carpetas
 
 ```
-app/
-  layout.js                 ← fuentes del sistema, paleta, sin JS de más
-  page.js                   ← portada (Server Component)
-  buscar/page.js
-  [estado]/[municipio]/[[...ruta]]/page.js
-  [slug]/page.js            ← tienda del vendedor + vista previa WhatsApp
-  p/[id]/page.js
-  precios/page.js
-  super/page.js · super/carrito/page.js
-  presupuesto/page.js
-  favoritos/ · mis-pedidos/
-  conoce/ · vende/ · verificado/
-  entrar/page.js
-  panel/ (layout con sesión) publicar/ publicaciones/ presupuestos/ mas/
-  admin/ (layout solo admin) moderacion/ verificaciones/ zonas/ categorias/ super/ metricas/
-components/
-  ui/            ← Boton, Tarjeta, Precio, Insignia, Icono (SVG Lokl)
-  publicacion/   ← TarjetaPublicacion, GaleriaFotos (carga diferida)
-  vendedor/      ← CabeceraVendedor, BotonWhatsApp, EstadoAbierto
-lib/
-  supabase/servidor.js · supabase/navegador.js   ← @supabase/ssr
-  horario.js       ← estaAbiertoAhora + ciclo del botón (lógica actual intacta)
-  whatsapp.js      ← enlaces wa.me, regla iOS, normalizar 58XXXXXXXXXX
-  imagen.js        ← comprimirImagen mejorada (WebP + miniatura)
-  cliente.js       ← lokl_cliente_id
+src/
+  layouts/Base.astro         ← <head>, paleta, vista previa WhatsApp, barra inferior
+  pages/
+    index.astro              ← portada
+    buscar.astro
+    [estado]/[municipio]/[...ruta].astro
+    [slug].astro             ← tienda del vendedor + vista previa WhatsApp
+    p/[id].astro
+    precios.astro · super/index.astro · super/carrito.astro
+    presupuesto/ · favoritos.astro · mis-pedidos.astro
+    conoce.astro · vende.astro · verificado.astro
+    entrar.astro
+    panel/   (requiere sesión) publicar · publicaciones · presupuestos · mas
+    admin/   (solo admin) moderacion · verificaciones · zonas · categorias · super · metricas
+  components/
+    Icono.astro · Logo.astro · BarraInferior.astro   ← 0 KB de JavaScript
+    islas/   ← componentes Preact (.jsx) solo para lo interactivo: carrito, publicar, botón abrir/cerrar
+  lib/
+    supabase/servidor.js · supabase/navegador.js   ← @supabase/ssr
+    horario.js       ← estaAbiertoAhora + ciclo del botón (lógica actual intacta)
+    whatsapp.js      ← enlaces wa.me, regla iOS, normalizar 58XXXXXXXXXX
+    imagen.js        ← comprimirImagen mejorada (WebP + miniatura)
+    cliente.js       ← lokl_cliente_id
+  styles/globals.css
 public/
-  sw.js · manifest.json · iconos/
+  sw.js · manifest.webmanifest · iconos/
 supabase/
   migrations/      ← el esquema como código
   seed.sql         ← Apure: municipios, zonas, categorías iniciales
+legado/            ← la app vieja, solo como referencia
 docs/
 identidad/
 ```
@@ -325,17 +325,17 @@ Una publicación marcada "al mayor" tiene precio por unidad (kg, pieza, bulto…
 
 | Regla | Meta |
 |---|---|
-| JavaScript inicial en páginas públicas | **< 70 KB comprimido** (React + Next mínimos; páginas casi sin JS propio) |
-| JavaScript en panel y admin | < 150 KB por ruta |
+| JavaScript en páginas públicas | **0 KB** (HTML puro con Astro; solo ~200 bytes en línea para el service worker) |
+| JavaScript en panel y admin | Preact ~10 KB + el código de la pantalla, < 50 KB por ruta |
 | Fuentes | **0 KB** (fuentes del sistema) |
 | Íconos | SVG propios en línea (~300 bytes cada uno) |
 | Imagen en listas | Miniatura WebP de ~400 px, **~25 KB** |
 | Imagen en ficha | WebP de 1200 px, ~120 KB, con carga diferida |
 | Recarga automática cada 15 s | **Eliminada**. Los datos se refrescan al volver a la pantalla o al deslizar hacia abajo |
-| Librerías externas | Solo `next`, `react`, `@supabase/supabase-js` y `@supabase/ssr`. Nada de librerías de gráficos (el contador es texto y barras en CSS) ni de mapas (un botón abre Google Maps) |
+| Librerías externas | Solo `astro`, `preact`, `@supabase/supabase-js` y `@supabase/ssr`. Nada de librerías de gráficos (el contador es texto y barras en CSS) ni de mapas (un botón abre Google Maps) |
 
 **Imágenes**
-`comprimirImagen()` mejorada: en el teléfono, antes de subir, genera **dos versiones en WebP**, una grande y una miniatura. No se usa la optimización de imágenes de Vercel ni las transformaciones de Supabase (ambas tienen límites o costo); las imágenes se sirven directo desde Storage con caché larga.
+`comprimirImagen()` mejorada: en el teléfono, antes de subir, genera **dos versiones en WebP**, una grande y una miniatura. No se usa la optimización de imágenes del alojamiento ni las transformaciones de Supabase (ambas tienen límites o costo); las imágenes se sirven directo desde Storage con caché larga.
 
 **PWA y service worker** (hecho a mano, sin librerías)
 - Guarda la "cáscara" de la app, los íconos y el CSS: en la segunda visita casi no se descarga nada.
@@ -344,7 +344,7 @@ Una publicación marcada "al mayor" tiene precio por unidad (kg, pieza, bulto…
 - Si no hay señal, se muestra lo último visto.
 
 **Caché en el servidor**
-Las páginas públicas se regeneran cada 60 segundos (ISR de Next), así que miles de visitas no golpean la base de datos.
+Las páginas públicas se guardan 60 segundos en la red de Cloudflare (y se siguen sirviendo mientras se regeneran), así que miles de visitas no golpean la base de datos.
 
 ---
 
@@ -367,7 +367,7 @@ Cada paso termina con algo que funciona, una medición del peso y tu visto bueno
 | 11 | **Pedir presupuesto** | Flujo completo y notificaciones push |
 | 12 | **Lanzamiento** | `/conoce`, `/vende`, `/verificado`, PWA completa, medición final y cambio de `main` a la versión nueva |
 
-Durante todo el proceso, `main` y `usalokl.com` siguen con la versión actual. Vercel genera una vista previa de la rama `rediseno-modular` para que pruebes cada módulo en tu teléfono antes de aprobarlo.
+Durante todo el proceso, `main` y `usalokl.com` siguen con la versión actual. Cloudflare genera una vista previa de la rama `rediseno-modular` para que pruebes cada módulo en tu teléfono antes de aprobarlo.
 
 ---
 
@@ -399,3 +399,5 @@ Meta: **tienda lista en menos de 2 minutos**, desde el teléfono.
 | 5 | Clasificados abiertos a cualquier persona | **Aprobado** |
 | 6 | Súper con máxima visibilidad (pestaña fija, portada, buscador) | **Aprobado** |
 | 7 | Comida como Feria de comida (incluye "desde casa" y cocinas ocultas) | **Aprobado** |
+| 8 | Astro + islas de Preact en vez de Next.js (Next pesaba ~133 KB de JavaScript base, la meta era 70 KB) | **Aprobado** (8/11/2026) |
+| 9 | Alojamiento en Cloudflare Workers en vez de Vercel (el plan gratis de Vercel no permite uso comercial) | **Aprobado** (8/11/2026) |
