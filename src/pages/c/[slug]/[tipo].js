@@ -4,7 +4,7 @@
 import { supabasePublico } from "@/lib/supabase/servidor.js";
 import { enlaceWhatsApp, enlaceLlamada } from "@/lib/whatsapp.js";
 
-export async function GET({ params, url, redirect, site }) {
+export async function GET({ params, url, redirect }) {
   const { slug, tipo } = params;
   if (tipo !== "whatsapp" && tipo !== "llamada") return redirect(`/${slug}`, 302);
 
@@ -29,7 +29,7 @@ export async function GET({ params, url, redirect, site }) {
   // Registrar sin hacer esperar a la persona más de lo necesario
   await sb.from("contactos").insert({ vendedor_id: t.id, tipo, publicacion_id: pub?.id ?? null });
 
-  const host = new URL("/", site).host;
+  const host = url.host;
   const mensaje = pub
     ? `Hola, me interesa "${pub.titulo}" que vi en Lokl (${host}/p/${pub.id})`
     : `Hola, te escribo desde Lokl (${host}/${slug})`;

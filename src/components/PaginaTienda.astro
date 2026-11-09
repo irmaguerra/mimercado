@@ -14,7 +14,7 @@ const municipio = t.zonas?.municipios;
 const lugar = [t.zonas?.nombre, municipio?.nombre].filter(Boolean).join(", ");
 const abierto = estaAbiertoAhora(t);
 const esPersona = t.tipo === "persona";
-const url = new URL(`/${t.slug}`, Astro.site).href;
+const url = new URL(`/${t.slug}`, Astro.url.origin).href;
 const descripcion = t.descripcion || `${QUE_HACES[t.seccion_principal]?.texto ?? "Tienda"} en ${lugar}. Escríbele por WhatsApp desde Lokl.`;
 const hora = (h) => String(h).slice(0, 5);
 ---

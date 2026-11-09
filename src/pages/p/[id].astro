@@ -33,7 +33,7 @@ const precio = mostrarPrecio(p.precio, p.moneda);
 const lugar = [t.zonas?.nombre, t.zonas?.municipios?.nombre].filter(Boolean).join(", ");
 const esPersona = t.tipo === "persona";
 const abierto = esPersona ? true : estaAbiertoAhora(t);
-const url = new URL(`/p/${p.id}`, Astro.site).href;
+const url = new URL(`/p/${p.id}`, Astro.url.origin).href;
 const descripcion = [precio, p.descripcion?.slice(0, 150), `${t.nombre}${lugar ? ` · ${lugar}` : ""}`].filter(Boolean).join(" · ");
 ---
 <Base titulo={p.titulo} descripcion={descripcion} imagen={fotos[0]?.url || t.logo_url || undefined}>

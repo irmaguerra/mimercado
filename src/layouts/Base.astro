@@ -10,7 +10,7 @@ const {
 } = Astro.props;
 
 const tituloCompleto = titulo ? `${titulo} · Lokl` : "Lokl — lo que se vende cerca de ti";
-const urlImagen = new URL(imagen, Astro.site).href;
+const urlImagen = new URL(imagen, Astro.url.origin).href;
 ---
 <!doctype html>
 <html lang="es-VE">
@@ -19,7 +19,7 @@ const urlImagen = new URL(imagen, Astro.site).href;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{tituloCompleto}</title>
     <meta name="description" content={descripcion} />
-    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).href} />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.url.origin).href} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
