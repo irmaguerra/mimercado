@@ -1,0 +1,187 @@
+---
+// /panel/publicar — Publicar (o editar con ?id=N) un producto, plato, servicio o anuncio.
+// Una sola pantalla: fotos, nombre, precio (opcional) y descripción (opcional).
+// La isla FotosPublicacion comprime las fotos en el teléfono; sin JavaScript igual funciona.
+import Base from "@/layouts/Base.astro";
+import FotosPublicacion from "@/components/islas/FotosPublicacion.jsx";
+import { miTienda } from "@/lib/sesion.js";
+import {
+  MAX_FOTOS, TIPOS_FOTO, MAX_PESO_FOTO, NOMBRE_COSA, DIAS_CLASIFICADO,
+  seccionDe, fotosOrdenadas, rutaEnAlmacen,
+} from "@/lib/publicacion.js";
+import { leerPrecio, precioParaCampo } from "@/lib/precio.js";
+
+const { sb, usuario } = Astro.locals;
+const t = await miTienda(sb, usuario.id);
+if (!t) return Astro.redirect("/panel/crear", 302);
+
+const id = Number(Astro.url.searchParams.get("id")) || null;
+let p = null;
+if (id) {
+  const { data } = await sb
+    .from("publicaciones")
+    .select("*, publicacion_fotos(id, url, url_mini, orden)")
+    .eq("id", id)
+    .eq("vendedor_id", t.id)
+    .maybeSingle();
+  p = data;
+  if (!p) return Astro.redirect("/panel/publicaciones", 302);
+}
+
+const seccion = p?.seccion ?? seccionDe(t);
+const cosa = NOMBRE_COSA[seccion] ?? "producto";
+const suspendida = t.estado !== "activo";
+const existentes = fotosOrdenadas(p ?? {});
+
+let error = "";
+let campos = {
+  titulo: p?.titulo ?? "",
+  precio: precioParaCampo(p?.precio),
+  moneda: p?.moneda ?? "USD",
+  descripcion: p?.descripcion ?? "",
+};
+
+if (Astro.request.method === "POST") {
+  const quiereJson = (Astro.request.headers.get("accept") || "").includes("application/json");
+  const f = await Astro.request.formData();
+  const txt = (k, max) => String(f.get(k) || "").trim().slice(0, max);
+  campos = {
+    titulo: txt("titulo", 120),
+    precio: txt("precio", 20),
+    moneda: f.get("moneda") === "VES" ? "VES" : "USD",
+    descripcion: txt("descripcion", 2000),
+  };
+  const precio = leerPrecio(campos.precio);
+
+  const grandes = f.getAll("foto").filter((x) => x instanceof File && x.size > 0);
+  const minis = f.getAll("mini").filter((x) => x instanceof File && x.size > 0);
+  const quitar = f.getAll("quitar_foto").map(Number);
+  const quedan = existentes.filter((x) => !quitar.includes(x.id));
+  const quitadas = existentes.filter((x) => quitar.includes(x.id));
+
+  if (suspendida) error = "Tu tienda está suspendida: no puedes publicar por ahora.";
+  else if (campos.titulo.length < 3) error = `Escribe el nombre del ${cosa} (mínimo 3 letras).`;
+  else if (Number.isNaN(precio)) error = "Revisa el precio. Escríbelo así: 5 o 5,50. Si no quieres ponerlo, déjalo vacío.";
+  else if (quedan.length + grandes.length > MAX_FOTOS) error = `Puedes poner hasta ${MAX_FOTOS} fotos.`;
+  else if ([...grandes, ...minis].some((x) => !TIPOS_FOTO[x.type])) error = "Las fotos deben ser JPG, PNG o WebP.";
+  else if ([...grandes, ...minis].some((x) => x.size > MAX_PESO_FOTO)) error = "Una foto pesa más de 2 MB. Prueba con otra.";
+
+  let pubId = p?.id, estado = p?.estado;
+  if (!error) {
+    const datos = { titulo: campos.titulo, descripcion: campos.descripcion || null, precio, moneda: campos.moneda };
+    const consulta = p
+      ? sb.from("publicaciones").update(datos).eq("id", p.id)
+      : sb.from("publicaciones").insert({ ...datos, vendedor_id: t.id, seccion, zona_id: t.zona_id });
+    const { data, error: e } = await consulta.select("id, estado").single();
+    if (e) {
+      console.error("publicar", e);
+      const m = (e.message || "").toLowerCase();
+      error = m.includes("límite") ? "Llegaste al límite de publicaciones de hoy. Mañana puedes publicar más."
+        : m.includes("suspendida") ? "Tu tienda está suspendida: no puedes publicar por ahora."
+        : "No pudimos guardar. Intenta de nuevo.";
+    } else {
+      pubId = data.id;
+      estado = data.estado;
+    }
+  }
+
+  // Fotos: subir las nuevas y guardar la lista final en orden (1, 2, 3)
+  if (!error && (grandes.length || quitadas.length)) {
+    const almacen = sb.storage.from("vendedores");
+    const nuevas = [];
+    for (const [i, g] of grandes.entries()) {
+      const base = `${t.id}/p${pubId}-${Date.now().toString(36)}${i}`;
+      const ext = TIPOS_FOTO[g.type];
+      const subir = (archivo, ruta) =>
+        almacen.upload(ruta, archivo, { contentType: archivo.type, cacheControl: "31536000", upsert: false });
+      const { error: eg } = await subir(g, `${base}.${ext}`);
+      if (eg) { console.error("foto", eg); error = "Se guardó, pero una foto no se pudo subir. Edítalo y vuelve a intentar."; continue; }
+      const url = almacen.getPublicUrl(`${base}.${ext}`).data.publicUrl;
+      let urlMini = url;
+      const m = minis[i];
+      if (m) {
+        const { error: em } = await subir(m, `${base}-mini.${TIPOS_FOTO[m.type]}`);
+        if (!em) urlMini = almacen.getPublicUrl(`${base}-mini.${TIPOS_FOTO[m.type]}`).data.publicUrl;
+      }
+      nuevas.push({ url, url_mini: urlMini });
+    }
+    const final = [...quedan.map(({ url, url_mini }) => ({ url, url_mini })), ...nuevas]
+      .map((x, i) => ({ ...x, publicacion_id: pubId, orden: i + 1 }));
+    await sb.from("publicacion_fotos").delete().eq("publicacion_id", pubId);
+    if (final.length) {
+      const { error: ef } = await sb.from("publicacion_fotos").insert(final);
+      if (ef) { console.error("fotos", ef); error = "Se guardó, pero las fotos no. Edítalo y vuelve a intentar."; }
+    }
+    const borrar = [...new Set(quitadas.flatMap((x) => [rutaEnAlmacen(x.url), rutaEnAlmacen(x.url_mini)]))]
+      .filter((r) => r && r.startsWith(`${t.id}/`));
+    if (borrar.length) await almacen.remove(borrar);
+  }
+
+  if (!error) {
+    const ok = estado === "en_revision" ? "revision" : p ? "editada" : "publicada";
+    const ir = `/panel/publicaciones?ok=${ok}${ok === "publicada" ? `&nueva=${pubId}` : ""}`;
+    if (quiereJson) return new Response(JSON.stringify({ ok: true, ir }), { headers: { "content-type": "application/json" } });
+    return Astro.redirect(ir, 303);
+  }
+  if (quiereJson) {
+    // Si ya se creó, la isla debe ir a editarla (no crear otra igual al reintentar)
+    const ir = !p && pubId ? `/panel/publicar?id=${pubId}` : undefined;
+    return new Response(JSON.stringify({ ok: false, mensaje: error, ir }), { status: 400, headers: { "content-type": "application/json" } });
+  }
+  if (!p && pubId) return Astro.redirect(`/panel/publicar?id=${pubId}&error=${encodeURIComponent(error)}`, 303);
+}
+if (!error) error = Astro.url.searchParams.get("error") || "";
+
+const titulo = p ? `Editar ${cosa}` : `Publicar ${cosa === "anuncio" ? "un anuncio" : `un ${cosa}`}`;
+---
+<Base titulo={titulo}>
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href={p ? "/panel/publicaciones" : "/panel"}>‹ {p ? "Mis publicaciones" : "Mi tienda"}</a></p>
+    <h1 style="font-size:24px;margin:8px 0 16px">{titulo}</h1>
+    {suspendida && <p class="mensaje error">Tu tienda está suspendida y no puedes publicar. {t.motivo_suspension} Escríbenos para revisarlo.</p>}
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+    {p?.estado === "en_revision" && <p class="mensaje ok">Lo estamos revisando antes de mostrarlo. Aquí verás cuando ya esté publicado.</p>}
+
+    <form method="post" enctype="multipart/form-data" class="formulario">
+      <fieldset class="opciones-radio">
+        <legend>Fotos</legend>
+        {existentes.length > 0 && (
+          <ul class="fotos-nuevas">
+            {existentes.map((x, i) => (
+              <li>
+                <img src={x.url_mini} alt={`Foto ${i + 1}`} width="96" height="96" />
+                <label class="radio" style="min-height:32px;font-size:14px"><input type="checkbox" name="quitar_foto" value={x.id} /> Quitar</label>
+              </li>
+            ))}
+          </ul>
+        )}
+        <FotosPublicacion client:load maximo={MAX_FOTOS} ocupadas={existentes.length} />
+      </fieldset>
+
+      <label>Nombre del {cosa}
+        <input type="text" name="titulo" value={campos.titulo} required minlength="3" maxlength="120"
+          placeholder={cosa === "plato" ? "Ej. Pabellón criollo" : cosa === "servicio" ? "Ej. Reparación de neveras" : "Ej. Queso llanero de 1 kg"} />
+      </label>
+
+      <fieldset class="opciones-radio">
+        <legend>Precio (opcional)</legend>
+        <div class="fila" style="gap:12px;flex-wrap:wrap">
+          <input type="text" name="precio" value={campos.precio} inputmode="decimal" maxlength="20" placeholder="Ej. 5,50" style="flex:1;min-width:120px" aria-label="Precio" />
+          <label class="radio"><input type="radio" name="moneda" value="USD" checked={campos.moneda !== "VES"} /> Dólares</label>
+          <label class="radio"><input type="radio" name="moneda" value="VES" checked={campos.moneda === "VES"} /> Bolívares</label>
+        </div>
+        <small class="texto-2">Se muestra tal cual lo escribes. Vacío = "Pregunta el precio".</small>
+      </fieldset>
+
+      <label>Descripción (opcional)
+        <textarea name="descripcion" rows="4" maxlength="2000" placeholder="Tamaño, sabor, estado, qué incluye…">{campos.descripcion}</textarea>
+      </label>
+
+      {seccion === "clasificados" && !p && (
+        <small class="texto-2">Tu anuncio se ve durante {DIAS_CLASIFICADO} días. Después lo renuevas con un toque.</small>
+      )}
+
+      <button class="boton ancho" type="submit" disabled={suspendida}>{p ? "Guardar cambios" : "Publicar"}</button>
+    </form>
+  </main>
+</Base>

@@ -1,0 +1,157 @@
+---
+// /panel/publicaciones — Mis publicaciones: ver, editar, marcar agotado / vendido, renovar y borrar.
+// Cada botón es un formulario normal: 0 KB de JavaScript.
+import Base from "@/layouts/Base.astro";
+import Icono from "@/components/Icono.astro";
+import { miTienda } from "@/lib/sesion.js";
+import { NOMBRE_COSA, DIAS_CLASIFICADO, seccionDe, miniatura, vencida, diasRestantes, rutaEnAlmacen } from "@/lib/publicacion.js";
+import { mostrarPrecio } from "@/lib/precio.js";
+import { enlaceCompartir } from "@/lib/whatsapp.js";
+
+const { sb, usuario } = Astro.locals;
+const t = await miTienda(sb, usuario.id);
+if (!t) return Astro.redirect("/panel/crear", 302);
+
+let error = "";
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  const id = Number(f.get("id"));
+  const accion = String(f.get("accion") || "");
+  const cambios = {
+    agotado: { agotado: true },
+    disponible: { agotado: false },
+    vendida: { estado: "vendida" },
+    renovar: {
+      estado: "publicada",
+      vence_en: new Date(Date.now() + DIAS_CLASIFICADO * 864e5).toISOString(),
+      renovada_en: new Date().toISOString(),
+    },
+  }[accion];
+
+  if (accion === "borrar") {
+    const { data: fotos } = await sb.from("publicacion_fotos").select("url, url_mini").eq("publicacion_id", id);
+    const { error: e } = await sb.from("publicaciones").delete().eq("id", id).eq("vendedor_id", t.id);
+    if (e) error = "No pudimos borrarla. Intenta de nuevo.";
+    else {
+      const rutas = [...new Set((fotos ?? []).flatMap((x) => [rutaEnAlmacen(x.url), rutaEnAlmacen(x.url_mini)]))]
+        .filter((r) => r && r.startsWith(`${t.id}/`));
+      if (rutas.length) await sb.storage.from("vendedores").remove(rutas);
+      return Astro.redirect("/panel/publicaciones?ok=borrada", 303);
+    }
+  } else if (cambios && id) {
+    const { error: e } = await sb.from("publicaciones").update(cambios).eq("id", id).eq("vendedor_id", t.id);
+    if (e) error = "No pudimos guardar el cambio. Intenta de nuevo.";
+    else return Astro.redirect(`/panel/publicaciones?ok=${accion}#p${id}`, 303);
+  }
+}
+
+const { data } = await sb
+  .from("publicaciones")
+  .select("id, titulo, precio, moneda, seccion, estado, motivo_estado, agotado, vence_en, publicacion_fotos(url_mini, orden)")
+  .eq("vendedor_id", t.id)
+  .neq("estado", "borrada")
+  .order("creado_en", { ascending: false })
+  .limit(200);
+const lista = data ?? [];
+
+const MENSAJES = {
+  publicada: "¡Listo! Ya está publicado.",
+  editada: "Cambios guardados.",
+  revision: "Lo estamos revisando antes de mostrarlo. Aquí verás cuando ya esté publicado.",
+  agotado: "Marcado como agotado. Sigue en tu tienda, al final.",
+  disponible: "Listo, ya aparece como disponible.",
+  vendida: "Marcado como vendido. Ya no aparece en Lokl.",
+  renovar: `Renovado por ${DIAS_CLASIFICADO} días.`,
+  borrada: "Publicación borrada.",
+};
+const ok = MENSAJES[Astro.url.searchParams.get("ok")] || "";
+const nueva = Number(Astro.url.searchParams.get("nueva")) || null;
+const cosa = NOMBRE_COSA[seccionDe(t)] ?? "producto";
+
+/** Estado en palabras simples, y si se ve o no en Lokl. */
+function estadoDe(p) {
+  if (p.estado === "en_revision") return { texto: "En revisión", visible: false };
+  if (p.estado === "oculta_reportes" || p.estado === "oculta_admin") return { texto: "Oculto por Lokl", visible: false, detalle: p.motivo_estado };
+  if (p.estado === "vendida") return { texto: "Vendido", visible: false };
+  if (vencida(p)) return { texto: "Vencido", visible: false };
+  if (p.agotado) return { texto: "Agotado", visible: true };
+  const dias = diasRestantes(p);
+  return { texto: "Publicado", visible: true, detalle: dias !== null ? `Vence en ${dias} ${dias === 1 ? "día" : "días"}` : null };
+}
+---
+<Base titulo="Mis publicaciones">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/panel">‹ Mi tienda</a></p>
+    <h1 style="font-size:24px;margin:8px 0 12px">Mis publicaciones</h1>
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+    {ok && <p class="mensaje ok" role="status">{ok}</p>}
+    {nueva && (
+      <a class="boton boton-claro ancho" href={enlaceCompartir(`Mira lo que publiqué en Lokl: ${new URL(`/p/${nueva}`, Astro.url.origin).href}`)}>
+        <Icono nombre="whatsapp" tam={20} /> Compartirlo en WhatsApp
+      </a>
+    )}
+
+    <a class="boton ancho" href="/panel/publicar" style="margin-top:12px">+ Publicar {cosa === "anuncio" ? "un anuncio" : `un ${cosa}`}</a>
+
+    {lista.length === 0 ? (
+      <p class="texto-2" style="text-align:center;margin-top:24px">Todavía no has publicado nada.</p>
+    ) : (
+      <ul class="lista-mis-publicaciones">
+        {lista.map((p) => {
+          const e = estadoDe(p);
+          const mini = miniatura(p);
+          const precio = mostrarPrecio(p.precio, p.moneda);
+          const esClasificado = p.seccion === "clasificados";
+          return (
+            <li id={`p${p.id}`} class="tarjeta">
+              <div class="fila" style="gap:12px;align-items:flex-start">
+                {mini ? <img src={mini} alt="" width="64" height="64" class="foto-lista" loading="lazy" />
+                  : <span class="foto-lista foto-vacia" aria-hidden="true"></span>}
+                <div style="min-width:0;flex:1">
+                  <strong style="display:block;word-break:break-word">{p.titulo}</strong>
+                  {precio && <span>{precio}</span>}
+                  <p style="margin:2px 0 0;font-size:14px">
+                    <span class:list={["etiqueta-estado", { apagada: !e.visible }]}>{e.texto}</span>
+                    {e.detalle && <span class="texto-2"> · {e.detalle}</span>}
+                  </p>
+                </div>
+              </div>
+              <div class="acciones-publicacion">
+                {e.visible && <a class="boton-texto" href={`/p/${p.id}`}>Ver</a>}
+                <a class="boton-texto" href={`/panel/publicar?id=${p.id}`}>Editar</a>
+                {p.estado === "publicada" && !vencida(p) && !esClasificado && (
+                  <form method="post">
+                    <input type="hidden" name="id" value={p.id} />
+                    <button class="boton-texto" name="accion" value={p.agotado ? "disponible" : "agotado"}>
+                      {p.agotado ? "Hay de nuevo" : "Marcar agotado"}
+                    </button>
+                  </form>
+                )}
+                {p.estado === "publicada" && !vencida(p) && esClasificado && (
+                  <form method="post">
+                    <input type="hidden" name="id" value={p.id} />
+                    <button class="boton-texto" name="accion" value="vendida">Ya lo vendí</button>
+                  </form>
+                )}
+                {esClasificado && (vencida(p) || p.estado === "vendida") && (
+                  <form method="post">
+                    <input type="hidden" name="id" value={p.id} />
+                    <button class="boton-texto" name="accion" value="renovar">{p.estado === "vendida" ? "Volver a publicar" : "Renovar"}</button>
+                  </form>
+                )}
+                <details class="confirmar-borrar">
+                  <summary class="boton-texto">Borrar</summary>
+                  <form method="post">
+                    <input type="hidden" name="id" value={p.id} />
+                    <span>¿Seguro? No se puede deshacer.</span>
+                    <button class="boton boton-claro" name="accion" value="borrar">Sí, borrar</button>
+                  </form>
+                </details>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    )}
+  </main>
+</Base>

@@ -10,11 +10,12 @@ import PaginaTienda from "@/components/PaginaTienda.astro";
 import { supabasePublico } from "@/lib/supabase/servidor.js";
 import { buscarEstado, municipiosActivos } from "@/lib/ubicacion.js";
 import { PUBLICA } from "@/lib/cache.js";
+import { productosDeTienda } from "@/lib/publicacion.js";
 
 const slug = Astro.params.slug;
 const estado = await buscarEstado(slug);
 
-let tienda = null;
+let tienda = null, productos = [];
 if (!estado) {
   const { data } = await supabasePublico()
     .from("vendedores")
@@ -24,6 +25,7 @@ if (!estado) {
     .maybeSingle();
   tienda = data;
   if (!tienda) return Astro.rewrite("/404");
+  productos = await productosDeTienda(supabasePublico(), tienda.id);
 }
 Astro.cache.set(PUBLICA);
 
@@ -38,7 +40,7 @@ if (estado) {
   otrosLugares = activos.filter((c) => c.estado.slug !== estado.slug);
 }
 ---
-{tienda ? <PaginaTienda t={tienda} /> : (
+{tienda ? <PaginaTienda t={tienda} productos={productos} /> : (
 <Base titulo={estado.nombre} descripcion={`Lo que se vende y se ofrece en ${estado.nombre}, ordenado. Todo termina en WhatsApp.`}>
   <main class="contenedor">
     <Cabecera lugar={estado.nombre} />

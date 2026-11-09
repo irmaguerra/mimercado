@@ -6,8 +6,10 @@ import Icono from "@/components/Icono.astro";
 import { estaAbiertoAhora } from "@/lib/horario.js";
 import { enlaceCompartir } from "@/lib/whatsapp.js";
 import { ALCANCE_ENVIO, MODALIDAD_COCINA, QUE_HACES } from "@/lib/vendedor.js";
+import { miniatura } from "@/lib/publicacion.js";
+import { mostrarPrecio } from "@/lib/precio.js";
 
-const { t } = Astro.props;
+const { t, productos = [] } = Astro.props;
 const municipio = t.zonas?.municipios;
 const lugar = [t.zonas?.nombre, municipio?.nombre].filter(Boolean).join(", ");
 const abierto = estaAbiertoAhora(t);
@@ -56,9 +58,28 @@ const hora = (h) => String(h).slice(0, 5);
       {t.maps_url && t.modalidad_cocina !== "desde_casa" && <li><a href={t.maps_url} rel="nofollow noopener">Ver en Google Maps</a></li>}
     </ul>
 
-    <p class="texto-2" style="margin:24px 0 0;font-size:14px;text-align:center">
-      Pronto verás aquí {esPersona ? "lo que vende" : "sus productos"}.
-    </p>
+    {productos.length > 0 ? (
+      <ul class="rejilla-productos">
+        {productos.map((p) => {
+          const mini = miniatura(p);
+          const precio = mostrarPrecio(p.precio, p.moneda);
+          return (
+            <li>
+              <a href={`/p/${p.id}`} class:list={["tarjeta enlace-tarjeta producto", { agotado: p.agotado }]}>
+                {mini ? <img src={mini} alt="" width="200" height="200" loading="lazy" decoding="async" />
+                  : <span class="foto-vacia" aria-hidden="true"></span>}
+                <span class="nombre-producto">{p.titulo}</span>
+                <span class="precio-producto">{p.agotado ? "Agotado" : precio ?? "Pregunta el precio"}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    ) : (
+      <p class="texto-2" style="margin:24px 0 0;font-size:14px;text-align:center">
+        Todavía no hay {esPersona ? "anuncios" : "productos"} publicados. Escríbele por WhatsApp para preguntar.
+      </p>
+    )}
 
     <p style="margin-top:20px;text-align:center">
       <a href={enlaceCompartir(`Mira ${t.nombre} en Lokl: ${url}`)} class="texto-2" style="font-size:14px">Compartir esta tienda</a>

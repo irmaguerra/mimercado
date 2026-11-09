@@ -75,7 +75,8 @@ const suspendida = t.estado !== "activo";
 
     <nav class="menu-panel" aria-label="Opciones de mi tienda">
       <a href="/panel/tienda">Editar mi tienda <span aria-hidden="true">›</span></a>
-      <a href="/panel/publicar" aria-disabled="true">Publicar un producto <span class="texto-2">próximamente</span></a>
+      <a href="/panel/publicar">Publicar <span aria-hidden="true">›</span></a>
+      <a href="/panel/publicaciones">Mis publicaciones <span aria-hidden="true">›</span></a>
       <a href={`/${t.slug}`}>Ver mi tienda como la ven los clientes <span aria-hidden="true">›</span></a>
       {esAdmin && <a href="/admin">Administración de Lokl <span aria-hidden="true">›</span></a>}
     </nav>
