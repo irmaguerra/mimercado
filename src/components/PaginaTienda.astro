@@ -6,10 +6,11 @@ import Icono from "@/components/Icono.astro";
 import { estaAbiertoAhora } from "@/lib/horario.js";
 import { enlaceCompartir } from "@/lib/whatsapp.js";
 import { ALCANCE_ENVIO, MODALIDAD_COCINA, QUE_HACES } from "@/lib/vendedor.js";
-import { miniatura } from "@/lib/publicacion.js";
+import { miniatura, PRODUCTOS_POR_PAGINA } from "@/lib/publicacion.js";
 import { mostrarPrecio } from "@/lib/precio.js";
 
-const { t, productos = [] } = Astro.props;
+const { t, productos = [], hayMas = false, ver = PRODUCTOS_POR_PAGINA } = Astro.props;
+const primeroNuevo = ver - PRODUCTOS_POR_PAGINA; // al tocar "Ver más", la página baja hasta los nuevos
 const municipio = t.zonas?.municipios;
 const lugar = [t.zonas?.nombre, municipio?.nombre].filter(Boolean).join(", ");
 const abierto = estaAbiertoAhora(t);
@@ -60,11 +61,11 @@ const hora = (h) => String(h).slice(0, 5);
 
     {productos.length > 0 ? (
       <ul class="rejilla-productos">
-        {productos.map((p) => {
+        {productos.map((p, i) => {
           const mini = miniatura(p);
           const precio = mostrarPrecio(p.precio, p.moneda);
           return (
-            <li>
+            <li id={i === primeroNuevo && i > 0 ? "mas" : undefined}>
               <a href={`/p/${p.id}`} class:list={["tarjeta enlace-tarjeta producto", { agotado: p.agotado }]}>
                 {mini ? <img src={mini} alt="" width="200" height="200" loading="lazy" decoding="async" />
                   : <span class="foto-vacia" aria-hidden="true"></span>}
@@ -75,7 +76,13 @@ const hora = (h) => String(h).slice(0, 5);
           );
         })}
       </ul>
-    ) : (
+    ) : null}
+    {hayMas && (
+      <a class="boton boton-claro ancho" href={`/${t.slug}?ver=${ver + PRODUCTOS_POR_PAGINA}#mas`} style="margin-top:14px" rel="nofollow">
+        Ver más productos
+      </a>
+    )}
+    {productos.length === 0 && (
       <p class="texto-2" style="margin:24px 0 0;font-size:14px;text-align:center">
         Todavía no hay {esPersona ? "anuncios" : "productos"} publicados. Escríbele por WhatsApp para preguntar.
       </p>

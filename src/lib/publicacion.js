@@ -51,8 +51,21 @@ export function rutaEnAlmacen(url) {
   return url?.split("/object/public/vendedores/")[1]?.split("?")[0] ?? null;
 }
 
-/** Productos visibles de una tienda: disponibles primero, luego agotados. */
-export async function productosDeTienda(sb, vendedorId, limite = 60) {
+/** Productos que muestra la tienda de una vez; "Ver más productos" suma otros tantos. */
+export const PRODUCTOS_POR_PAGINA = 30;
+
+/** Cuántos productos mostrar según ?ver= en la dirección (30, 60, 90…; máximo 600). */
+export function cuantosVer(valor) {
+  const n = Math.ceil((Number(valor) || 0) / PRODUCTOS_POR_PAGINA) * PRODUCTOS_POR_PAGINA;
+  return Math.min(Math.max(n, PRODUCTOS_POR_PAGINA), 600);
+}
+
+/**
+ * Productos visibles de una tienda: disponibles primero, luego agotados.
+ * Pide uno de más para saber si hay que mostrar "Ver más productos".
+ * @returns {Promise<{productos: object[], hayMas: boolean}>}
+ */
+export async function productosDeTienda(sb, vendedorId, limite = PRODUCTOS_POR_PAGINA) {
   const { data, error } = await sb
     .from("publicaciones")
     .select("id, titulo, precio, moneda, agotado, vence_en, estado, publicacion_fotos(url_mini, orden)")
@@ -61,7 +74,8 @@ export async function productosDeTienda(sb, vendedorId, limite = 60) {
     .gt("vence_en", new Date().toISOString())
     .order("agotado")
     .order("creado_en", { ascending: false })
-    .limit(limite);
+    .limit(limite + 1);
   if (error) console.error("productosDeTienda", error);
-  return data ?? [];
+  const lista = data ?? [];
+  return { productos: lista.slice(0, limite), hayMas: lista.length > limite };
 }

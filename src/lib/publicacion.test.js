@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { seccionDe, vencida, diasRestantes, rutaEnAlmacen, miniatura } from "./publicacion.js";
+import { seccionDe, vencida, diasRestantes, rutaEnAlmacen, miniatura, cuantosVer } from "./publicacion.js";
 
 test("seccionDe usa lo que eligió el vendedor", () => {
   assert.equal(seccionDe({ seccion_principal: "comida", tipo: "negocio" }), "comida");
@@ -28,4 +28,13 @@ test("ruta de la foto en el almacén", () => {
 test("miniatura toma la primera foto", () => {
   assert.equal(miniatura({ publicacion_fotos: [{ url_mini: "b", orden: 2 }, { url_mini: "a", orden: 1 }] }), "a");
   assert.equal(miniatura({}), null);
+});
+
+test("ver más productos va de 30 en 30, hasta 600", () => {
+  assert.equal(cuantosVer(null), 30);
+  assert.equal(cuantosVer("60"), 60);
+  assert.equal(cuantosVer("45"), 60);
+  assert.equal(cuantosVer("-5"), 30);
+  assert.equal(cuantosVer("abc"), 30);
+  assert.equal(cuantosVer("99999"), 600);
 });

@@ -401,3 +401,5 @@ Meta: **tienda lista en menos de 2 minutos**, desde el teléfono.
 | 7 | Comida como Feria de comida (incluye "desde casa" y cocinas ocultas) | **Aprobado** |
 | 8 | Astro + islas de Preact en vez de Next.js (Next pesaba ~133 KB de JavaScript base, la meta era 70 KB) | **Aprobado** (8/11/2026) |
 | 9 | Alojamiento en Cloudflare Workers en vez de Vercel (el plan gratis de Vercel no permite uso comercial) | **Aprobado** (8/11/2026) |
+| 10 | Publicar: solo los clasificados vencen (30 días); el resto se marca "agotado". Hasta 3 fotos. Precio opcional en $ o Bs, exacto | **Aprobado** (8/11/2026) |
+| 11 | Sin tope total de productos por vendedor; freno anti-spam de 30 publicaciones por día. La tienda muestra 30 productos y "Ver más productos" de 30 en 30 | **Aprobado** (10/11/2026) |
