@@ -1,5 +1,5 @@
 ---
-// /reportar?p=<id> (un producto) o /reportar?t=<enlace> (una tienda). Sin cuenta y sin JavaScript.
+// /reportar?p=<id> (un producto), ?t=<enlace> (una tienda) o ?r=<id> (una reseña). Sin cuenta y sin JavaScript.
 // Cada teléfono reporta una sola vez cada cosa (cookie lokl_cliente). Con 3 reportes de personas
 // distintas una publicación se oculta sola hasta que Lokl la revise; una tienda nunca se suspende sola.
 // No se cachea: depende de la cookie de cada persona.
@@ -11,12 +11,16 @@ import { MOTIVOS_REPORTE, clienteDeCookie } from "@/lib/moderacion.js";
 const params = Astro.url.searchParams;
 const pubId = Number(params.get("p")) || null;
 const slug = params.get("t") || "";
+const resenaId = Number(params.get("r")) || null;
 const sb = supabasePublico();
 
 let objetivo = null; // { tipo, id, nombre, volver }
 if (pubId) {
   const { data } = await sb.from("publicaciones").select("id, titulo").eq("id", pubId).eq("estado", "publicada").maybeSingle();
   if (data) objetivo = { tipo: "publicacion", id: String(data.id), nombre: data.titulo, volver: `/p/${data.id}` };
+} else if (resenaId) {
+  const { data } = await sb.from("resenas").select("id, estrellas, nombre, vendedores(nombre, slug)").eq("id", resenaId).eq("estado", "publicada").maybeSingle();
+  if (data) objetivo = { tipo: "resena", id: String(data.id), nombre: `${data.estrellas}★ de ${data.nombre || "Cliente de Lokl"} en ${data.vendedores?.nombre}`, volver: `/${data.vendedores?.slug}#opiniones` };
 } else if (/^[a-z0-9-]{1,60}$/.test(slug)) {
   const { data } = await sb.from("vendedores").select("id, nombre, slug").eq("slug", slug).eq("estado", "activo").maybeSingle();
   if (data) objetivo = { tipo: "vendedor", id: data.id, nombre: data.nombre, volver: `/${data.slug}` };
@@ -42,7 +46,7 @@ if (Astro.request.method === "POST") {
     else resultado = data; // ok · repetido · no_existe
   }
 }
-const que = objetivo.tipo === "vendedor" ? "esta tienda" : "esta publicación";
+const que = { vendedor: "esta tienda", resena: "esta opinión", publicacion: "esta publicación" }[objetivo.tipo];
 ---
 <Base titulo="Reportar">
   <main class="contenedor angosto">

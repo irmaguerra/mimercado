@@ -15,12 +15,14 @@ if (!t) {
   return Astro.redirect(admin ? "/admin" : "/panel/crear", 302);
 }
 
-const hace7dias = new Date(Date.now() - 7 * 864e5).toISOString();
-const [{ count: contactos }, { data: esAdmin }, { count: categorias }] = await Promise.all([
-  sb.from("contactos").select("id", { count: "exact", head: true }).eq("vendedor_id", t.id).gte("creado_en", hace7dias),
+const [{ data: semana }, { data: esAdmin }, { count: categorias }, { count: resenasTotal }] = await Promise.all([
+  sb.rpc("mi_resumen_semana"),
   sb.rpc("es_admin"),
   sb.from("vendedor_categorias").select("categoria_id", { count: "exact", head: true }).eq("vendedor_id", t.id),
+  sb.from("resenas").select("id", { count: "exact", head: true }).eq("vendedor_id", t.id).eq("estado", "publicada"),
 ]);
+const s = semana?.[0] ?? { whatsapp: 0, llamadas: 0, personas: 0, favoritos: 0, resenas_nuevas: 0 };
+const veces = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
 const faltanCategorias = t.seccion_principal && t.seccion_principal !== "clasificados" && !categorias;
 
 const abierto = estaAbiertoAhora(t);
@@ -78,7 +80,13 @@ const suspendida = t.estado !== "activo";
 
     <section class="tarjeta bloque">
       <p style="margin:0;font-size:15px">Esta semana</p>
-      <p style="margin:2px 0 0"><strong style="font-size:30px">{contactos ?? 0}</strong> {contactos === 1 ? "persona te contactó" : "personas te contactaron"} desde Lokl</p>
+      <p style="margin:2px 0 0"><strong style="font-size:30px">{s.personas}</strong> {s.personas === 1 ? "persona te contactó" : "personas te contactaron"} desde Lokl</p>
+      <ul class="resumen-semana">
+        <li><strong>{s.whatsapp}</strong><span class="texto-2">{veces(s.whatsapp, "mensaje", "mensajes")} por WhatsApp</span></li>
+        <li><strong>{s.llamadas}</strong><span class="texto-2">{veces(s.llamadas, "llamada", "llamadas")}</span></li>
+        {t.tipo !== "persona" && <li><strong>{s.favoritos}</strong><span class="texto-2">te {s.favoritos === 1 ? "guardó" : "guardaron"} en favoritos</span></li>}
+        {t.tipo !== "persona" && <li><strong>{s.resenas_nuevas}</strong><span class="texto-2">{veces(s.resenas_nuevas, "reseña nueva", "reseñas nuevas")}</span></li>}
+      </ul>
     </section>
 
     <div class="pila-botones" style="margin-top:16px">
@@ -93,6 +101,7 @@ const suspendida = t.estado !== "activo";
       {t.tipo !== "persona" && <a href="/panel/mas">{servicio ? "Fotos, pagos, sectores y precios" : "Fotos de mi local y formas de pago"} <span aria-hidden="true">›</span></a>}
       <a href="/panel/publicar">Publicar <span aria-hidden="true">›</span></a>
       <a href="/panel/publicaciones">Mis publicaciones <span aria-hidden="true">›</span></a>
+      {t.tipo !== "persona" && <a href="/panel/resenas">Opiniones de mis clientes{resenasTotal ? ` (${resenasTotal})` : ""} <span aria-hidden="true">›</span></a>}
       <a href={`/${t.slug}`}>Ver mi tienda como la ven los clientes <span aria-hidden="true">›</span></a>
       {esAdmin && <a href="/admin">Administración de Lokl <span aria-hidden="true">›</span></a>}
     </nav>

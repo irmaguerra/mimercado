@@ -18,15 +18,16 @@ if (Astro.request.method === "POST") {
   }
 }
 
-const [{ count: vendedores }, { data: zonasPendientes }, { count: sugeridas }, tienda, { data: colaPubs }, { data: colaTiendas }] = await Promise.all([
+const [{ count: vendedores }, { data: zonasPendientes }, { count: sugeridas }, tienda, { data: colaPubs }, { data: colaTiendas }, { data: colaResenas }] = await Promise.all([
   sb.from("vendedores").select("id", { count: "exact", head: true }).eq("estado", "activo"),
   sb.from("zonas").select("id, nombre, creado_en, municipios(nombre)").eq("activa", false).order("creado_en"),
   sb.from("categorias_sugeridas").select("id", { count: "exact", head: true }).is("resuelta_en", null),
   miTienda(sb, usuario.id),
   sb.rpc("cola_publicaciones"),
   sb.rpc("cola_vendedores"),
+  sb.rpc("cola_resenas"),
 ]);
-const porRevisar = (colaPubs?.length ?? 0) + (colaTiendas?.length ?? 0);
+const porRevisar = (colaPubs?.length ?? 0) + (colaTiendas?.length ?? 0) + (colaResenas?.length ?? 0);
 ---
 <Base titulo="Administración">
   <main class="contenedor angosto" style="padding-top:20px">

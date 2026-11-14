@@ -1,0 +1,88 @@
+---
+// /favoritos — Las tiendas que guardó esta persona y "Lo nuevo de tus favoritos". Sin cuenta y sin JavaScript.
+// POST: guardar o quitar una tienda (desde su página o desde aquí) y volver.
+// No se cachea: depende del teléfono de cada persona.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import TarjetaVendedor from "@/components/TarjetaVendedor.astro";
+import TarjetaProducto from "@/components/TarjetaProducto.astro";
+import { supabasePublico } from "@/lib/supabase/servidor.js";
+import { leerCliente, clienteDeCookie, volverSeguro } from "@/lib/cliente-cookie.js";
+import { leerUbicacion, rutaUbicacion } from "@/lib/ubicacion.js";
+
+const sb = supabasePublico();
+
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  const slug = String(f.get("slug") || "");
+  const guardar = f.get("accion") !== "quitar";
+  const cliente = guardar ? clienteDeCookie(Astro.cookies) : leerCliente(Astro.cookies);
+  let resultado = "no_existe";
+  if (cliente && /^[a-z0-9-]{1,60}$/.test(slug)) {
+    const { data, error } = await sb.rpc("guardar_favorito", { p_cliente: cliente, p_slug: slug, p_guardar: guardar });
+    if (error) console.error("favorito", error);
+    resultado = data ?? "error";
+  }
+  const volver = volverSeguro(f.get("volver"), "/favoritos");
+  const marca = resultado === "guardado" ? "guardado=1" : resultado === "quitado" ? "quitado=1" : "";
+  const destino = marca ? `${volver}${volver.includes("?") ? "&" : "?"}${marca}` : volver;
+  return Astro.redirect(destino, 303);
+}
+
+const cliente = leerCliente(Astro.cookies);
+const [{ data: tiendas }, { data: novedades }] = cliente
+  ? await Promise.all([
+      sb.rpc("mis_favoritos", { p_cliente: cliente }),
+      sb.rpc("novedades_favoritos", { p_cliente: cliente, p_dias: 7, p_limite: 24 }),
+    ])
+  : [{ data: [] }, { data: [] }];
+const ubic = leerUbicacion(Astro.cookies);
+const inicio = ubic ? rutaUbicacion(ubic) : "/";
+const quitado = Astro.url.searchParams.get("quitado");
+---
+<Base titulo="Mis favoritos">
+  <main class="contenedor">
+    <Cabecera />
+    <h1 style="font-size:24px;margin:20px 0 4px">Mis favoritos</h1>
+    {quitado && <p class="mensaje ok" role="status">Listo, ya no está en tus favoritos.</p>}
+
+    {!tiendas?.length ? (
+      <div class="tarjeta aviso">
+        <strong style="display:block">Todavía no guardaste ninguna tienda.</strong>
+        Cuando veas una que te guste, toca <strong>"♡ Guardar"</strong> en su página y aparecerá aquí, con lo nuevo que publique.
+        <p style="margin:10px 0 0"><a href={inicio}>Ver tiendas</a></p>
+      </div>
+    ) : (
+      <>
+        {novedades?.length > 0 && (
+          <>
+            <h2 style="font-size:18px;margin:20px 0 0">Lo nuevo de tus favoritos</h2>
+            <p class="texto-2" style="margin:2px 0 0;font-size:14px">Lo que publicaron en la última semana.</p>
+            <ul class="rejilla-productos" style="margin-top:10px">
+              {novedades.map((p) => <TarjetaProducto p={{ ...p, zona: p.vendedor_nombre }} />)}
+            </ul>
+          </>
+        )}
+
+        <h2 style="font-size:18px;margin:24px 0 0">Tus tiendas ({tiendas.length})</h2>
+        <ul class="lista-vendedores">
+          {tiendas.map((v) => (
+            <li>
+              <TarjetaVendedor v={v} />
+              <form method="post" style="margin:4px 0 0;text-align:right">
+                <input type="hidden" name="slug" value={v.slug} />
+                <input type="hidden" name="accion" value="quitar" />
+                <input type="hidden" name="volver" value="/favoritos" />
+                <button type="submit" class="boton-texto" style="font-size:14px">Quitar de favoritos</button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      </>
+    )}
+
+    <p class="texto-2" style="font-size:13px;margin-top:24px">
+      Tus favoritos se guardan en este teléfono, sin cuenta. Si borras los datos del navegador o cambias de teléfono, se pierden.
+    </p>
+  </main>
+</Base>

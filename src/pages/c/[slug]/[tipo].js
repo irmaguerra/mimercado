@@ -3,8 +3,9 @@
 // Es un enlace normal: funciona en iPhone sin window.open y sin JavaScript.
 import { supabasePublico } from "@/lib/supabase/servidor.js";
 import { enlaceWhatsApp, enlaceLlamada } from "@/lib/whatsapp.js";
+import { clienteDeCookie } from "@/lib/cliente-cookie.js";
 
-export async function GET({ params, url, redirect }) {
+export async function GET({ params, url, redirect, cookies }) {
   const { slug, tipo } = params;
   if (tipo !== "whatsapp" && tipo !== "llamada") return redirect(`/${slug}`, 302);
 
@@ -26,8 +27,10 @@ export async function GET({ params, url, redirect }) {
     pub = data;
   }
 
-  // Registrar sin hacer esperar a la persona más de lo necesario
-  await sb.from("contactos").insert({ vendedor_id: t.id, tipo, publicacion_id: pub?.id ?? null });
+  // Registrar sin hacer esperar a la persona más de lo necesario.
+  // El id del teléfono permite que después pueda opinar sobre esta tienda (decisión 28).
+  const cliente_id = clienteDeCookie(cookies);
+  await sb.from("contactos").insert({ vendedor_id: t.id, tipo, publicacion_id: pub?.id ?? null, cliente_id });
 
   const host = url.host;
   const mensaje = pub

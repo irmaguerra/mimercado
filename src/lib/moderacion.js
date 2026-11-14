@@ -18,7 +18,7 @@ export const METODOS_VERIFICACION = {
   referencia: "Referencia de alguien de confianza",
 };
 
-/** Acciones de la bitácora, en palabras. */
+/** Acciones de la bitácora, en palabras ("Aprobó la opinión…"). */
 export const ACCIONES = {
   aprobar: "Aprobó",
   ocultar: "Ocultó",
@@ -55,17 +55,5 @@ export function resumirMotivos(motivos = []) {
 export const esPalabraBloqueada = (e) => /no permitida/i.test(e?.message || "");
 export const MENSAJE_PALABRA = "Tu texto tiene una palabra que no está permitida en Lokl. Cámbiala para poder guardar.";
 
-// ---------------------------------------------------------------------
-// Cliente anónimo en las páginas sin JavaScript: el mismo id en una cookie
-// (solo la lee el servidor). Sirve para que cada teléfono reporte una vez.
-// ---------------------------------------------------------------------
-export const COOKIE_CLIENTE = "lokl_cliente";
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export function clienteDeCookie(cookies) {
-  const actual = cookies.get(COOKIE_CLIENTE)?.value;
-  if (actual && UUID.test(actual)) return actual;
-  const nuevo = crypto.randomUUID();
-  cookies.set(COOKIE_CLIENTE, nuevo, { path: "/", maxAge: 60 * 60 * 24 * 365 * 2, sameSite: "lax", secure: true, httpOnly: true });
-  return nuevo;
-}
+// El id del cliente anónimo vive en cliente-cookie.js (también lo usan favoritos y reseñas).
+export { COOKIE_CLIENTE, clienteDeCookie } from "./cliente-cookie.js";

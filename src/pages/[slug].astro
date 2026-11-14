@@ -16,6 +16,7 @@ const slug = Astro.params.slug;
 const estado = await buscarEstado(slug);
 
 let tienda = null, productos = [], hayMas = false, ver = 0, galeria = [], sectores = [], todoMunicipio = false;
+let resenas = [], resumen = { cantidad: 0, promedio: null };
 if (!estado) {
   const { data } = await supabasePublico()
     .from("vendedores")
@@ -27,14 +28,22 @@ if (!estado) {
   if (!tienda) return Astro.rewrite("/404");
   ver = cuantosVer(Astro.url.searchParams.get("ver"));
   const sb = supabasePublico();
-  const [prod, { data: fotos }, { data: cubiertas }] = await Promise.all([
+  const conResenas = tienda.tipo !== "persona"; // decisión 32
+  const [prod, { data: fotos }, { data: cubiertas }, { data: ultimas }, { data: res }] = await Promise.all([
     productosDeTienda(sb, tienda.id, ver),
     sb.from("vendedor_fotos").select("url, url_mini, orden").eq("vendedor_id", tienda.id).order("orden"),
     tienda.seccion_principal === "servicios"
       ? sb.from("vendedor_zonas").select("zonas(nombre, municipio_id)").eq("vendedor_id", tienda.id)
       : { data: [] },
+    conResenas
+      ? sb.from("resenas").select("id, nombre, estrellas, texto, creado_en, respuesta")
+          .eq("vendedor_id", tienda.id).eq("estado", "publicada").order("creado_en", { ascending: false }).limit(5)
+      : { data: [] },
+    conResenas ? sb.rpc("resumen_resenas", { p_vendedor: tienda.id }) : { data: [] },
   ]);
   ({ productos, hayMas } = prod);
+  resenas = ultimas ?? [];
+  if (res?.[0]) resumen = res[0];
   galeria = fotos ?? [];
   sectores = (cubiertas ?? []).map((c) => c.zonas).filter(Boolean);
   // Si cubre todos los sectores de su ciudad, se dice "Va a todo San Fernando"
@@ -57,7 +66,7 @@ if (estado) {
   otrosLugares = activos.filter((c) => c.estado.slug !== estado.slug);
 }
 ---
-{tienda ? <PaginaTienda t={tienda} productos={productos} hayMas={hayMas} ver={ver} galeria={galeria} sectores={sectores} todoMunicipio={todoMunicipio} /> : (
+{tienda ? <PaginaTienda t={tienda} productos={productos} hayMas={hayMas} ver={ver} galeria={galeria} sectores={sectores} todoMunicipio={todoMunicipio} resenas={resenas} resumen={resumen} /> : (
 <Base titulo={estado.nombre} descripcion={`Lo que se vende y se ofrece en ${estado.nombre}, ordenado. Todo termina en WhatsApp.`}>
   <main class="contenedor">
     <Cabecera lugar={estado.nombre} />

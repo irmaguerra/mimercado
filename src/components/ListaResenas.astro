@@ -1,0 +1,24 @@
+---
+// Reseñas de una tienda: estrellas, nombre, fecha, comentario y respuesta del vendedor. HTML puro.
+import { estrellas } from "@/lib/resenas.js";
+
+/** resenas: [{ id, nombre, estrellas, texto, creado_en, respuesta }]; tienda: nombre del vendedor */
+const { resenas = [], tienda = "" } = Astro.props;
+const fecha = (d) => new Date(d).toLocaleDateString("es-VE", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Caracas" });
+---
+<ul class="lista-resenas">
+  {resenas.map((r) => (
+    <li class="tarjeta">
+      <div class="fila-entre" style="gap:8px">
+        <span class="estrellas" aria-label={`${r.estrellas} de 5 estrellas`}>{estrellas(r.estrellas)}</span>
+        <span class="texto-2" style="font-size:13px">{fecha(r.creado_en)}</span>
+      </div>
+      <strong style="display:block;font-size:15px">{r.nombre || "Cliente de Lokl"}</strong>
+      {r.texto && <p style="margin:4px 0 0;white-space:pre-line">{r.texto}</p>}
+      {r.respuesta && (
+        <p class="respuesta-vendedor"><strong>Respuesta de {tienda}:</strong> {r.respuesta}</p>
+      )}
+      <a href={`/reportar?r=${r.id}`} class="texto-2" style="font-size:13px" rel="nofollow">Reportar</a>
+    </li>
+  ))}
+</ul>

@@ -418,3 +418,9 @@ Meta: **tienda lista en menos de 2 minutos**, desde el teléfono.
 | 24 | Formas de pago: Pago móvil, Efectivo en dólares, Efectivo en bolívares, Transferencia, Punto de venta, Zelle, Binance | **Aprobado** (14/11/2026) |
 | 25 | Los servicios marcan a qué sectores van ("Todo San Fernando" de atajo); ordena, no esconde | **Aprobado** (14/11/2026) |
 | 26 | Filtros "A domicilio" y "24 horas" en la lista de Servicios | **Aprobado** (14/11/2026) |
+| 27 | Los favoritos se abren con un ♡ arriba, junto a la ubicación; la barra de abajo no cambia | **Aprobado** (14/11/2026) |
+| 28 | Solo opina quien escribió o llamó desde Lokl desde ese teléfono; una reseña por teléfono y tienda, editable | **Aprobado** (14/11/2026) |
+| 29 | El promedio de estrellas se muestra desde 3 reseñas | **Aprobado** (14/11/2026) |
+| 30 | El vendedor responde una vez cada reseña | **Aprobado** (14/11/2026) |
+| 31 | Las reseñas se reportan y se ocultan con 3 reportes; el vendedor no puede borrarlas | **Aprobado** (14/11/2026) |
+| 32 | Favoritos y reseñas solo para tiendas, puestos, productores y servicios (no para personas de Clasificados) | **Aprobado** (14/11/2026) |

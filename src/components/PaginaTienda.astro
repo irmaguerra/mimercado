@@ -8,8 +8,13 @@ import { enlaceCompartir } from "@/lib/whatsapp.js";
 import { ALCANCE_ENVIO, MODALIDAD_COCINA, QUE_HACES, FORMAS_PAGO, esServicio, textoAbierto } from "@/lib/vendedor.js";
 import { miniatura, PRODUCTOS_POR_PAGINA } from "@/lib/publicacion.js";
 import { mostrarPrecio } from "@/lib/precio.js";
+import ListaResenas from "./ListaResenas.astro";
+import { MIN_PARA_PROMEDIO, estrellas, promedioTexto, cuantasResenas } from "@/lib/resenas.js";
 
-const { t, productos = [], hayMas = false, ver = PRODUCTOS_POR_PAGINA, galeria = [], sectores = [], todoMunicipio = false } = Astro.props;
+const { t, productos = [], hayMas = false, ver = PRODUCTOS_POR_PAGINA, galeria = [], sectores = [], todoMunicipio = false,
+  resenas = [], resumen = { cantidad: 0, promedio: null } } = Astro.props;
+const conPromedio = resumen.cantidad >= MIN_PARA_PROMEDIO && resumen.promedio;
+const guardado = Astro.url.searchParams.get("guardado") === "1";
 const servicio = esServicio(t);
 const pagos = (t.formas_pago ?? []).map((k) => FORMAS_PAGO[k]).filter(Boolean);
 const vaA = todoMunicipio ? `todo ${municipio?.nombre ?? "el municipio"}` : sectores.map((z) => z.nombre).sort((a, b) => a.localeCompare(b, "es")).join(", ");
@@ -35,6 +40,9 @@ const hora = (h) => String(h).slice(0, 5);
           <a href="/verificado" class="insignia-verificado"><Icono nombre="verificado" tam={16} /> Verificado por Lokl</a>
         )}
         {lugar && <p class="texto-2 fila" style="margin:4px 0 0;font-size:14px;gap:4px"><Icono nombre="ubicacion" tam={16} />{lugar}</p>}
+        {conPromedio && (
+          <a href="#opiniones" class="resumen-estrellas"><span class="estrellas">{estrellas(resumen.promedio)}</span> <strong>{promedioTexto(resumen.promedio)}</strong> <span class="texto-2">({cuantasResenas(resumen.cantidad)})</span></a>
+        )}
         {!esPersona && (
           <p style="margin:6px 0 0;font-size:14px">
             <strong class:list={["estado-abierto", { cerrado: !abierto }]}>● {textoAbierto(abierto, servicio)}</strong>
@@ -51,6 +59,18 @@ const hora = (h) => String(h).slice(0, 5);
       </a>
       {t.telefono && <a class="boton boton-claro ancho" href={`/c/${t.slug}/llamada`} rel="nofollow">Llamar</a>}
     </div>
+
+    {!esPersona && (
+      guardado ? (
+        <p class="mensaje ok" role="status" style="margin-top:10px">♥ Guardada en <a href="/favoritos">tus favoritos</a>.</p>
+      ) : (
+        <form method="post" action="/favoritos" style="margin:10px 0 0;text-align:center">
+          <input type="hidden" name="slug" value={t.slug} />
+          <input type="hidden" name="volver" value={`/${t.slug}`} />
+          <button type="submit" class="boton-texto boton-guardar"><Icono nombre="favorito" tam={20} /> Guardar en mis favoritos</button>
+        </form>
+      )
+    )}
 
     {t.descripcion && <p style="margin:18px 0 0;white-space:pre-line">{t.descripcion}</p>}
 
@@ -108,6 +128,19 @@ const hora = (h) => String(h).slice(0, 5);
       <p class="texto-2" style="margin:24px 0 0;font-size:14px;text-align:center">
         Todavía no hay {esPersona ? "anuncios" : "productos"} publicados. Escríbele por WhatsApp para preguntar.
       </p>
+    )}
+
+    {!esPersona && (
+      <section id="opiniones" style="margin-top:28px">
+        <h2 class="fila-entre" style="font-size:18px;margin:0">
+          <span>Opiniones</span>
+          {resumen.cantidad > 0 && <span class="texto-2" style="font-size:14px;font-weight:400">{cuantasResenas(resumen.cantidad)}</span>}
+        </h2>
+        {resenas.length > 0 ? <ListaResenas resenas={resenas} tienda={t.nombre} />
+          : <p class="texto-2" style="margin:6px 0 0;font-size:14px">Todavía no hay opiniones. Si ya le compraste, cuéntale a otros cómo te fue.</p>}
+        {resumen.cantidad > resenas.length && <p style="margin:10px 0 0"><a href={`/opiniones?t=${t.slug}`}>Ver todas las opiniones ›</a></p>}
+        <a class="boton boton-claro ancho" href={`/opinar?t=${t.slug}`} style="margin-top:12px" rel="nofollow">Dejar mi opinión</a>
+      </section>
     )}
 
     <p style="margin-top:20px;text-align:center">

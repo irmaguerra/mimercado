@@ -1,6 +1,6 @@
 # Módulo 7 — Servicios (páginas amarillas)
 
-**Estado:** 🛠️ publicado · `sql/09` corrido · falta probar en el teléfono · 14 de noviembre de 2026
+**Estado:** ✅ aprobado por Irma el 14 de noviembre de 2026. Probado en el teléfono: galería, formas de pago, sectores, 24 horas, precios de referencia, "Disponible", filtros y buscador.
 
 ## Decisiones de Irma (14/11/2026)
 
@@ -33,7 +33,7 @@
 ## Pendiente
 
 1. ✅ `sql/09` corrido el 14/11/2026.
-2. Subir el código y **probar en el teléfono** con una cuenta de **servicio** y otra de **tienda**:
+2. ✅ Publicado y probado en el teléfono (14/11/2026) con una cuenta de **servicio** y otra de **tienda**:
    - Subir 2 o 3 fotos a la galería, quitar una y verlas en la página pública.
    - Marcar formas de pago y verlas en la página.
    - Con el servicio: marcar sectores (y "Todo San Fernando"), "24 horas" y precios de referencia.

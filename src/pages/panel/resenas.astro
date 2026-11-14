@@ -1,0 +1,69 @@
+---
+// /panel/resenas — Las opiniones de mis clientes y mi respuesta (una por reseña, se puede corregir).
+// El vendedor no puede borrar una reseña mala: solo responderla (decisión 31).
+import Base from "@/layouts/Base.astro";
+import { miTienda } from "@/lib/sesion.js";
+import { estrellas, promedioTexto, cuantasResenas, MIN_PARA_PROMEDIO } from "@/lib/resenas.js";
+import { esPalabraBloqueada, MENSAJE_PALABRA } from "@/lib/moderacion.js";
+
+const { sb, usuario } = Astro.locals;
+const t = await miTienda(sb, usuario.id);
+if (!t) return Astro.redirect("/panel/crear", 302);
+if (t.tipo === "persona") return Astro.redirect("/panel", 302);
+
+let aviso = "";
+let error = "";
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  const { error: e } = await sb.rpc("responder_resena", { p_id: Number(f.get("resena")), p_texto: String(f.get("respuesta") || "").slice(0, 400) });
+  if (e) { console.error("responder", e); error = esPalabraBloqueada(e) ? MENSAJE_PALABRA : "No se pudo guardar tu respuesta."; }
+  else aviso = "Respuesta guardada.";
+}
+
+const [{ data: resenas }, { data: resumen }] = await Promise.all([
+  sb.rpc("mis_resenas"),
+  sb.rpc("resumen_resenas", { p_vendedor: t.id }),
+]);
+const { cantidad = 0, promedio = null } = resumen?.[0] ?? {};
+const fecha = (d) => new Date(d).toLocaleDateString("es-VE", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Caracas" });
+---
+<Base titulo="Opiniones de mis clientes">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/panel">‹ Mi tienda</a></p>
+    <h1 style="font-size:24px;margin:8px 0 4px">Opiniones de mis clientes</h1>
+    {cantidad >= MIN_PARA_PROMEDIO && promedio
+      ? <p style="margin:0"><span class="estrellas">{estrellas(promedio)}</span> <strong>{promedioTexto(promedio)}</strong> <span class="texto-2">({cuantasResenas(cantidad)})</span></p>
+      : <p class="texto-2" style="margin:0;font-size:14px">El promedio de estrellas aparece en tu página desde {MIN_PARA_PROMEDIO} reseñas.</p>}
+    <p class="texto-2" style="margin:8px 0 12px;font-size:14px">
+      Solo pueden opinar quienes te escribieron o te llamaron desde Lokl. No puedes borrar una reseña, pero sí responderla:
+      una respuesta amable ayuda mucho. Si una reseña es falsa u ofensiva, repórtala desde tu página.
+    </p>
+    {aviso && <p class="mensaje ok" role="status">{aviso}</p>}
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+
+    {!resenas?.length ? (
+      <p class="tarjeta aviso">Todavía no tienes reseñas. Cuando alguien te escriba desde Lokl, podrá dejarte una.</p>
+    ) : (
+      <ul class="lista-resenas">
+        {resenas.map((r) => (
+          <li class="tarjeta">
+            <div class="fila-entre" style="gap:8px">
+              <span class="estrellas" aria-label={`${r.estrellas} de 5`}>{estrellas(r.estrellas)}</span>
+              <span class="texto-2" style="font-size:13px">{fecha(r.creado_en)}</span>
+            </div>
+            <strong style="display:block;font-size:15px">{r.nombre || "Cliente de Lokl"}</strong>
+            {r.estado !== "publicada" && <span class="etiqueta-estado apagada" style="font-size:14px">Oculta por Lokl (no se ve en tu página)</span>}
+            {r.texto && <p style="margin:4px 0 0;white-space:pre-line">{r.texto}</p>}
+            <form method="post" class="formulario" style="margin-top:8px;gap:6px">
+              <input type="hidden" name="resena" value={r.id} />
+              <label style="font-size:14px">{r.respuesta ? "Tu respuesta" : "Responder (opcional)"}
+                <textarea name="respuesta" rows="2" maxlength="400" placeholder="Ej. ¡Gracias por tu compra!">{r.respuesta}</textarea>
+              </label>
+              <button class="boton boton-claro" type="submit">{r.respuesta ? "Cambiar respuesta" : "Responder"}</button>
+            </form>
+          </li>
+        ))}
+      </ul>
+    )}
+  </main>
+</Base>

@@ -3,6 +3,7 @@
 // Cada acción pasa por una función de la base que exige ser admin y deja nota en la bitácora.
 import Base from "@/layouts/Base.astro";
 import { resumirMotivos } from "@/lib/moderacion.js";
+import { estrellas } from "@/lib/resenas.js";
 
 const { sb } = Astro.locals;
 let aviso = "";
@@ -14,16 +15,19 @@ if (Astro.request.method === "POST") {
   const nota = String(f.get("nota") || "").trim().slice(0, 300) || null;
   const { error: e } = f.get("publicacion")
     ? await sb.rpc("moderar_publicacion", { p_id: Number(f.get("publicacion")), p_accion: accion, p_nota: nota })
+    : f.get("resena")
+    ? await sb.rpc("moderar_resena", { p_id: Number(f.get("resena")), p_accion: accion, p_nota: nota })
     : await sb.rpc("moderar_vendedor", { p_id: String(f.get("vendedor")), p_accion: accion, p_nota: nota });
   if (e) { console.error("moderar", e); error = /motivo/i.test(e.message) ? "Escribe el motivo." : "No se pudo guardar. Intenta de nuevo."; }
   else aviso = { aprobar: "Listo: vuelve a estar publicada.", ocultar: "Listo: quedó oculta.", descartar: "Listo: reportes descartados.", suspender: "Listo: tienda suspendida." }[accion] ?? "Listo.";
 }
 
-const [{ data: pubs, error: e1 }, { data: tiendas, error: e2 }] = await Promise.all([
+const [{ data: pubs, error: e1 }, { data: tiendas, error: e2 }, { data: resenas, error: e3 }] = await Promise.all([
   sb.rpc("cola_publicaciones"),
   sb.rpc("cola_vendedores"),
+  sb.rpc("cola_resenas"),
 ]);
-if (e1 || e2) console.error("cola", e1 || e2);
+if (e1 || e2 || e3) console.error("cola", e1 || e2 || e3);
 
 const ESTADO = {
   en_revision: "Frenada por el filtro de palabras",
@@ -71,6 +75,30 @@ const ESTADO = {
                   <button class="boton" type="submit">Ocultar</button>
                 </form>
               </details>
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    <h2 style="font-size:18px;margin:28px 0 8px">Opiniones ({resenas?.length ?? 0})</h2>
+    {!resenas?.length ? <p class="texto-2">Ninguna opinión por revisar.</p> : (
+      <ul class="lista-mis-publicaciones">
+        {resenas.map((r) => (
+          <li class="tarjeta">
+            <span class="estrellas">{estrellas(r.estrellas)}</span>
+            <strong style="display:block">{r.nombre || "Cliente de Lokl"} <span class="texto-2" style="font-weight:400;font-size:14px">sobre <a href={`/${r.vendedor_slug}#opiniones`}>{r.vendedor_nombre}</a></span></strong>
+            <span class="etiqueta-estado" style="display:block;font-size:14px">{r.estado === "oculta" ? (r.reportes >= 3 ? "Oculta por reportes" : "Frenada por el filtro de palabras") : "Publicada, con reportes"}</span>
+            {r.texto && <p style="margin:6px 0 0;white-space:pre-line">{r.texto}</p>}
+            {r.reportes > 0 && <p style="margin:6px 0 0;font-size:14px"><strong>{r.reportes} {r.reportes === 1 ? "reporte" : "reportes"}:</strong> {resumirMotivos(r.motivos)}</p>}
+            {r.detalles?.length > 0 && (
+              <ul class="texto-2" style="margin:4px 0 0;padding-left:18px;font-size:14px">{r.detalles.map((d) => <li>"{d}"</li>)}</ul>
+            )}
+            <div class="acciones-publicacion" style="margin-top:10px">
+              <form method="post"><input type="hidden" name="resena" value={r.id} /><input type="hidden" name="accion" value="aprobar" />
+                <button class="boton boton-claro" type="submit">Está bien</button></form>
+              <form method="post"><input type="hidden" name="resena" value={r.id} /><input type="hidden" name="accion" value="ocultar" />
+                <button class="boton-texto" type="submit">Ocultar</button></form>
             </div>
           </li>
         ))}

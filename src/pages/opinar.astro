@@ -1,0 +1,92 @@
+---
+// /opinar?t=<enlace> — Dejar o cambiar la reseña de una tienda. Sin cuenta y sin JavaScript.
+// Solo puede opinar quien le escribió o lo llamó desde Lokl desde este teléfono (decisión 28).
+// No se cachea: depende del teléfono de cada persona.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import { supabasePublico } from "@/lib/supabase/servidor.js";
+import { leerCliente } from "@/lib/cliente-cookie.js";
+import { RESULTADO_OPINAR } from "@/lib/resenas.js";
+import { esPalabraBloqueada, MENSAJE_PALABRA } from "@/lib/moderacion.js";
+
+const slug = Astro.url.searchParams.get("t") || "";
+if (!/^[a-z0-9-]{1,60}$/.test(slug)) return Astro.rewrite("/404");
+const sb = supabasePublico();
+const { data: t } = await sb.from("vendedores").select("id, nombre, slug, tipo").eq("slug", slug).eq("estado", "activo").maybeSingle();
+if (!t || t.tipo === "persona") return Astro.rewrite("/404");
+
+const cliente = leerCliente(Astro.cookies);
+let permiso = "sin_contacto";
+if (cliente) {
+  const { data } = await sb.rpc("puede_opinar", { p_cliente: cliente, p_slug: slug });
+  permiso = data ?? "sin_contacto";
+}
+
+let campos = { estrellas: 0, texto: "", nombre: "" };
+let resultado = "";
+let error = "";
+if (permiso === "si") {
+  const { data } = await sb.rpc("mi_resena", { p_cliente: cliente, p_slug: slug });
+  if (data?.[0]) campos = { estrellas: data[0].estrellas, texto: data[0].texto ?? "", nombre: data[0].nombre ?? "" };
+}
+const yaOpino = campos.estrellas > 0;
+
+if (Astro.request.method === "POST" && permiso === "si") {
+  const f = await Astro.request.formData();
+  campos = {
+    estrellas: Number(f.get("estrellas")) || 0,
+    texto: String(f.get("texto") || "").trim().slice(0, 600),
+    nombre: String(f.get("nombre") || "").trim().slice(0, 40),
+  };
+  if (campos.estrellas < 1 || campos.estrellas > 5) error = "Elige de 1 a 5 estrellas.";
+  else {
+    const { data, error: e } = await sb.rpc("opinar", {
+      p_cliente: cliente, p_slug: slug, p_estrellas: campos.estrellas,
+      p_texto: campos.texto || null, p_nombre: campos.nombre || null,
+    });
+    if (e) { console.error("opinar", e); error = esPalabraBloqueada(e) ? MENSAJE_PALABRA : "No pudimos guardar tu reseña. Intenta de nuevo."; }
+    else if (data === "ok" || data === "revision") resultado = data;
+    else error = RESULTADO_OPINAR[data] ?? "No pudimos guardar tu reseña.";
+  }
+}
+const ETIQUETA = ["", "1 · Muy mala", "2 · Mala", "3 · Regular", "4 · Buena", "5 · Excelente"];
+---
+<Base titulo={`Opinar sobre ${t.nombre}`}>
+  <main class="contenedor angosto">
+    <Cabecera />
+    <p style="margin:18px 0 0"><a href={`/${t.slug}`}>‹ {t.nombre}</a></p>
+    <h1 style="font-size:22px;margin:8px 0 12px">{yaOpino && !resultado ? "Cambiar mi reseña" : "¿Qué tal te fue?"}</h1>
+
+    {resultado ? (
+      <div class="tarjeta aviso">
+        <strong style="display:block">{RESULTADO_OPINAR[resultado]}</strong>
+        <p style="margin:10px 0 0"><a href={`/${t.slug}`}>Volver a {t.nombre}</a></p>
+      </div>
+    ) : permiso !== "si" ? (
+      <div class="tarjeta aviso">
+        <strong style="display:block">{RESULTADO_OPINAR[permiso] ?? RESULTADO_OPINAR.sin_contacto}</strong>
+        <span class="texto-2" style="font-size:14px">Así las reseñas son de clientes de verdad. Después de escribirle, vuelve aquí desde este mismo teléfono.</span>
+        <p style="margin:10px 0 0"><a href={`/${t.slug}`}>Ir a {t.nombre}</a></p>
+      </div>
+    ) : (
+      <form method="post" class="formulario">
+        {error && <p class="mensaje error" role="alert">{error}</p>}
+        <fieldset class="opciones-radio">
+          <legend>Tu calificación</legend>
+          {[5, 4, 3, 2, 1].map((n) => (
+            <label class="radio"><input type="radio" name="estrellas" value={n} checked={campos.estrellas === n} required />
+              <span class="estrellas" aria-hidden="true">{"★".repeat(n)}{"☆".repeat(5 - n)}</span> {ETIQUETA[n]}</label>
+          ))}
+        </fieldset>
+        <label>Cuéntale a otros cómo te fue (opcional)
+          <textarea name="texto" rows="4" maxlength="600" placeholder="Qué compraste o qué servicio te hizo, cómo te atendió, si llegó a tiempo…">{campos.texto}</textarea>
+        </label>
+        <label>Tu nombre (opcional)
+          <input type="text" name="nombre" value={campos.nombre} maxlength="40" placeholder="Ej. Ana" />
+          <small class="texto-2">Si lo dejas vacío, se muestra "Cliente de Lokl".</small>
+        </label>
+        <button class="boton ancho" type="submit">{yaOpino ? "Guardar cambios" : "Publicar mi reseña"}</button>
+      </form>
+    )}
+  </main>
+</Base>

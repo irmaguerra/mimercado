@@ -7,9 +7,12 @@ const { lugar } = Astro.props; // texto a mostrar, ej. "San Fernando"; vacío = 
 ---
 <header class="fila-entre" style="padding-top:16px">
   <a href="/" aria-label="Lokl, inicio" style="color:var(--texto)"><Logo alto={34} /></a>
-  <a href="/ubicacion" class="chip-ubicacion">
-    <Icono nombre="ubicacion" tam={18} />
-    <span>{lugar || "Elegir ubicación"}</span>
-    <span aria-hidden="true">▾</span>
-  </a>
+  <span class="fila" style="gap:6px">
+    <a href="/favoritos" class="chip-ubicacion boton-favoritos" aria-label="Mis favoritos" title="Mis favoritos"><Icono nombre="favorito" tam={20} /></a>
+    <a href="/ubicacion" class="chip-ubicacion">
+      <Icono nombre="ubicacion" tam={18} />
+      <span>{lugar || "Elegir ubicación"}</span>
+      <span aria-hidden="true">▾</span>
+    </a>
+  </span>
 </header>

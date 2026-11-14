@@ -1,0 +1,40 @@
+---
+// /opiniones?t=<enlace> — Todas las reseñas de una tienda (de 30 en 30). HTML puro, cacheado.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import ListaResenas from "@/components/ListaResenas.astro";
+import { supabasePublico } from "@/lib/supabase/servidor.js";
+import { PUBLICA } from "@/lib/cache.js";
+import { MIN_PARA_PROMEDIO, estrellas, promedioTexto, cuantasResenas } from "@/lib/resenas.js";
+import { cuantosVer, POR_PAGINA } from "@/lib/listados.js";
+
+const slug = Astro.url.searchParams.get("t") || "";
+if (!/^[a-z0-9-]{1,60}$/.test(slug)) return Astro.rewrite("/404");
+const sb = supabasePublico();
+const { data: t } = await sb.from("vendedores").select("id, nombre, slug, tipo").eq("slug", slug).eq("estado", "activo").maybeSingle();
+if (!t || t.tipo === "persona") return Astro.rewrite("/404");
+
+const ver = cuantosVer(Astro.url.searchParams.get("ver"));
+const [{ data: lista }, { data: resumen }] = await Promise.all([
+  sb.from("resenas").select("id, nombre, estrellas, texto, creado_en, respuesta")
+    .eq("vendedor_id", t.id).eq("estado", "publicada").order("creado_en", { ascending: false }).limit(ver + 1),
+  sb.rpc("resumen_resenas", { p_vendedor: t.id }),
+]);
+Astro.cache.set(PUBLICA);
+const resenas = (lista ?? []).slice(0, ver);
+const hayMas = (lista ?? []).length > ver;
+const { cantidad = 0, promedio = null } = resumen?.[0] ?? {};
+---
+<Base titulo={`Opiniones de ${t.nombre}`} descripcion={`Lo que dicen los clientes de ${t.nombre} en Lokl.`}>
+  <main class="contenedor angosto">
+    <Cabecera />
+    <p style="margin:18px 0 0"><a href={`/${t.slug}`}>‹ {t.nombre}</a></p>
+    <h1 style="font-size:22px;margin:8px 0 4px">Opiniones de {t.nombre}</h1>
+    {cantidad >= MIN_PARA_PROMEDIO && promedio && (
+      <p style="margin:0"><span class="estrellas">{estrellas(promedio)}</span> <strong>{promedioTexto(promedio)}</strong> <span class="texto-2">({cuantasResenas(cantidad)})</span></p>
+    )}
+    {resenas.length ? <ListaResenas resenas={resenas} tienda={t.nombre} /> : <p class="texto-2">Todavía no hay opiniones.</p>}
+    {hayMas && <a class="boton boton-claro ancho" href={`/opiniones?t=${t.slug}&ver=${ver + POR_PAGINA}`} style="margin-top:14px" rel="nofollow">Ver más opiniones</a>}
+    <a class="boton ancho" href={`/opinar?t=${t.slug}`} style="margin-top:16px" rel="nofollow">Dejar mi opinión</a>
+  </main>
+</Base>

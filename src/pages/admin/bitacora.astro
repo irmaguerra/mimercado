@@ -18,7 +18,7 @@ const fecha = (d) => new Date(d).toLocaleString("es-VE", { day: "numeric", month
           <li class="tarjeta">
             <span class="texto-2" style="font-size:13px">{fecha(f.creado_en)}{f.admin_correo && ` · ${f.admin_correo}`}</span>
             <span style="display:block">
-              {ACCIONES[f.accion] ?? f.accion} {f.objetivo === "vendedor" ? "la tienda" : "la publicación"}{" "}
+              {ACCIONES[f.accion] ?? f.accion} {{ vendedor: "la tienda", resena: "la opinión", publicacion: "la publicación" }[f.objetivo]}{" "}
               <strong>{f.nombre ?? "(ya borrada)"}</strong>
             </span>
             {f.nota && <span class="texto-2" style="display:block;font-size:14px">"{f.nota}"</span>}
