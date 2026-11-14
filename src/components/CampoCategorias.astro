@@ -1,0 +1,33 @@
+---
+// "¿Qué vendes?": casillas para marcar hasta 10 categorías de la sección de la tienda. Sin JavaScript.
+// Las categorías con subcategorías (Servicios → Transporte → Moto taxi) se muestran como grupo.
+import { MAX_CATEGORIAS } from "@/lib/listados.js";
+
+/** arbol: categorías de la sección (arbolCategorias); elegidas: Set de ids marcados. */
+const { arbol = [], elegidas = new Set(), titulo = "¿Qué vendes?" } = Astro.props;
+const conHijos = arbol.filter((c) => c.hijos.length);
+const sueltas = arbol.filter((c) => !c.hijos.length);
+---
+{arbol.length > 0 && (
+  <fieldset class="opciones-radio" id="categorias">
+    <legend>{titulo}</legend>
+    <small class="texto-2">Marca hasta {MAX_CATEGORIAS}. Así sales en esas listas y en el buscador.</small>
+    {sueltas.length > 0 && (
+      <div class="casillas">
+        {sueltas.map((c) => (
+          <label class="radio"><input type="checkbox" name="categoria" value={c.id} checked={elegidas.has(c.id)} /> {c.nombre}</label>
+        ))}
+      </div>
+    )}
+    {conHijos.map((g) => (
+      <div>
+        <strong class="titulo-grupo">{g.nombre}</strong>
+        <div class="casillas">
+          {g.hijos.map((c) => (
+            <label class="radio"><input type="checkbox" name="categoria" value={c.id} checked={elegidas.has(c.id)} /> {c.nombre}</label>
+          ))}
+        </div>
+      </div>
+    ))}
+  </fieldset>
+)}

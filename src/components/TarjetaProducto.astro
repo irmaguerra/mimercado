@@ -1,0 +1,17 @@
+---
+// Un producto en una cuadrícula (clasificados, "Lo nuevo", buscador). HTML puro.
+import { mostrarPrecio } from "@/lib/precio.js";
+
+/** p: { id, titulo, precio, moneda, foto_mini, agotado, zona? } */
+const { p, id } = Astro.props;
+const precio = mostrarPrecio(p.precio, p.moneda);
+---
+<li id={id}>
+  <a href={`/p/${p.id}`} class:list={["tarjeta enlace-tarjeta producto", { agotado: p.agotado }]}>
+    {p.foto_mini ? <img src={p.foto_mini} alt="" width="200" height="200" loading="lazy" decoding="async" />
+      : <span class="foto-vacia" aria-hidden="true"></span>}
+    <span class="nombre-producto">{p.titulo}</span>
+    <span class="precio-producto">{p.agotado ? "Agotado" : precio ?? "Pregunta el precio"}</span>
+    {p.zona && <span class="zona-producto texto-2">{p.zona}</span>}
+  </a>
+</li>

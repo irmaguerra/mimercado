@@ -2,11 +2,13 @@
 // /panel/tienda — Editar mi tienda: logo, nombre, enlace, contacto, zona, horario y envíos.
 import Base from "@/layouts/Base.astro";
 import CampoZona from "@/components/CampoZona.astro";
+import CampoCategorias from "@/components/CampoCategorias.astro";
 import SubirLogo from "@/components/islas/SubirLogo.jsx";
 import { miTienda } from "@/lib/sesion.js";
 import { MODALIDAD_COCINA, ALCANCE_ENVIO, resolverZona } from "@/lib/vendedor.js";
 import { crearSlug, esSlugValido } from "@/lib/slug.js";
 import { normalizarNumero, esCelularValido } from "@/lib/whatsapp.js";
+import { categoriasDeSeccion, categoriasMarcables, leerCategorias } from "@/lib/listados.js";
 
 const { sb, usuario } = Astro.locals;
 let t = await miTienda(sb, usuario.id);
@@ -14,6 +16,14 @@ if (!t) return Astro.redirect("/panel/crear", 302);
 
 let error = Astro.url.searchParams.get("error") || "";
 let ok = Astro.url.searchParams.get("ok") ? "Cambios guardados." : "";
+
+// Categorías ("¿Qué vendes?"): hasta 10 de su sección. Los clasificados eligen una por anuncio.
+const conCategorias = t.seccion_principal && t.seccion_principal !== "clasificados";
+const [arbol, { data: marcadas }] = await Promise.all([
+  conCategorias ? categoriasDeSeccion(sb, t.seccion_principal) : [],
+  sb.from("vendedor_categorias").select("categoria_id").eq("vendedor_id", t.id),
+]);
+let elegidas = new Set((marcadas ?? []).map((x) => x.categoria_id));
 
 if (Astro.request.method === "POST") {
   const f = await Astro.request.formData();
@@ -34,8 +44,11 @@ if (Astro.request.method === "POST") {
   if (t.seccion_principal === "comida" && MODALIDAD_COCINA[txt("modalidad")]) cambios.modalidad_cocina = txt("modalidad");
   if (cambios.modalidad_cocina === "desde_casa" || t.modalidad_cocina === "desde_casa") cambios.direccion = null;
   const slugNuevo = crearSlug(txt("slug", 60));
+  const cats = conCategorias ? leerCategorias(f, categoriasMarcables(arbol)) : null;
+  if (cats) elegidas = new Set(cats.ids);
 
-  if (cambios.nombre.length < 2) error = "Escribe el nombre de tu tienda.";
+  if (cats?.error) error = cats.error;
+  else if (cambios.nombre.length < 2) error = "Escribe el nombre de tu tienda.";
   else if (!esCelularValido(cambios.whatsapp)) error = "Revisa tu número de WhatsApp (ej. 0414 123 4567).";
   else if (!!cambios.hora_desde !== !!cambios.hora_hasta) error = "Pon la hora de abrir y la de cerrar, o deja las dos vacías.";
   else if (cambios.maps_url && !/^https:\/\/(maps\.app\.goo\.gl|goo\.gl\/maps|(www\.)?google\.[a-z.]+\/maps)/.test(cambios.maps_url)) error = "El enlace de ubicación debe ser de Google Maps.";
@@ -56,10 +69,28 @@ if (Astro.request.method === "POST") {
       cambios.whatsapp = normalizarNumero(cambios.whatsapp);
       const { error: e } = await sb.from("vendedores").update(cambios).eq("id", t.id);
       if (e) error = "No pudimos guardar. Intenta de nuevo.";
-      else return Astro.redirect("/panel/tienda?ok=1", 303);
+      else {
+        if (cats) error = await guardarCategorias(cats.ids);
+        if (!error) return Astro.redirect("/panel/tienda?ok=1", 303);
+      }
     }
   }
   t = { ...t, ...Object.fromEntries([...f.entries()].map(([k, v]) => [k, typeof v === "string" ? v : t[k]])) };
+}
+/** Reemplaza las categorías de la tienda. Devuelve un mensaje de error o "". */
+async function guardarCategorias(ids) {
+  const antes = (marcadas ?? []).map((x) => x.categoria_id);
+  const quitar = antes.filter((id) => !ids.includes(id));
+  const poner = ids.filter((id) => !antes.includes(id));
+  if (quitar.length) {
+    const { error: e } = await sb.from("vendedor_categorias").delete().eq("vendedor_id", t.id).in("categoria_id", quitar);
+    if (e) { console.error("categorias", e); return "Se guardó tu tienda, pero no las categorías. Intenta de nuevo."; }
+  }
+  if (poner.length) {
+    const { error: e } = await sb.from("vendedor_categorias").insert(poner.map((categoria_id) => ({ vendedor_id: t.id, categoria_id })));
+    if (e) { console.error("categorias", e); return "Se guardó tu tienda, pero no las categorías. Intenta de nuevo."; }
+  }
+  return "";
 }
 const hora = (h) => (h ? String(h).slice(0, 5) : "");
 const local = (n) => (/^58\d{10}$/.test(n || "") ? "0" + n.slice(2) : n || "");
@@ -86,6 +117,8 @@ const local = (n) => (/^58\d{10}$/.test(n || "") ? "0" + n.slice(2) : n || "");
       <label>Descripción
         <textarea name="descripcion" rows="3" maxlength="500" placeholder="Qué vendes, desde cuándo, qué te hace especial">{t.descripcion}</textarea>
       </label>
+      <CampoCategorias arbol={arbol} elegidas={elegidas} titulo={t.seccion_principal === "servicios" ? "¿Qué servicios ofreces?" : "¿Qué vendes?"} />
+
       <label>WhatsApp
         <input type="tel" name="whatsapp" value={local(t.whatsapp)} required inputmode="tel" />
       </label>

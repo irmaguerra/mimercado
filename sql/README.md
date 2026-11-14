@@ -20,6 +20,7 @@ Cada archivo se corre **una sola vez** y nunca se modifica después de correrlo:
 | 04 | `04-admin-usalokl.sql` | La cuenta usalokl.app@gmail.com pasa a ser administradora de Lokl | ✅ 8/11/2026 |
 | 05 | `05-borrar-tienda-prueba-dorcas.sql` | Borra la tienda de prueba DORCAS de la cuenta administradora | ✅ 8/11/2026 |
 | 06 | `06-modulo-4-publicar.sql` | Publicar: "agotado", solo los clasificados vencen, el vendedor no puede sacar de revisión lo moderado, permisos de las fotos de productos | ✅ 9/11/2026 |
+| 07 | `07-modulo-5-buscador-listados.sql` | Buscador y listados: hasta 10 categorías por tienda, listas de tiendas y anuncios por sección, buscador que perdona errores ("kezo" = queso) y ordena por cercanía | ✅ 14/11/2026 |
 
 ## Para quien programa
 

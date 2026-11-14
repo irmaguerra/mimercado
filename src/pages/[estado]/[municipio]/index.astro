@@ -1,26 +1,23 @@
 ---
 // Portada de un municipio: /apure/san-fernando
 // HTML puro, 0 KB de JavaScript. Funciona para cualquier municipio de Venezuela que exista en la base.
-// En el Módulo 5 se llena con "lo nuevo" y el buscador real.
+// Buscador, Súper, secciones y "Lo nuevo" (las últimas publicaciones con foto).
 import Base from "@/layouts/Base.astro";
 import Cabecera from "@/components/Cabecera.astro";
 import Icono from "@/components/Icono.astro";
+import TarjetaProducto from "@/components/TarjetaProducto.astro";
 import { buscarMunicipio } from "@/lib/ubicacion.js";
+import { supabasePublico } from "@/lib/supabase/servidor.js";
+import { SECCIONES, listarPublicaciones } from "@/lib/listados.js";
 import { PUBLICA } from "@/lib/cache.js";
 
 const { estado, municipio } = Astro.params;
 const m = await buscarMunicipio(estado, municipio);
 if (!m) return Astro.rewrite("/404");
+const { filas: nuevo } = await listarPublicaciones(supabasePublico(), { municipioId: m.id, limite: 12, soloConFoto: true });
 Astro.cache.set(PUBLICA);
 
 const base = `/${m.estado.slug}/${m.slug}`;
-const SECCIONES = [
-  { slug: "tiendas", icono: "tiendas", nombre: "Tiendas", detalle: "Negocios de la zona" },
-  { slug: "comida", icono: "comida", nombre: "Comida", detalle: "La feria de comida" },
-  { slug: "al-mayor", icono: "al-mayor", nombre: "Al mayor", detalle: "Precios de origen" },
-  { slug: "servicios", icono: "servicios", nombre: "Servicios", detalle: "Oficios, salud, transporte…" },
-  { slug: "clasificados", icono: "clasificados", nombre: "Clasificados", detalle: "Ventas de una vez" },
-];
 ---
 <Base
   titulo={`${m.nombre}, ${m.estado.nombre}`}
@@ -64,6 +61,15 @@ const SECCIONES = [
         </li>
       ))}
     </ul>
+
+    {nuevo.length > 0 && (
+      <>
+        <h2 style="font-size:18px;margin:24px 0 0">Lo nuevo en {m.nombre}</h2>
+        <ul class="rejilla-productos" style="margin-top:10px">
+          {nuevo.map((p) => <TarjetaProducto p={p} />)}
+        </ul>
+      </>
+    )}
 
     <p class="texto-2" style="font-size:14px;margin-top:24px">
       <a href={`/${m.estado.slug}`}>Ver todo {m.estado.nombre}</a>

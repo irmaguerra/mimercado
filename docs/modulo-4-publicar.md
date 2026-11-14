@@ -1,6 +1,6 @@
 # Módulo 4 — Publicar
 
-**Estado:** 🛠️ código listo, `sql/06` corrido el 9/11/2026; falta probar en el teléfono.
+**Estado:** ✅ aprobado por Irma el 14 de noviembre de 2026. Probado en el teléfono: publicar con fotos, editar, agotado, borrar, ficha y WhatsApp desde la ficha.
 
 ## Decisiones de Irma (8/11/2026)
 
@@ -28,6 +28,6 @@
 ## Pendiente
 
 - ✅ `sql/06` corrido el 9/11/2026.
-- Probar en el teléfono: publicar con 3 fotos, editar, quitar una foto, agotado, borrar, ficha y WhatsApp desde la ficha.
+- ✅ Probado en el teléfono el 14/11/2026.
 - ✅ Peso medido: ficha ~5 KB + foto principal ~25 KB; tienda ~5 KB + ~6 KB por miniatura.
 - La categoría de cada publicación queda vacía por ahora (se usará con el buscador).

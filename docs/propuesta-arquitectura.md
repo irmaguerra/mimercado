@@ -403,3 +403,7 @@ Meta: **tienda lista en menos de 2 minutos**, desde el teléfono.
 | 9 | Alojamiento en Cloudflare Workers en vez de Vercel (el plan gratis de Vercel no permite uso comercial) | **Aprobado** (8/11/2026) |
 | 10 | Publicar: solo los clasificados vencen (30 días); el resto se marca "agotado". Hasta 3 fotos. Precio opcional en $ o Bs, exacto | **Aprobado** (8/11/2026) |
 | 11 | Sin tope total de productos por vendedor; freno anti-spam de 30 publicaciones por día. La tienda muestra 30 productos y "Ver más productos" de 30 en 30 | **Aprobado** (10/11/2026) |
+| 12 | Listados: Tiendas, Comida, Servicios y Al mayor muestran las tiendas (logo, abierto/cerrado, zona; abiertas y del sector primero); Clasificados muestra la cuadrícula de productos, lo más nuevo primero | **Aprobado** (14/11/2026) |
+| 13 | Filtro "Ver primero: tu sector" en los listados: ordena, no esconde | **Aprobado** (14/11/2026) |
+| 14 | El bloque de Lokl Súper en los resultados queda para el Módulo 10 y el autocompletado para después | **Aprobado** (14/11/2026) |
+| 15 | Categorías: cada tienda marca hasta 10 de su sección (antes 3) y sus productos salen por ella; en clasificados cada anuncio elige una categoría al publicarse | **Aprobado** (14/11/2026) |

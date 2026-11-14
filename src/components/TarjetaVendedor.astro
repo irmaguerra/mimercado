@@ -1,0 +1,22 @@
+---
+// Una tienda en una lista (sección o buscador): logo, nombre, sello, zona y abierto/cerrado. HTML puro.
+import Icono from "./Icono.astro";
+import { MODALIDAD_COCINA } from "@/lib/vendedor.js";
+
+/** v: { slug, nombre, logo_url, zona, verificado, abierto, modalidad_cocina?, descripcion? } */
+const { v, mostrarAbierto = true } = Astro.props;
+---
+<a href={`/${v.slug}`} class="tarjeta enlace-tarjeta vendedor-fila">
+  {v.logo_url ? <img src={v.logo_url} alt="" width="56" height="56" class="logo-tienda" loading="lazy" decoding="async" />
+    : <span class="logo-tienda logo-vacio" aria-hidden="true">{v.nombre.slice(0, 1)}</span>}
+  <span style="min-width:0">
+    <strong class="nombre-vendedor">{v.nombre}</strong>
+    {v.verificado && <span class="insignia-verificado"><Icono nombre="verificado" tam={14} /> Verificado</span>}
+    <span class="texto-2 detalle-vendedor">
+      {mostrarAbierto && <strong class:list={["estado-abierto", { cerrado: !v.abierto }]}>● {v.abierto ? "Abierto" : "Cerrado"}</strong>}
+      {mostrarAbierto && v.zona && " · "}{v.zona}
+      {v.modalidad_cocina && ` · ${MODALIDAD_COCINA[v.modalidad_cocina]}`}
+    </span>
+    {v.descripcion && <span class="texto-2 descripcion-vendedor">{v.descripcion}</span>}
+  </span>
+</a>

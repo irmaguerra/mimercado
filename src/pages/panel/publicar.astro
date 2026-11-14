@@ -10,6 +10,7 @@ import {
   seccionDe, fotosOrdenadas, rutaEnAlmacen,
 } from "@/lib/publicacion.js";
 import { leerPrecio, precioParaCampo } from "@/lib/precio.js";
+import { categoriasDeSeccion, categoriasMarcables } from "@/lib/listados.js";
 
 const { sb, usuario } = Astro.locals;
 const t = await miTienda(sb, usuario.id);
@@ -32,6 +33,8 @@ const seccion = p?.seccion ?? seccionDe(t);
 const cosa = NOMBRE_COSA[seccion] ?? "producto";
 const suspendida = t.estado !== "activo";
 const existentes = fotosOrdenadas(p ?? {});
+// Clasificados: cada anuncio elige su categoría (decisión 15). El resto usa las de su tienda.
+const categorias = seccion === "clasificados" ? categoriasMarcables(await categoriasDeSeccion(sb, "clasificados")) : [];
 
 let error = "";
 let campos = {
@@ -39,6 +42,7 @@ let campos = {
   precio: precioParaCampo(p?.precio),
   moneda: p?.moneda ?? "USD",
   descripcion: p?.descripcion ?? "",
+  categoria: p?.categoria_id ?? null,
 };
 
 if (Astro.request.method === "POST") {
@@ -50,7 +54,9 @@ if (Astro.request.method === "POST") {
     precio: txt("precio", 20),
     moneda: f.get("moneda") === "VES" ? "VES" : "USD",
     descripcion: txt("descripcion", 2000),
+    categoria: Number(f.get("categoria")) || null,
   };
+  if (!categorias.some((c) => c.id === campos.categoria)) campos.categoria = null;
   const precio = leerPrecio(campos.precio);
 
   const grandes = f.getAll("foto").filter((x) => x instanceof File && x.size > 0);
@@ -60,6 +66,7 @@ if (Astro.request.method === "POST") {
   const quitadas = existentes.filter((x) => quitar.includes(x.id));
 
   if (suspendida) error = "Tu tienda está suspendida: no puedes publicar por ahora.";
+  else if (categorias.length && !campos.categoria) error = "Elige de qué es tu anuncio (por ejemplo, Vehículos y motos).";
   else if (campos.titulo.length < 3) error = `Escribe el nombre del ${cosa} (mínimo 3 letras).`;
   else if (Number.isNaN(precio)) error = "Revisa el precio. Escríbelo así: 5 o 5,50. Si no quieres ponerlo, déjalo vacío.";
   else if (quedan.length + grandes.length > MAX_FOTOS) error = `Puedes poner hasta ${MAX_FOTOS} fotos.`;
@@ -69,6 +76,7 @@ if (Astro.request.method === "POST") {
   let pubId = p?.id, estado = p?.estado;
   if (!error) {
     const datos = { titulo: campos.titulo, descripcion: campos.descripcion || null, precio, moneda: campos.moneda };
+    if (categorias.length) datos.categoria_id = campos.categoria;
     const consulta = p
       ? sb.from("publicaciones").update(datos).eq("id", p.id)
       : sb.from("publicaciones").insert({ ...datos, vendedor_id: t.id, seccion, zona_id: t.zona_id });
@@ -157,6 +165,17 @@ const titulo = p ? `Editar ${cosa}` : `Publicar ${cosa === "anuncio" ? "un anunc
         )}
         <FotosPublicacion client:load maximo={MAX_FOTOS} ocupadas={existentes.length} />
       </fieldset>
+
+      {categorias.length > 0 && (
+        <fieldset class="opciones-radio">
+          <legend>¿De qué es tu anuncio?</legend>
+          <div class="casillas">
+            {categorias.map((c) => (
+              <label class="radio"><input type="radio" name="categoria" value={c.id} checked={campos.categoria === c.id} required /> {c.nombre}</label>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       <label>Nombre del {cosa}
         <input type="text" name="titulo" value={campos.titulo} required minlength="3" maxlength="120"

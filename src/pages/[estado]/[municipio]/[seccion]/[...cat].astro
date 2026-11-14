@@ -1,0 +1,142 @@
+---
+// Listado de una sección y, si viene, de su categoría y subcategoría:
+//   /apure/san-fernando/comida
+//   /apure/san-fernando/comida/pizza
+//   /apure/san-fernando/servicios/transporte/moto-taxi
+// Tiendas, Comida, Al mayor y Servicios muestran tiendas; Clasificados, productos (decisión 12).
+// ?zona=<sector> pone primero lo de ese sector, sin esconder lo demás (decisión 13). HTML puro, 0 KB de JS.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import TarjetaVendedor from "@/components/TarjetaVendedor.astro";
+import TarjetaProducto from "@/components/TarjetaProducto.astro";
+import { buscarMunicipio } from "@/lib/ubicacion.js";
+import { supabasePublico } from "@/lib/supabase/servidor.js";
+import { PUBLICA } from "@/lib/cache.js";
+import {
+  seccionPorSlug, categoriasDeSeccion, idsDeCategoria, zonasDeMunicipio,
+  listarVendedores, listarPublicaciones, cuantosVer, POR_PAGINA, NOMBRE_TIENDAS,
+} from "@/lib/listados.js";
+
+const { estado, municipio, seccion, cat } = Astro.params;
+const sec = seccionPorSlug(seccion);
+if (!sec) return Astro.rewrite("/404");
+const m = await buscarMunicipio(estado, municipio);
+if (!m) return Astro.rewrite("/404");
+
+const sb = supabasePublico();
+const [arbol, zonas] = await Promise.all([categoriasDeSeccion(sb, sec.clave), zonasDeMunicipio(sb, m.id)]);
+
+// Categoría y subcategoría de la dirección
+const partes = (cat ?? "").split("/").filter(Boolean);
+const cat1 = partes[0] ? arbol.find((c) => c.slug === partes[0]) : null;
+const cat2 = partes[1] ? cat1?.hijos.find((c) => c.slug === partes[1]) : null;
+if (partes.length > 2 || (partes[0] && !cat1) || (partes[1] && !cat2)) return Astro.rewrite("/404");
+const actual = cat2 ?? cat1;
+
+const zonaSlug = Astro.url.searchParams.get("zona") || "";
+const zona = zonas.find((z) => z.slug === zonaSlug) ?? null;
+const ver = cuantosVer(Astro.url.searchParams.get("ver"));
+const primeroNuevo = ver - POR_PAGINA;
+
+const consulta = { municipioId: m.id, seccion: sec.clave, categorias: idsDeCategoria(actual), zonaId: zona?.id ?? null, limite: ver };
+const { filas, hayMas } = sec.lista === "tiendas" ? await listarVendedores(sb, consulta) : await listarPublicaciones(sb, consulta);
+Astro.cache.set(PUBLICA);
+
+const raiz = `/${m.estado.slug}/${m.slug}`;
+const base = `${raiz}/${sec.slug}`;
+const conZona = (ruta, extra = "") => {
+  const q = new URLSearchParams();
+  if (zona) q.set("zona", zona.slug);
+  if (extra) q.set("ver", extra);
+  const s = q.toString();
+  return s ? `${ruta}?${s}` : ruta;
+};
+
+// Botones de arriba: subcategorías si la categoría tiene, si no las categorías de la sección
+const grupo = cat1?.hijos.length ? cat1 : null;
+const chips = grupo
+  ? [{ nombre: `Todo ${grupo.nombre.toLowerCase()}`, ruta: `${base}/${grupo.slug}`, activa: !cat2 },
+     ...grupo.hijos.map((h) => ({ nombre: h.nombre, ruta: `${base}/${grupo.slug}/${h.slug}`, activa: cat2?.id === h.id }))]
+  : [{ nombre: "Todo", ruta: base, activa: !cat1 },
+     ...arbol.map((c) => ({ nombre: c.nombre, ruta: `${base}/${c.slug}`, activa: cat1?.id === c.id }))];
+
+const ruta = Astro.url.pathname;
+const titulo = actual ? `${actual.nombre} en ${m.nombre}` : `${sec.nombre} en ${m.nombre}`;
+const [, plural] = NOMBRE_TIENDAS[sec.clave];
+const vacio = actual
+  ? `Todavía no hay ${plural} de ${actual.nombre.toLowerCase()} en ${m.nombre}.`
+  : `Todavía no hay ${plural} en ${m.nombre}.`;
+---
+<Base titulo={titulo} descripcion={`${titulo}, ${m.estado.nombre}. Míralos en Lokl y escríbeles por WhatsApp.`}>
+  <main class="contenedor">
+    <Cabecera lugar={m.nombre} />
+
+    <nav class="migas texto-2" aria-label="Estás en">
+      <a href={raiz}>{m.nombre}</a> ›
+      {actual ? <a href={conZona(base)}>{sec.nombre}</a> : <span>{sec.nombre}</span>}
+      {cat2 && <> › <a href={conZona(`${base}/${cat1.slug}`)}>{cat1.nombre}</a></>}
+    </nav>
+    <h1 style="font-size:24px;margin:4px 0 0">{actual?.nombre ?? sec.nombre}</h1>
+
+    {chips.length > 1 && (
+      <ul class="chips" aria-label="Categorías">
+        {chips.map((c) => (
+          <li><a href={conZona(c.ruta)} class="chip" aria-current={c.activa ? "page" : undefined}>{c.nombre}</a></li>
+        ))}
+      </ul>
+    )}
+
+    {zonas.length > 1 && (
+      <form method="get" action={ruta} class="filtro-sector">
+        <label for="zona" class="texto-2">Ver primero</label>
+        <select id="zona" name="zona">
+          <option value="">Todo {m.nombre}</option>
+          {zonas.map((z) => <option value={z.slug} selected={z.id === zona?.id}>{z.nombre}</option>)}
+        </select>
+        <button type="submit" class="boton boton-claro">Ver</button>
+      </form>
+    )}
+
+    {!m.activo && (
+      <p class="tarjeta aviso">Lokl está empezando en {m.nombre}. Aquí verás a los vendedores de la zona a medida que se registren.</p>
+    )}
+
+    {filas.length > 0 && sec.lista === "tiendas" && (
+      <ul class="lista-vendedores">
+        {filas.map((v, i) => (
+          <li id={i === primeroNuevo && i > 0 ? "mas" : undefined}><TarjetaVendedor v={v} /></li>
+        ))}
+      </ul>
+    )}
+    {filas.length > 0 && sec.lista === "productos" && (
+      <ul class="rejilla-productos">
+        {filas.map((p, i) => <TarjetaProducto p={p} id={i === primeroNuevo && i > 0 ? "mas" : undefined} />)}
+      </ul>
+    )}
+
+    {hayMas && (
+      <a class="boton boton-claro ancho" href={`${conZona(ruta, String(ver + POR_PAGINA))}#mas`} style="margin-top:14px" rel="nofollow">
+        Ver más
+      </a>
+    )}
+
+    {filas.length === 0 && (
+      <div class="tarjeta aviso" style="text-align:center">
+        <p style="margin:0">{vacio}</p>
+        <p style="margin:8px 0 0">
+          {sec.clave === "clasificados"
+            ? <a href="/panel/publicar">¿Vendes algo? Publícalo gratis</a>
+            : <a href="/panel/crear">¿Tienes uno? Crea tu tienda gratis</a>}
+        </p>
+      </div>
+    )}
+
+    <form action="/buscar" style="margin-top:24px">
+      <div class="tarjeta fila" style="padding:0 12px">
+        <input name="q" type="search" class="campo-limpio" placeholder={`Buscar en ${m.nombre}…`} aria-label="Buscar" />
+        <input type="hidden" name="lugar" value={`${m.estado.slug}/${m.slug}`} />
+        <button type="submit" class="boton-texto">Buscar</button>
+      </div>
+    </form>
+  </main>
+</Base>

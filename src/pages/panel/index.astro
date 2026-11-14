@@ -15,10 +15,12 @@ if (!t) {
 }
 
 const hace7dias = new Date(Date.now() - 7 * 864e5).toISOString();
-const [{ count: contactos }, { data: esAdmin }] = await Promise.all([
+const [{ count: contactos }, { data: esAdmin }, { count: categorias }] = await Promise.all([
   sb.from("contactos").select("id", { count: "exact", head: true }).eq("vendedor_id", t.id).gte("creado_en", hace7dias),
   sb.rpc("es_admin"),
+  sb.from("vendedor_categorias").select("categoria_id", { count: "exact", head: true }).eq("vendedor_id", t.id),
 ]);
+const faltanCategorias = t.seccion_principal && t.seccion_principal !== "clasificados" && !categorias;
 
 const abierto = estaAbiertoAhora(t);
 const enHorario = dentroDeHorario(t.hora_desde, t.hora_hasta);
@@ -51,6 +53,12 @@ const suspendida = t.estado !== "activo";
     </a>
 
     {suspendida && <p class="mensaje error">Tu tienda está suspendida y no aparece en Lokl. {t.motivo_suspension} Escríbenos para revisarlo.</p>}
+    {faltanCategorias && (
+      <p class="mensaje ok">
+        Para salir en las listas (por ejemplo "Pizza" o "Moto taxi"), marca qué vendes.
+        <a href="/panel/tienda#categorias">Elegir mis categorías</a>
+      </p>
+    )}
     {zonaPendiente && <p class="mensaje ok">Tu zona "{t.zonas.nombre}" está en revisión. Tu tienda ya funciona.</p>}
 
     <section class="tarjeta bloque">

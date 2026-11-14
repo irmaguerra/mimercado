@@ -4,10 +4,12 @@ import Base from "@/layouts/Base.astro";
 import Logo from "@/components/Logo.astro";
 import Icono from "@/components/Icono.astro";
 import CampoZona from "@/components/CampoZona.astro";
+import CampoCategorias from "@/components/CampoCategorias.astro";
 import { miTienda } from "@/lib/sesion.js";
 import { QUE_HACES, MODALIDAD_COCINA, resolverZona } from "@/lib/vendedor.js";
 import { slugDisponible } from "@/lib/slug.js";
 import { normalizarNumero, esCelularValido } from "@/lib/whatsapp.js";
+import { categoriasDeSeccion, categoriasMarcables, leerCategorias } from "@/lib/listados.js";
 
 const { sb, usuario } = Astro.locals;
 if (await miTienda(sb, usuario.id)) return Astro.redirect("/panel", 302);
@@ -19,6 +21,8 @@ let error = "";
 let detalle = "";
 let zonaElegida = null;
 let valores = { nombre: "", whatsapp: "", modalidad: "" };
+let arbol = [];
+let elegidas = new Set();
 
 if (Astro.request.method === "POST") {
   const f = await Astro.request.formData();
@@ -29,8 +33,12 @@ if (Astro.request.method === "POST") {
     modalidad: String(f.get("modalidad") || ""),
   };
   zonaElegida = Number(f.get("zona_id")) || null;
+  arbol = que && que !== "clasificados" ? await categoriasDeSeccion(sb, que) : [];
+  const cats = leerCategorias(f, categoriasMarcables(arbol));
+  elegidas = new Set(cats.ids);
 
   if (!que) error = "Elige qué haces.";
+  else if (cats.error) error = cats.error;
   else if (valores.nombre.length < 2) error = que === "clasificados" ? "Escribe tu nombre." : "Escribe el nombre de tu tienda.";
   else if (!esCelularValido(valores.whatsapp)) error = "Escribe un número de WhatsApp de Venezuela, por ejemplo 0414 123 4567.";
   else if (que === "comida" && !MODALIDAD_COCINA[valores.modalidad]) error = "Cuéntanos cómo vendes tu comida.";
@@ -43,7 +51,7 @@ if (Astro.request.method === "POST") {
         const { data } = await sb.rpc("slug_disponible", { s });
         return data === false;
       });
-      const { error: e } = await sb.from("vendedores").insert({
+      const { data: nueva, error: e } = await sb.from("vendedores").insert({
         usuario_id: usuario.id,
         slug,
         nombre: valores.nombre,
@@ -52,7 +60,7 @@ if (Astro.request.method === "POST") {
         whatsapp: normalizarNumero(valores.whatsapp),
         zona_id: zona.zonaId,
         modalidad_cocina: que === "comida" ? valores.modalidad : null,
-      });
+      }).select("id").single();
       if (e) {
         console.error("crear tienda", e);
         detalle = [e.code, e.message].filter(Boolean).join(" · ");
@@ -60,11 +68,20 @@ if (Astro.request.method === "POST") {
           ? "Ya hay una tienda con ese nombre. Prueba con otro nombre, por ejemplo agregando tu zona."
           : "No pudimos crear tu tienda. Intenta de nuevo.";
       }
-      else return Astro.redirect("/panel/lista", 303);
+      else {
+        // Las categorías no frenan la creación: si fallan, las marca luego en "Editar mi tienda".
+        if (elegidas.size) {
+          const { error: ec } = await sb.from("vendedor_categorias")
+            .insert([...elegidas].map((categoria_id) => ({ vendedor_id: nueva.id, categoria_id })));
+          if (ec) console.error("categorias al crear", ec);
+        }
+        return Astro.redirect("/panel/lista", 303);
+      }
     }
   }
 }
 const opcion = que ? QUE_HACES[que] : null;
+if (que && que !== "clasificados" && !arbol.length) arbol = await categoriasDeSeccion(sb, que);
 ---
 <Base titulo="Crea tu tienda" barra={false}>
   <main class="contenedor angosto" style="padding-top:20px">
@@ -114,6 +131,7 @@ const opcion = que ? QUE_HACES[que] : null;
             </fieldset>
           )}
           <CampoZona sb={sb} actual={zonaElegida} />
+          <CampoCategorias arbol={arbol} elegidas={elegidas} titulo={que === "servicios" ? "¿Qué servicios ofreces? (opcional)" : "¿Qué vendes? (opcional)"} />
           <button class="boton ancho" type="submit">Crear mi tienda</button>
         </form>
       </>
