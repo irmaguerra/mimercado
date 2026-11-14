@@ -1,6 +1,6 @@
 # Módulo 5 — Buscador y listados
 
-**Estado:** 🛠️ publicado · `sql/07` corrido · falta probar en el teléfono · 14 de noviembre de 2026
+**Estado:** ✅ aprobado por Irma el 14 de noviembre de 2026. Probado en el teléfono: categorías, listados, "Ver primero", clasificados por categoría, buscador y "Lo nuevo".
 
 ## Decisiones de Irma (14/11/2026)
 
@@ -37,7 +37,7 @@ Todas las listas muestran 30 y tienen el botón "Ver más". La pestaña **Buscar
 ## Pendiente
 
 1. ✅ `sql/07` corrido el 14/11/2026.
-2. Subir el código y **probar en el teléfono**:
+2. ✅ Publicado y probado en el teléfono (14/11/2026):
    - En "Editar mi tienda", marcar categorías. Si se marcan 11, debe salir un aviso.
    - Ver tu tienda en la sección y en su categoría, y probar "Ver primero".
    - Publicar un clasificado eligiendo su categoría y verlo en esa lista.

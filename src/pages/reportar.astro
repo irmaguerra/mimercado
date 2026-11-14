@@ -1,0 +1,79 @@
+---
+// /reportar?p=<id> (un producto) o /reportar?t=<enlace> (una tienda). Sin cuenta y sin JavaScript.
+// Cada teléfono reporta una sola vez cada cosa (cookie lokl_cliente). Con 3 reportes de personas
+// distintas una publicación se oculta sola hasta que Lokl la revise; una tienda nunca se suspende sola.
+// No se cachea: depende de la cookie de cada persona.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import { supabasePublico } from "@/lib/supabase/servidor.js";
+import { MOTIVOS_REPORTE, clienteDeCookie } from "@/lib/moderacion.js";
+
+const params = Astro.url.searchParams;
+const pubId = Number(params.get("p")) || null;
+const slug = params.get("t") || "";
+const sb = supabasePublico();
+
+let objetivo = null; // { tipo, id, nombre, volver }
+if (pubId) {
+  const { data } = await sb.from("publicaciones").select("id, titulo").eq("id", pubId).eq("estado", "publicada").maybeSingle();
+  if (data) objetivo = { tipo: "publicacion", id: String(data.id), nombre: data.titulo, volver: `/p/${data.id}` };
+} else if (/^[a-z0-9-]{1,60}$/.test(slug)) {
+  const { data } = await sb.from("vendedores").select("id, nombre, slug").eq("slug", slug).eq("estado", "activo").maybeSingle();
+  if (data) objetivo = { tipo: "vendedor", id: data.id, nombre: data.nombre, volver: `/${data.slug}` };
+}
+if (!objetivo) return Astro.rewrite("/404");
+
+let resultado = "";
+let error = "";
+let motivo = "";
+let detalle = "";
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  motivo = String(f.get("motivo") || "");
+  detalle = String(f.get("detalle") || "").trim().slice(0, 500);
+  if (!MOTIVOS_REPORTE[motivo]) error = "Elige un motivo.";
+  else if (motivo === "otro" && detalle.length < 5) error = "Cuéntanos en pocas palabras qué pasa.";
+  else {
+    const { data, error: e } = await sb.rpc("reportar", {
+      p_objetivo: objetivo.tipo, p_objetivo_id: objetivo.id, p_cliente_id: clienteDeCookie(Astro.cookies),
+      p_motivo: motivo, p_detalle: detalle || null,
+    });
+    if (e) { console.error("reportar", e); error = "No pudimos enviar tu reporte. Intenta de nuevo."; }
+    else resultado = data; // ok · repetido · no_existe
+  }
+}
+const que = objetivo.tipo === "vendedor" ? "esta tienda" : "esta publicación";
+---
+<Base titulo="Reportar">
+  <main class="contenedor angosto">
+    <Cabecera />
+    <p style="margin:18px 0 0"><a href={objetivo.volver}>‹ Volver</a></p>
+    <h1 style="font-size:22px;margin:8px 0 4px">Reportar {que}</h1>
+    <p class="texto-2" style="margin:0 0 16px">{objetivo.nombre}</p>
+
+    {resultado === "ok" || resultado === "repetido" ? (
+      <div class="tarjeta aviso">
+        <strong style="display:block">{resultado === "ok" ? "Gracias por avisarnos." : "Ya habías reportado esto."}</strong>
+        Lo vamos a revisar. Tu reporte es anónimo: nadie sabrá que fuiste tú.
+        <p style="margin:12px 0 0"><a href={objetivo.volver}>Volver</a></p>
+      </div>
+    ) : resultado === "no_existe" ? (
+      <p class="tarjeta aviso">Esto ya no está publicado en Lokl. Gracias de todas formas.</p>
+    ) : (
+      <form method="post" class="formulario">
+        {error && <p class="mensaje error" role="alert">{error}</p>}
+        <fieldset class="opciones-radio">
+          <legend>¿Qué pasa?</legend>
+          {Object.entries(MOTIVOS_REPORTE).map(([clave, texto]) => (
+            <label class="radio"><input type="radio" name="motivo" value={clave} checked={motivo === clave} required /> {texto}</label>
+          ))}
+        </fieldset>
+        <label>Cuéntanos más (opcional)
+          <textarea name="detalle" rows="3" maxlength="500" placeholder="Qué pasó, cuándo…">{detalle}</textarea>
+        </label>
+        <small class="texto-2">Tu reporte es anónimo. Lokl lo revisa; si varias personas reportan lo mismo, se oculta mientras tanto.</small>
+        <button class="boton ancho" type="submit">Enviar reporte</button>
+      </form>
+    )}
+  </main>
+</Base>

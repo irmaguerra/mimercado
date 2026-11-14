@@ -1,0 +1,83 @@
+---
+// /admin/palabras — Palabras prohibidas. Empieza vacía (decisión 20): se agregan al ver casos.
+// "Bloquear" no deja publicar; "Revisar" guarda la publicación pero no sale hasta aprobarla.
+// Se comparan sin acentos ni mayúsculas y como palabra completa ("arma" no frena "armario").
+import Base from "@/layouts/Base.astro";
+import { ACCION_PALABRA, limpiarPalabra } from "@/lib/moderacion.js";
+
+const { sb } = Astro.locals;
+let aviso = "";
+let error = "";
+
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  const quitar = Number(f.get("quitar")) || null;
+  const cambiar = Number(f.get("cambiar")) || null;
+  const accion = ACCION_PALABRA[f.get("accion")] ? String(f.get("accion")) : "revisar";
+  if (quitar) {
+    const { error: e } = await sb.from("palabras_prohibidas").delete().eq("id", quitar);
+    if (e) error = "No se pudo quitar."; else aviso = "Palabra quitada.";
+  } else if (cambiar) {
+    const { error: e } = await sb.from("palabras_prohibidas").update({ accion }).eq("id", cambiar);
+    if (e) error = "No se pudo cambiar."; else aviso = "Cambiado.";
+  } else {
+    const palabra = limpiarPalabra(f.get("palabra"));
+    if (!palabra) error = "Escribe una palabra o frase corta, solo con letras y números.";
+    else {
+      const { error: e } = await sb.from("palabras_prohibidas").insert({ palabra, accion });
+      if (e?.code === "23505") error = `"${palabra}" ya estaba en la lista.`;
+      else if (e) { console.error("palabras", e); error = "No se pudo agregar."; }
+      else aviso = `"${palabra}" agregada.`;
+    }
+  }
+}
+
+const { data: palabras } = await sb.from("palabras_prohibidas").select("id, palabra, accion").order("palabra");
+---
+<Base titulo="Palabras prohibidas">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/admin">‹ Administración</a></p>
+    <h1 style="font-size:24px;margin:8px 0 4px">Palabras prohibidas</h1>
+    <p class="texto-2" style="margin:0 0 12px;font-size:14px">
+      Se buscan en el nombre y la descripción de cada publicación, sin importar acentos ni mayúsculas, y solo como palabra completa
+      ("arma" no frena "armario"). Las de <strong>Bloquear</strong> también se revisan en el nombre y la descripción de las tiendas.
+    </p>
+    {aviso && <p class="mensaje ok" role="status">{aviso}</p>}
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+
+    <form method="post" class="formulario tarjeta bloque">
+      <label>Palabra o frase
+        <input type="text" name="palabra" required maxlength="40" placeholder="Ej. arma blanca" />
+      </label>
+      <fieldset class="opciones-radio">
+        <legend>¿Qué hacer?</legend>
+        {Object.entries(ACCION_PALABRA).map(([k, txt]) => (
+          <label class="radio"><input type="radio" name="accion" value={k} checked={k === "revisar"} /> {txt}</label>
+        ))}
+      </fieldset>
+      <button class="boton ancho" type="submit">Agregar</button>
+    </form>
+
+    <h2 style="font-size:18px;margin:22px 0 8px">En la lista ({palabras?.length ?? 0})</h2>
+    {!palabras?.length ? <p class="texto-2">Todavía no hay palabras. Agrégalas a medida que veas casos.</p> : (
+      <ul class="lista-mis-publicaciones">
+        {palabras.map((p) => (
+          <li class="tarjeta fila-entre" style="gap:8px;flex-wrap:wrap">
+            <span><strong>{p.palabra}</strong> <span class:list={["etiqueta-estado", { apagada: p.accion === "revisar" }]}>· {p.accion === "bloquear" ? "Bloquea" : "Revisa"}</span></span>
+            <span class="acciones-publicacion" style="margin:0">
+              <form method="post">
+                <input type="hidden" name="cambiar" value={p.id} />
+                <input type="hidden" name="accion" value={p.accion === "bloquear" ? "revisar" : "bloquear"} />
+                <button class="boton-texto" type="submit">Cambiar a {p.accion === "bloquear" ? "revisar" : "bloquear"}</button>
+              </form>
+              <form method="post">
+                <input type="hidden" name="quitar" value={p.id} />
+                <button class="boton-texto" type="submit">Quitar</button>
+              </form>
+            </span>
+          </li>
+        ))}
+      </ul>
+    )}
+  </main>
+</Base>

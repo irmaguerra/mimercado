@@ -11,6 +11,7 @@ import {
 } from "@/lib/publicacion.js";
 import { leerPrecio, precioParaCampo } from "@/lib/precio.js";
 import { categoriasDeSeccion, categoriasMarcables } from "@/lib/listados.js";
+import { MENSAJE_PALABRA } from "@/lib/moderacion.js";
 
 const { sb, usuario } = Astro.locals;
 const t = await miTienda(sb, usuario.id);
@@ -86,6 +87,7 @@ if (Astro.request.method === "POST") {
       const m = (e.message || "").toLowerCase();
       error = m.includes("límite") ? "Llegaste al límite de publicaciones de hoy. Mañana puedes publicar más."
         : m.includes("suspendida") ? "Tu tienda está suspendida: no puedes publicar por ahora."
+        : m.includes("no permitida") ? MENSAJE_PALABRA
         : "No pudimos guardar. Intenta de nuevo.";
     } else {
       pubId = data.id;

@@ -1,0 +1,30 @@
+---
+// /admin/bitacora — Quién ocultó, suspendió, verificó o reactivó qué, cuándo y por qué.
+import Base from "@/layouts/Base.astro";
+import { ACCIONES } from "@/lib/moderacion.js";
+
+const { sb } = Astro.locals;
+const { data: filas, error } = await sb.rpc("bitacora", { p_limite: 200 });
+if (error) console.error("bitacora", error);
+const fecha = (d) => new Date(d).toLocaleString("es-VE", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "America/Caracas" });
+---
+<Base titulo="Bitácora">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/admin">‹ Administración</a></p>
+    <h1 style="font-size:24px;margin:8px 0 12px">Bitácora</h1>
+    {!filas?.length ? <p class="texto-2">Todavía no hay acciones.</p> : (
+      <ul class="lista-mis-publicaciones">
+        {filas.map((f) => (
+          <li class="tarjeta">
+            <span class="texto-2" style="font-size:13px">{fecha(f.creado_en)}{f.admin_correo && ` · ${f.admin_correo}`}</span>
+            <span style="display:block">
+              {ACCIONES[f.accion] ?? f.accion} {f.objetivo === "vendedor" ? "la tienda" : "la publicación"}{" "}
+              <strong>{f.nombre ?? "(ya borrada)"}</strong>
+            </span>
+            {f.nota && <span class="texto-2" style="display:block;font-size:14px">"{f.nota}"</span>}
+          </li>
+        ))}
+      </ul>
+    )}
+  </main>
+</Base>

@@ -1,6 +1,6 @@
 ---
 // /admin — Administración de Lokl (solo cuentas en la tabla `admins`; lo verifica el middleware).
-// Por ahora: resumen y zonas propuestas por vendedores. Moderación, verificaciones y Súper llegan en sus módulos.
+// Resumen, zonas propuestas por vendedores y accesos a moderación (Módulo 6). El Súper llega en el Módulo 10.
 import Base from "@/layouts/Base.astro";
 import Icono from "@/components/Icono.astro";
 import { miTienda } from "@/lib/sesion.js";
@@ -18,12 +18,15 @@ if (Astro.request.method === "POST") {
   }
 }
 
-const [{ count: vendedores }, { data: zonasPendientes }, { count: sugeridas }, tienda] = await Promise.all([
+const [{ count: vendedores }, { data: zonasPendientes }, { count: sugeridas }, tienda, { data: colaPubs }, { data: colaTiendas }] = await Promise.all([
   sb.from("vendedores").select("id", { count: "exact", head: true }).eq("estado", "activo"),
   sb.from("zonas").select("id, nombre, creado_en, municipios(nombre)").eq("activa", false).order("creado_en"),
   sb.from("categorias_sugeridas").select("id", { count: "exact", head: true }).is("resuelta_en", null),
   miTienda(sb, usuario.id),
+  sb.rpc("cola_publicaciones"),
+  sb.rpc("cola_vendedores"),
 ]);
+const porRevisar = (colaPubs?.length ?? 0) + (colaTiendas?.length ?? 0);
 ---
 <Base titulo="Administración">
   <main class="contenedor angosto" style="padding-top:20px">
@@ -33,11 +36,19 @@ const [{ count: vendedores }, { data: zonasPendientes }, { count: sugeridas }, t
 
     <div class="rejilla-secciones" style="margin-top:16px">
       <div class="tarjeta bloque" style="margin:0"><strong style="font-size:28px">{vendedores ?? 0}</strong><br /><span class="texto-2">tiendas activas</span></div>
-      <div class="tarjeta bloque" style="margin:0"><strong style="font-size:28px">{zonasPendientes?.length ?? 0}</strong><br /><span class="texto-2">zonas por revisar</span></div>
+      <a href="/admin/revisar" class="tarjeta bloque enlace-tarjeta" style="margin:0"><strong style="font-size:28px" class:list={{ "texto-alerta": porRevisar > 0 }}>{porRevisar}</strong><br /><span class="texto-2">por revisar ›</span></a>
     </div>
 
+    <nav class="menu-panel" aria-label="Moderación">
+      <a href="/admin/revisar">Por revisar{porRevisar > 0 && ` (${porRevisar})`} <span aria-hidden="true">›</span></a>
+      <a href="/admin/tiendas">Tiendas: verificar y suspender <span aria-hidden="true">›</span></a>
+      <a href="/admin/palabras">Palabras prohibidas <span aria-hidden="true">›</span></a>
+      <a href="/admin/busquedas">Lo que buscan y no encuentran <span aria-hidden="true">›</span></a>
+      <a href="/admin/bitacora">Bitácora <span aria-hidden="true">›</span></a>
+    </nav>
+
     <section style="margin-top:22px">
-      <h2 style="font-size:18px;margin:0 0 8px">Zonas propuestas</h2>
+      <h2 style="font-size:18px;margin:0 0 8px">Zonas propuestas ({zonasPendientes?.length ?? 0})</h2>
       {!zonasPendientes?.length ? <p class="texto-2">No hay zonas por revisar.</p> : (
         <ul class="lista-opciones">
           {zonasPendientes.map((z) => (
@@ -62,7 +73,7 @@ const [{ count: vendedores }, { data: zonasPendientes }, { count: sugeridas }, t
 
     <nav class="menu-panel" aria-label="Más opciones">
       <span class="texto-2" style="padding:14px 0;font-size:14px">
-        Próximamente: moderación y reportes, verificaciones, categorías sugeridas ({sugeridas ?? 0}), palabras prohibidas y búsquedas sin resultado.
+        Próximamente: categorías sugeridas ({sugeridas ?? 0}).
       </span>
       {tienda && <a href="/panel">Mi tienda ({tienda.nombre}) <span aria-hidden="true">›</span></a>}
     </nav>

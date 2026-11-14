@@ -239,3 +239,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .grupo-resultados .rejilla-productos { margin-top: 12px; }
 .casillas { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0 12px; }
 .titulo-grupo { display: block; margin: 10px 0 0; font-size: 15px; }
+
+/* ───────── Moderación (Módulo 6) ───────── */
+.texto-alerta { color: var(--lokl-error); }
+.tabla-simple { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 15px; }
+.tabla-simple th { text-align: left; font-size: 13px; color: var(--texto-2); font-weight: 600; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--borde); }
+.tabla-simple td { padding: 10px 8px 10px 0; border-bottom: 1px solid var(--borde); vertical-align: top; }

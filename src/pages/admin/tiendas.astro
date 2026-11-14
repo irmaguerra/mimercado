@@ -1,0 +1,127 @@
+---
+// /admin/tiendas — Buscar una tienda para verificarla, quitarle el sello, suspenderla o reactivarla.
+// Sin búsqueda muestra las suspendidas y las verificadas.
+import Base from "@/layouts/Base.astro";
+import { METODOS_VERIFICACION } from "@/lib/moderacion.js";
+
+const { sb } = Astro.locals;
+let aviso = "";
+let error = "";
+
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  const id = String(f.get("vendedor") || "");
+  const accion = String(f.get("accion") || "");
+  const nota = String(f.get("nota") || "").trim().slice(0, 300) || null;
+  let r;
+  if (accion === "verificar") {
+    const metodo = String(f.get("metodo") || "");
+    r = METODOS_VERIFICACION[metodo]
+      ? await sb.rpc("verificar_vendedor", { p_id: id, p_metodo: metodo, p_nota: nota })
+      : { error: { message: "Elige cómo la verificaste" } };
+  } else if (accion === "quitar_verificacion") {
+    r = await sb.rpc("quitar_verificacion", { p_id: id, p_nota: nota });
+  } else {
+    r = await sb.rpc("moderar_vendedor", { p_id: id, p_accion: accion, p_nota: nota });
+  }
+  if (r.error) {
+    console.error("tiendas admin", r.error);
+    const m = r.error.message || "";
+    error = /motivo/i.test(m) ? "Escribe el motivo." : /verificaste/i.test(m) ? "Elige cómo la verificaste." : "No se pudo guardar. Intenta de nuevo.";
+  } else {
+    aviso = { verificar: "Listo: tiene el sello verde.", quitar_verificacion: "Listo: se quitó el sello.", suspender: "Listo: tienda suspendida.", reactivar: "Listo: tienda reactivada." }[accion] ?? "Listo.";
+  }
+}
+
+// Búsqueda: solo letras, números, espacios y guiones (se usa dentro del filtro de la base)
+const q = (Astro.url.searchParams.get("q") || "").replace(/[^\p{L}\p{N} -]/gu, "").trim().slice(0, 60);
+const CAMPOS = "id, nombre, slug, estado, motivo_suspension, verificado_en, zonas!vendedores_zona_id_fkey(nombre, municipios(nombre))";
+let tiendas = [];
+if (q) {
+  const { data } = await sb.from("vendedores").select(CAMPOS).or(`nombre.ilike.*${q}*,slug.ilike.*${q}*`).order("nombre").limit(30);
+  tiendas = data ?? [];
+} else {
+  const { data } = await sb.from("vendedores").select(CAMPOS).or("estado.eq.suspendido,verificado_en.not.is.null").order("nombre").limit(100);
+  tiendas = data ?? [];
+}
+// Cómo se verificó cada una (la verificación vigente)
+const verificadas = tiendas.filter((t) => t.verificado_en).map((t) => t.id);
+const { data: vers } = verificadas.length
+  ? await sb.from("verificaciones").select("vendedor_id, metodo, nota, creado_en").in("vendedor_id", verificadas).is("revocado_en", null)
+  : { data: [] };
+const verDe = new Map((vers ?? []).map((v) => [v.vendedor_id, v]));
+const fecha = (d) => new Date(d).toLocaleDateString("es-VE", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Caracas" });
+---
+<Base titulo="Tiendas">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/admin">‹ Administración</a></p>
+    <h1 style="font-size:24px;margin:8px 0 12px">Tiendas</h1>
+    {aviso && <p class="mensaje ok" role="status">{aviso}</p>}
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+
+    <form method="get" class="tarjeta fila" style="padding:0 12px">
+      <input name="q" type="search" class="campo-limpio" value={q} placeholder="Nombre o enlace de la tienda" aria-label="Buscar tienda" />
+      <button type="submit" class="boton-texto">Buscar</button>
+    </form>
+    {!q && <p class="texto-2" style="font-size:14px;margin:12px 0 0">Mostrando las suspendidas y las verificadas. Busca una tienda para verificarla.</p>}
+    {q && !tiendas.length && <p class="texto-2" style="margin-top:12px">No hay tiendas con "{q}".</p>}
+
+    <ul class="lista-mis-publicaciones">
+      {tiendas.map((t) => {
+        const v = verDe.get(t.id);
+        return (
+          <li class="tarjeta">
+            <strong style="display:block"><a href={`/${t.slug}`}>{t.nombre}</a></strong>
+            <span class="texto-2" style="font-size:14px">/{t.slug} · {[t.zonas?.nombre, t.zonas?.municipios?.nombre].filter(Boolean).join(", ")}</span>
+            {t.estado !== "activo" && <p class="mensaje error" style="margin:8px 0 0">Suspendida: {t.motivo_suspension}</p>}
+            {t.verificado_en && (
+              <p class="etiqueta-estado" style="margin:6px 0 0;font-size:14px">
+                ✓ Verificada el {fecha(t.verificado_en)}{v && ` · ${METODOS_VERIFICACION[v.metodo]}`}{v?.nota && ` · ${v.nota}`}
+              </p>
+            )}
+            <div class="acciones-publicacion" style="margin-top:8px">
+              {!t.verificado_en ? (
+                <details class="confirmar-borrar">
+                  <summary class="boton-texto">Verificar…</summary>
+                  <form method="post">
+                    <input type="hidden" name="vendedor" value={t.id} /><input type="hidden" name="accion" value="verificar" />
+                    <select name="metodo" required style="min-height:40px">
+                      <option value="">¿Cómo la verificaste?</option>
+                      {Object.entries(METODOS_VERIFICACION).map(([k, txt]) => <option value={k}>{txt}</option>)}
+                    </select>
+                    <input type="text" name="nota" maxlength="300" placeholder="Nota (opcional)" style="flex:1;min-width:160px;min-height:40px" />
+                    <button class="boton" type="submit">Dar el sello</button>
+                  </form>
+                </details>
+              ) : (
+                <details class="confirmar-borrar">
+                  <summary class="boton-texto">Quitar el sello…</summary>
+                  <form method="post">
+                    <input type="hidden" name="vendedor" value={t.id} /><input type="hidden" name="accion" value="quitar_verificacion" />
+                    <input type="text" name="nota" maxlength="300" placeholder="Por qué (opcional)" style="flex:1;min-width:160px;min-height:40px" />
+                    <button class="boton boton-claro" type="submit">Quitar</button>
+                  </form>
+                </details>
+              )}
+              {t.estado === "activo" ? (
+                <details class="confirmar-borrar">
+                  <summary class="boton-texto">Suspender…</summary>
+                  <form method="post">
+                    <input type="hidden" name="vendedor" value={t.id} /><input type="hidden" name="accion" value="suspender" />
+                    <input type="text" name="nota" required maxlength="300" placeholder="Motivo (lo verá el vendedor)" style="flex:1;min-width:160px;min-height:40px" />
+                    <button class="boton" type="submit">Suspender</button>
+                  </form>
+                </details>
+              ) : (
+                <form method="post">
+                  <input type="hidden" name="vendedor" value={t.id} /><input type="hidden" name="accion" value="reactivar" />
+                  <button class="boton boton-claro" type="submit">Reactivar</button>
+                </form>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  </main>
+</Base>

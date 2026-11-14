@@ -9,6 +9,7 @@ import { MODALIDAD_COCINA, ALCANCE_ENVIO, resolverZona } from "@/lib/vendedor.js
 import { crearSlug, esSlugValido } from "@/lib/slug.js";
 import { normalizarNumero, esCelularValido } from "@/lib/whatsapp.js";
 import { categoriasDeSeccion, categoriasMarcables, leerCategorias } from "@/lib/listados.js";
+import { esPalabraBloqueada, MENSAJE_PALABRA } from "@/lib/moderacion.js";
 
 const { sb, usuario } = Astro.locals;
 let t = await miTienda(sb, usuario.id);
@@ -68,7 +69,7 @@ if (Astro.request.method === "POST") {
       cambios.zona_id = zona.zonaId;
       cambios.whatsapp = normalizarNumero(cambios.whatsapp);
       const { error: e } = await sb.from("vendedores").update(cambios).eq("id", t.id);
-      if (e) error = "No pudimos guardar. Intenta de nuevo.";
+      if (e) error = esPalabraBloqueada(e) ? MENSAJE_PALABRA : "No pudimos guardar. Intenta de nuevo.";
       else {
         if (cats) error = await guardarCategorias(cats.ids);
         if (!error) return Astro.redirect("/panel/tienda?ok=1", 303);

@@ -90,6 +90,8 @@ const hora = (h) => String(h).slice(0, 5);
 
     <p style="margin-top:20px;text-align:center">
       <a href={enlaceCompartir(`Mira ${t.nombre} en Lokl: ${url}`)} class="texto-2" style="font-size:14px">Compartir esta tienda</a>
+      <span class="texto-2" aria-hidden="true"> · </span>
+      <a href={`/reportar?t=${t.slug}`} class="texto-2" style="font-size:14px" rel="nofollow">Reportar</a>
     </p>
   </main>
 </Base>

@@ -1,0 +1,36 @@
+---
+// /verificado — Qué significa el sello "Verificado por Lokl" (versión corta, decisión 21).
+// La versión completa llega con las páginas informativas del Módulo 12. HTML puro.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import Icono from "@/components/Icono.astro";
+import { INFORMATIVA } from "@/lib/cache.js";
+import { METODOS_VERIFICACION } from "@/lib/moderacion.js";
+
+Astro.cache.set(INFORMATIVA);
+---
+<Base titulo="Verificado por Lokl" descripcion="Qué significa el sello verde de Verificado por Lokl.">
+  <main class="contenedor angosto">
+    <Cabecera />
+    <h1 class="fila" style="font-size:24px;margin:20px 0 8px;gap:8px;color:var(--acento)">
+      <Icono nombre="verificado" tam={28} /> Verificado por Lokl
+    </h1>
+    <p>El sello verde significa que <strong>Lokl comprobó que este negocio existe</strong> y que su WhatsApp es de verdad suyo.</p>
+
+    <h2 style="font-size:18px;margin:22px 0 6px">Cómo lo comprobamos</h2>
+    <ul style="margin:0;padding-left:20px">
+      {Object.values(METODOS_VERIFICACION).map((m) => <li>{m}</li>)}
+    </ul>
+
+    <h2 style="font-size:18px;margin:22px 0 6px">Lo que no significa</h2>
+    <ul style="margin:0;padding-left:20px">
+      <li>No es un requisito para vender en Lokl: cualquiera puede publicar gratis.</li>
+      <li>Lokl no cobra ni recibe pagos. Lo que compres lo acuerdas directo con el vendedor por WhatsApp.</li>
+      <li>El sello se puede quitar si el negocio deja de cumplir.</li>
+    </ul>
+
+    <p class="tarjeta aviso">
+      Si algo no está bien con un vendedor, toca <strong>"Reportar"</strong> al final de su tienda o de su producto. Es anónimo.
+    </p>
+  </main>
+</Base>

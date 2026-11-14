@@ -1,0 +1,33 @@
+---
+// /admin/busquedas — Lo que la gente busca y no encuentra: dice qué vendedores hacen falta en cada ciudad.
+import Base from "@/layouts/Base.astro";
+
+const { sb } = Astro.locals;
+const dias = Astro.url.searchParams.get("dias") === "30" ? 30 : 7;
+const { data: filas, error } = await sb.rpc("busquedas_sin_resultado", { p_dias: dias });
+if (error) console.error("busquedas", error);
+const fecha = (d) => new Date(d).toLocaleDateString("es-VE", { day: "numeric", month: "short", timeZone: "America/Caracas" });
+---
+<Base titulo="Búsquedas sin resultado">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/admin">‹ Administración</a></p>
+    <h1 style="font-size:24px;margin:8px 0 4px">Lo que buscan y no encuentran</h1>
+    <p class="texto-2" style="margin:0 0 12px;font-size:14px">Si algo se repite, falta un vendedor de eso. También puede faltar un sinónimo.</p>
+
+    <ul class="chips" aria-label="Período" style="margin-top:0">
+      <li><a href="/admin/busquedas" class="chip" aria-current={dias === 7 ? "true" : undefined}>Últimos 7 días</a></li>
+      <li><a href="/admin/busquedas?dias=30" class="chip" aria-current={dias === 30 ? "true" : undefined}>Últimos 30 días</a></li>
+    </ul>
+
+    {!filas?.length ? <p class="texto-2" style="margin-top:16px">Ninguna búsqueda sin resultado en este período.</p> : (
+      <table class="tabla-simple">
+        <thead><tr><th>Buscaron</th><th>Veces</th><th>Dónde</th><th>Última</th></tr></thead>
+        <tbody>
+          {filas.map((f) => (
+            <tr><td><strong>{f.texto}</strong></td><td>{f.veces}</td><td>{f.municipio ?? "—"}</td><td>{fecha(f.ultima)}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    )}
+  </main>
+</Base>

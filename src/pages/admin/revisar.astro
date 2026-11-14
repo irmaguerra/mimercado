@@ -1,0 +1,111 @@
+---
+// /admin/revisar — Lo frenado por el filtro de palabras, lo oculto por reportes y las tiendas reportadas.
+// Cada acción pasa por una función de la base que exige ser admin y deja nota en la bitácora.
+import Base from "@/layouts/Base.astro";
+import { resumirMotivos } from "@/lib/moderacion.js";
+
+const { sb } = Astro.locals;
+let aviso = "";
+let error = "";
+
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  const accion = String(f.get("accion") || "");
+  const nota = String(f.get("nota") || "").trim().slice(0, 300) || null;
+  const { error: e } = f.get("publicacion")
+    ? await sb.rpc("moderar_publicacion", { p_id: Number(f.get("publicacion")), p_accion: accion, p_nota: nota })
+    : await sb.rpc("moderar_vendedor", { p_id: String(f.get("vendedor")), p_accion: accion, p_nota: nota });
+  if (e) { console.error("moderar", e); error = /motivo/i.test(e.message) ? "Escribe el motivo." : "No se pudo guardar. Intenta de nuevo."; }
+  else aviso = { aprobar: "Listo: vuelve a estar publicada.", ocultar: "Listo: quedó oculta.", descartar: "Listo: reportes descartados.", suspender: "Listo: tienda suspendida." }[accion] ?? "Listo.";
+}
+
+const [{ data: pubs, error: e1 }, { data: tiendas, error: e2 }] = await Promise.all([
+  sb.rpc("cola_publicaciones"),
+  sb.rpc("cola_vendedores"),
+]);
+if (e1 || e2) console.error("cola", e1 || e2);
+
+const ESTADO = {
+  en_revision: "Frenada por el filtro de palabras",
+  oculta_reportes: "Oculta por reportes",
+  publicada: "Publicada, con reportes",
+};
+---
+<Base titulo="Por revisar">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/admin">‹ Administración</a></p>
+    <h1 style="font-size:24px;margin:8px 0 4px">Por revisar</h1>
+    <p class="texto-2" style="margin:0 0 12px;font-size:14px">"Está bien" la vuelve a mostrar y descarta sus reportes. Ocultar y suspender piden un motivo, que el vendedor verá.</p>
+    {aviso && <p class="mensaje ok" role="status">{aviso}</p>}
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+
+    <h2 style="font-size:18px;margin:20px 0 8px">Publicaciones ({pubs?.length ?? 0})</h2>
+    {!pubs?.length ? <p class="texto-2">No hay nada por revisar. 🎉</p> : (
+      <ul class="lista-mis-publicaciones">
+        {pubs.map((p) => (
+          <li class="tarjeta">
+            <div class="fila" style="gap:12px;align-items:flex-start">
+              {p.foto_mini ? <img src={p.foto_mini} alt="" width="72" height="72" class="foto-lista" loading="lazy" />
+                : <span class="foto-lista foto-vacia" style="width:72px;height:72px" aria-hidden="true"></span>}
+              <div style="min-width:0">
+                <strong style="display:block">{p.titulo}</strong>
+                <span class="texto-2" style="font-size:14px">de <a href={`/admin/tiendas?q=${p.vendedor_slug}`}>{p.vendedor_nombre}</a></span>
+                <span class="etiqueta-estado" style="display:block;font-size:14px">{ESTADO[p.estado] ?? p.estado}</span>
+              </div>
+            </div>
+            {p.descripcion && <p style="margin:8px 0 0;font-size:14px;white-space:pre-line">{p.descripcion}</p>}
+            {p.reportes > 0 && (
+              <p style="margin:8px 0 0;font-size:14px"><strong>{p.reportes} {p.reportes === 1 ? "reporte" : "reportes"}:</strong> {resumirMotivos(p.motivos)}</p>
+            )}
+            {p.detalles?.length > 0 && (
+              <ul class="texto-2" style="margin:4px 0 0;padding-left:18px;font-size:14px">{p.detalles.map((d) => <li>"{d}"</li>)}</ul>
+            )}
+            <div class="acciones-publicacion" style="margin-top:10px">
+              <form method="post"><input type="hidden" name="publicacion" value={p.id} /><input type="hidden" name="accion" value="aprobar" />
+                <button class="boton boton-claro" type="submit">Está bien</button></form>
+              <details class="confirmar-borrar">
+                <summary class="boton-texto">Ocultar…</summary>
+                <form method="post">
+                  <input type="hidden" name="publicacion" value={p.id} /><input type="hidden" name="accion" value="ocultar" />
+                  <input type="text" name="nota" required maxlength="300" placeholder="Motivo (lo verá el vendedor)" style="flex:1;min-width:200px;min-height:40px" />
+                  <button class="boton" type="submit">Ocultar</button>
+                </form>
+              </details>
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    <h2 style="font-size:18px;margin:28px 0 8px">Tiendas reportadas ({tiendas?.length ?? 0})</h2>
+    <p class="texto-2" style="margin:0 0 8px;font-size:14px">Las tiendas nunca se suspenden solas: decides tú.</p>
+    {!tiendas?.length ? <p class="texto-2">Ninguna tienda reportada.</p> : (
+      <ul class="lista-mis-publicaciones">
+        {tiendas.map((t) => (
+          <li class="tarjeta">
+            <strong style="display:block"><a href={`/${t.slug}`}>{t.nombre}</a>{t.verificado && " ✓"}</strong>
+            {t.estado !== "activo" && <span class="etiqueta-estado apagada">Suspendida</span>}
+            <p style="margin:6px 0 0;font-size:14px"><strong>{t.reportes} {t.reportes === 1 ? "reporte" : "reportes"}:</strong> {resumirMotivos(t.motivos)}</p>
+            {t.detalles?.length > 0 && (
+              <ul class="texto-2" style="margin:4px 0 0;padding-left:18px;font-size:14px">{t.detalles.map((d) => <li>"{d}"</li>)}</ul>
+            )}
+            <div class="acciones-publicacion" style="margin-top:10px">
+              <form method="post"><input type="hidden" name="vendedor" value={t.id} /><input type="hidden" name="accion" value="descartar" />
+                <button class="boton boton-claro" type="submit">Está bien</button></form>
+              {t.estado === "activo" && (
+                <details class="confirmar-borrar">
+                  <summary class="boton-texto">Suspender…</summary>
+                  <form method="post">
+                    <input type="hidden" name="vendedor" value={t.id} /><input type="hidden" name="accion" value="suspender" />
+                    <input type="text" name="nota" required maxlength="300" placeholder="Motivo (lo verá el vendedor)" style="flex:1;min-width:200px;min-height:40px" />
+                    <button class="boton" type="submit">Suspender</button>
+                  </form>
+                </details>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+  </main>
+</Base>

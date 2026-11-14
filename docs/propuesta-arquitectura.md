@@ -407,3 +407,9 @@ Meta: **tienda lista en menos de 2 minutos**, desde el teléfono.
 | 13 | Filtro "Ver primero: tu sector" en los listados: ordena, no esconde | **Aprobado** (14/11/2026) |
 | 14 | El bloque de Lokl Súper en los resultados queda para el Módulo 10 y el autocompletado para después | **Aprobado** (14/11/2026) |
 | 15 | Categorías: cada tienda marca hasta 10 de su sección (antes 3) y sus productos salen por ella; en clasificados cada anuncio elige una categoría al publicarse | **Aprobado** (14/11/2026) |
+| 16 | Motivos de reporte: estafa o engaño, algo prohibido, ofensivo, ya no existe o no contesta, otro | **Aprobado** (14/11/2026) |
+| 17 | Una publicación se oculta sola con 3 reportes de personas distintas, hasta que el admin la revise | **Aprobado** (14/11/2026) |
+| 18 | Las tiendas reportadas nunca se suspenden solas: decide el admin | **Aprobado** (14/11/2026) |
+| 19 | Palabras prohibidas: "Bloquear" no deja publicar; "Revisar" guarda pero no sale hasta aprobarla | **Aprobado** (14/11/2026) |
+| 20 | La lista de palabras prohibidas empieza vacía y se llena desde el admin | **Aprobado** (14/11/2026) |
+| 21 | `/verificado` en versión corta desde el Módulo 6; la completa en el Módulo 12 | **Aprobado** (14/11/2026) |

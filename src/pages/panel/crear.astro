@@ -10,6 +10,7 @@ import { QUE_HACES, MODALIDAD_COCINA, resolverZona } from "@/lib/vendedor.js";
 import { slugDisponible } from "@/lib/slug.js";
 import { normalizarNumero, esCelularValido } from "@/lib/whatsapp.js";
 import { categoriasDeSeccion, categoriasMarcables, leerCategorias } from "@/lib/listados.js";
+import { esPalabraBloqueada, MENSAJE_PALABRA } from "@/lib/moderacion.js";
 
 const { sb, usuario } = Astro.locals;
 if (await miTienda(sb, usuario.id)) return Astro.redirect("/panel", 302);
@@ -66,6 +67,7 @@ if (Astro.request.method === "POST") {
         detalle = [e.code, e.message].filter(Boolean).join(" · ");
         error = e.code === "23505" && /slug/.test(e.message || "")
           ? "Ya hay una tienda con ese nombre. Prueba con otro nombre, por ejemplo agregando tu zona."
+          : esPalabraBloqueada(e) ? MENSAJE_PALABRA
           : "No pudimos crear tu tienda. Intenta de nuevo.";
       }
       else {
