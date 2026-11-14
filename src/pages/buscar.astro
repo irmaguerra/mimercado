@@ -65,7 +65,7 @@ const con = (cambios) => {
 };
 const comoTienda = (r) => ({
   slug: r.vendedor_slug, nombre: r.titulo, logo_url: r.foto_mini, zona: r.zona,
-  verificado: r.verificado, abierto: r.abierto, descripcion: r.subtitulo,
+  verificado: r.verificado, abierto: r.abierto, descripcion: r.subtitulo, servicio: r.seccion === "servicios",
 });
 const comoProducto = (r) => ({
   id: r.id, titulo: r.titulo, precio: r.precio, moneda: r.moneda, foto_mini: r.foto_mini, agotado: r.agotado, zona: r.zona,

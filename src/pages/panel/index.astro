@@ -5,6 +5,7 @@ import Icono from "@/components/Icono.astro";
 import { miTienda } from "@/lib/sesion.js";
 import { estaAbiertoAhora, dentroDeHorario } from "@/lib/horario.js";
 import { enlaceCompartir } from "@/lib/whatsapp.js";
+import { esServicio, textoAbierto } from "@/lib/vendedor.js";
 
 const { sb, usuario } = Astro.locals;
 const t = await miTienda(sb, usuario.id);
@@ -24,12 +25,18 @@ const faltanCategorias = t.seccion_principal && t.seccion_principal !== "clasifi
 
 const abierto = estaAbiertoAhora(t);
 const enHorario = dentroDeHorario(t.hora_desde, t.hora_hasta);
-const textoBoton = t.forzar_abierto === true ? "Volver a mi horario" : abierto ? "Cerrar ahora" : "Abrir ahora";
+// Los servicios dicen "Disponible / No disponible" con el mismo botón (decisión 23)
+const servicio = esServicio(t);
+const [palAbierto, palCerrado] = servicio ? ["disponible", "no disponible"] : ["abierto", "cerrado"];
+const textoBoton = t.forzar_abierto === true ? "Volver a mi horario"
+  : servicio ? (abierto ? "No estoy disponible" : "Estoy disponible")
+  : abierto ? "Cerrar ahora" : "Abrir ahora";
 const explicacion =
-  t.forzar_abierto === true ? "Abriste a mano. Se mantiene abierto hasta que toques el botón."
-  : t.forzar_abierto === false ? "Cerraste a mano. Se mantiene cerrado hasta que toques el botón."
+  t.forzar_abierto === true ? `Lo pusiste ${palAbierto} a mano. Se mantiene así hasta que toques el botón.`
+  : t.forzar_abierto === false ? `Lo pusiste ${palCerrado} a mano. Se mantiene así hasta que toques el botón.`
+  : t.atiende_24h ? `Atiendes las 24 horas: sales siempre ${palAbierto}.`
   : t.hora_desde ? `Sigue tu horario: ${t.hora_desde.slice(0, 5)} a ${t.hora_hasta.slice(0, 5)}.`
-  : "Sin horario: se muestra siempre abierto. Puedes poner tu horario en \"Editar mi tienda\".";
+  : `Sin horario: se muestra siempre ${palAbierto}. Puedes poner tu horario en "Editar mi tienda".`;
 
 const url = `${Astro.url.origin}/${t.slug}`;
 const zonaPendiente = t.zonas && t.zonas.activa === false;
@@ -63,7 +70,7 @@ const suspendida = t.estado !== "activo";
 
     <section class="tarjeta bloque">
       <div class="fila-entre">
-        <strong class:list={["estado-abierto", { cerrado: !abierto }]}>● {abierto ? "Abierto" : "Cerrado"}</strong>
+        <strong class:list={["estado-abierto", { cerrado: !abierto }]}>● {textoAbierto(abierto, servicio).replace(" ahora", "")}</strong>
         <form method="post" action="/panel/abrir"><button class="boton boton-claro" type="submit">{textoBoton}</button></form>
       </div>
       <p class="texto-2" style="font-size:14px;margin:8px 0 0">{explicacion}</p>
@@ -83,6 +90,7 @@ const suspendida = t.estado !== "activo";
 
     <nav class="menu-panel" aria-label="Opciones de mi tienda">
       <a href="/panel/tienda">Editar mi tienda <span aria-hidden="true">›</span></a>
+      {t.tipo !== "persona" && <a href="/panel/mas">{servicio ? "Fotos, pagos, sectores y precios" : "Fotos de mi local y formas de pago"} <span aria-hidden="true">›</span></a>}
       <a href="/panel/publicar">Publicar <span aria-hidden="true">›</span></a>
       <a href="/panel/publicaciones">Mis publicaciones <span aria-hidden="true">›</span></a>
       <a href={`/${t.slug}`}>Ver mi tienda como la ven los clientes <span aria-hidden="true">›</span></a>

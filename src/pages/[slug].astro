@@ -15,18 +15,34 @@ import { productosDeTienda, cuantosVer } from "@/lib/publicacion.js";
 const slug = Astro.params.slug;
 const estado = await buscarEstado(slug);
 
-let tienda = null, productos = [], hayMas = false, ver = 0;
+let tienda = null, productos = [], hayMas = false, ver = 0, galeria = [], sectores = [], todoMunicipio = false;
 if (!estado) {
   const { data } = await supabasePublico()
     .from("vendedores")
-    .select("*, zonas!vendedores_zona_id_fkey(nombre, municipios(nombre, slug, estados(nombre, slug)))")
+    .select("*, zonas!vendedores_zona_id_fkey(nombre, municipio_id, municipios(nombre, slug, estados(nombre, slug)))")
     .eq("slug", slug)
     .eq("estado", "activo")
     .maybeSingle();
   tienda = data;
   if (!tienda) return Astro.rewrite("/404");
   ver = cuantosVer(Astro.url.searchParams.get("ver"));
-  ({ productos, hayMas } = await productosDeTienda(supabasePublico(), tienda.id, ver));
+  const sb = supabasePublico();
+  const [prod, { data: fotos }, { data: cubiertas }] = await Promise.all([
+    productosDeTienda(sb, tienda.id, ver),
+    sb.from("vendedor_fotos").select("url, url_mini, orden").eq("vendedor_id", tienda.id).order("orden"),
+    tienda.seccion_principal === "servicios"
+      ? sb.from("vendedor_zonas").select("zonas(nombre, municipio_id)").eq("vendedor_id", tienda.id)
+      : { data: [] },
+  ]);
+  ({ productos, hayMas } = prod);
+  galeria = fotos ?? [];
+  sectores = (cubiertas ?? []).map((c) => c.zonas).filter(Boolean);
+  // Si cubre todos los sectores de su ciudad, se dice "Va a todo San Fernando"
+  const muni = tienda.zonas?.municipio_id;
+  if (sectores.length && muni) {
+    const { count } = await sb.from("zonas").select("id", { count: "exact", head: true }).eq("municipio_id", muni).eq("activa", true);
+    todoMunicipio = count > 0 && sectores.filter((z) => z.municipio_id === muni).length >= count;
+  }
 }
 Astro.cache.set(PUBLICA);
 
@@ -41,7 +57,7 @@ if (estado) {
   otrosLugares = activos.filter((c) => c.estado.slug !== estado.slug);
 }
 ---
-{tienda ? <PaginaTienda t={tienda} productos={productos} hayMas={hayMas} ver={ver} /> : (
+{tienda ? <PaginaTienda t={tienda} productos={productos} hayMas={hayMas} ver={ver} galeria={galeria} sectores={sectores} todoMunicipio={todoMunicipio} /> : (
 <Base titulo={estado.nombre} descripcion={`Lo que se vende y se ofrece en ${estado.nombre}, ordenado. Todo termina en WhatsApp.`}>
   <main class="contenedor">
     <Cabecera lugar={estado.nombre} />

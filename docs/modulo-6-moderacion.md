@@ -1,6 +1,6 @@
 # Módulo 6 — Moderación
 
-**Estado:** 🛠️ publicado · `sql/08` corrido · falta probar en el teléfono · 14 de noviembre de 2026
+**Estado:** ✅ aprobado por Irma el 14 de noviembre de 2026. Probado en el teléfono: palabras (bloquear y revisar), reportar, por revisar, ocultar, sello verde, suspender y reactivar, bitácora.
 
 En Lokl todo se publica al instante. Este módulo es el control posterior.
 
@@ -41,7 +41,7 @@ El vendedor ve en "Mis publicaciones" **"Oculto por Lokl"** con el motivo. Si su
 ## Pendiente
 
 1. ✅ `sql/08` corrido el 14/11/2026.
-2. Subir el código y **probar en el teléfono**:
+2. ✅ Publicado y probado en el teléfono (14/11/2026):
    - Agregar una palabra de prueba en Bloquear y otra en Revisar, y publicar con cada una.
    - Reportar un producto desde otro teléfono o en una ventana de incógnito, y verlo en "Por revisar".
    - Tocar "Está bien" en uno y "Ocultar…" en otro, y ver el motivo en "Mis publicaciones" del vendedor.

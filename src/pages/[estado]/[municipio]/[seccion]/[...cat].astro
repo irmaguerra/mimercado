@@ -36,17 +36,23 @@ const actual = cat2 ?? cat1;
 const zonaSlug = Astro.url.searchParams.get("zona") || "";
 const zona = zonas.find((z) => z.slug === zonaSlug) ?? null;
 const ver = cuantosVer(Astro.url.searchParams.get("ver"));
+// Filtros de Servicios (decisión 26): "A domicilio" y "24 horas"
+const esServicios = sec.clave === "servicios";
+const aDomicilio = esServicios && Astro.url.searchParams.get("domicilio") === "1";
+const h24 = esServicios && Astro.url.searchParams.get("h24") === "1";
 const primeroNuevo = ver - POR_PAGINA;
 
-const consulta = { municipioId: m.id, seccion: sec.clave, categorias: idsDeCategoria(actual), zonaId: zona?.id ?? null, limite: ver };
+const consulta = { municipioId: m.id, seccion: sec.clave, categorias: idsDeCategoria(actual), zonaId: zona?.id ?? null, limite: ver, aDomicilio, h24 };
 const { filas, hayMas } = sec.lista === "tiendas" ? await listarVendedores(sb, consulta) : await listarPublicaciones(sb, consulta);
 Astro.cache.set(PUBLICA);
 
 const raiz = `/${m.estado.slug}/${m.slug}`;
 const base = `${raiz}/${sec.slug}`;
-const conZona = (ruta, extra = "") => {
+const conZona = (ruta, extra = "", filtros = {}) => {
   const q = new URLSearchParams();
   if (zona) q.set("zona", zona.slug);
+  if ("domicilio" in filtros ? filtros.domicilio : aDomicilio) q.set("domicilio", "1");
+  if ("h24" in filtros ? filtros.h24 : h24) q.set("h24", "1");
   if (extra) q.set("ver", extra);
   const s = q.toString();
   return s ? `${ruta}?${s}` : ruta;
@@ -66,6 +72,7 @@ const [, plural] = NOMBRE_TIENDAS[sec.clave];
 const vacio = actual
   ? `Todavía no hay ${plural} de ${actual.nombre.toLowerCase()} en ${m.nombre}.`
   : `Todavía no hay ${plural} en ${m.nombre}.`;
+const filtrando = aDomicilio || h24;
 ---
 <Base titulo={titulo} descripcion={`${titulo}, ${m.estado.nombre}. Míralos en Lokl y escríbeles por WhatsApp.`}>
   <main class="contenedor">
@@ -86,8 +93,17 @@ const vacio = actual
       </ul>
     )}
 
+    {esServicios && (
+      <ul class="chips" aria-label="Filtrar" style="margin-top:8px">
+        <li><a href={conZona(ruta, "", { domicilio: !aDomicilio })} class="chip" aria-current={aDomicilio ? "true" : undefined}>{aDomicilio && "✓ "}A domicilio</a></li>
+        <li><a href={conZona(ruta, "", { h24: !h24 })} class="chip" aria-current={h24 ? "true" : undefined}>{h24 && "✓ "}24 horas</a></li>
+      </ul>
+    )}
+
     {zonas.length > 1 && (
       <form method="get" action={ruta} class="filtro-sector">
+        {aDomicilio && <input type="hidden" name="domicilio" value="1" />}
+        {h24 && <input type="hidden" name="h24" value="1" />}
         <label for="zona" class="texto-2">Ver primero</label>
         <select id="zona" name="zona">
           <option value="">Todo {m.nombre}</option>
@@ -122,7 +138,8 @@ const vacio = actual
 
     {filas.length === 0 && (
       <div class="tarjeta aviso" style="text-align:center">
-        <p style="margin:0">{vacio}</p>
+        <p style="margin:0">{filtrando ? `No hay ${plural} con ese filtro todavía.` : vacio}</p>
+        {filtrando && <p style="margin:8px 0 0"><a href={conZona(ruta, "", { domicilio: false, h24: false })}>Quitar los filtros</a></p>}
         <p style="margin:8px 0 0">
           {sec.clave === "clasificados"
             ? <a href="/panel/publicar">¿Vendes algo? Publícalo gratis</a>

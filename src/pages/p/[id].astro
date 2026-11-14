@@ -8,6 +8,7 @@ import { fotosOrdenadas, vencida } from "@/lib/publicacion.js";
 import { mostrarPrecio } from "@/lib/precio.js";
 import { estaAbiertoAhora } from "@/lib/horario.js";
 import { enlaceCompartir } from "@/lib/whatsapp.js";
+import { esServicio, textoAbierto } from "@/lib/vendedor.js";
 import { PUBLICA } from "@/lib/cache.js";
 
 const id = Number(Astro.params.id);
@@ -17,7 +18,7 @@ const { data: p, error } = await supabasePublico()
   .from("publicaciones")
   .select(`id, titulo, descripcion, precio, moneda, seccion, estado, agotado, vence_en,
     publicacion_fotos(url, url_mini, orden),
-    vendedores!publicaciones_vendedor_id_fkey(nombre, slug, logo_url, estado, tipo, verificado_en, telefono,
+    vendedores!publicaciones_vendedor_id_fkey(nombre, slug, logo_url, estado, tipo, seccion_principal, verificado_en, telefono,
       hora_desde, hora_hasta, forzar_abierto, en_pausa,
       zonas!vendedores_zona_id_fkey(nombre, municipios(nombre)))`)
   .eq("id", id)
@@ -71,7 +72,7 @@ const descripcion = [precio, p.descripcion?.slice(0, 150), `${t.nombre}${lugar ?
         <strong style="display:block">{t.nombre}</strong>
         {t.verificado_en && <span class="insignia-verificado" style="margin:0"><Icono nombre="verificado" tam={14} /> Verificado</span>}
         <span class="texto-2" style="display:block;font-size:14px">
-          {!esPersona && <span class:list={["estado-abierto", { cerrado: !abierto }]}>● {abierto ? "Abierto" : "Cerrado"}</span>}
+          {!esPersona && <span class:list={["estado-abierto", { cerrado: !abierto }]}>● {textoAbierto(abierto, esServicio(t)).replace(" ahora", "")}</span>}
           {lugar && <>{!esPersona && " · "}{lugar}</>}
         </span>
         <span style="font-size:14px">{esPersona ? "Ver todo lo que vende ›" : "Ver la tienda ›"}</span>

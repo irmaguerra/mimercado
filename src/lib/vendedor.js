@@ -16,6 +16,27 @@ export const MODALIDAD_COCINA = {
   cocina_oculta: "Solo delivery (cocina oculta)",
 };
 
+/** Formas de pago (decisión 24, 14/11/2026). Las mismas claves acepta la base. */
+export const FORMAS_PAGO = {
+  pago_movil:    "Pago móvil",
+  efectivo_usd:  "Efectivo en dólares",
+  efectivo_bs:   "Efectivo en bolívares",
+  transferencia: "Transferencia",
+  punto_venta:   "Punto de venta",
+  zelle:         "Zelle",
+  binance:       "Binance",
+};
+
+/** Hasta 6 fotos en la galería de la tienda. */
+export const MAX_FOTOS_GALERIA = 6;
+
+/** Los servicios dicen "Disponible" en vez de "Abierto" (decisión 23). */
+export const esServicio = (t) => t?.seccion_principal === "servicios";
+export function textoAbierto(abierto, servicio) {
+  if (servicio) return abierto ? "Disponible ahora" : "No disponible ahora";
+  return abierto ? "Abierto ahora" : "Cerrado ahora";
+}
+
 export const ALCANCE_ENVIO = {
   zona:      "Solo en mi zona",
   municipio: "En todo mi municipio",

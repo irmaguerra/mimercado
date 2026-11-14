@@ -1,0 +1,178 @@
+---
+// /panel/mas — "Más sobre mi tienda": galería (hasta 6 fotos) y formas de pago para todos;
+// para servicios además: sectores que cubre, 24 horas y precios de referencia (Módulo 7).
+// Dos formularios: la galería (con la isla que comprime fotos) y los datos (sin JavaScript).
+import Base from "@/layouts/Base.astro";
+import FotosPublicacion from "@/components/islas/FotosPublicacion.jsx";
+import { miTienda } from "@/lib/sesion.js";
+import { FORMAS_PAGO, MAX_FOTOS_GALERIA, esServicio } from "@/lib/vendedor.js";
+import { TIPOS_FOTO, MAX_PESO_FOTO, rutaEnAlmacen } from "@/lib/publicacion.js";
+import { zonasDeMunicipio } from "@/lib/listados.js";
+
+const { sb, usuario } = Astro.locals;
+const t = await miTienda(sb, usuario.id);
+if (!t) return Astro.redirect("/panel/crear", 302);
+const servicio = esServicio(t);
+
+const { data: zonaPropia } = await sb.from("zonas").select("municipio_id, municipios(nombre)").eq("id", t.zona_id).maybeSingle();
+const municipioNombre = zonaPropia?.municipios?.nombre ?? "mi ciudad";
+const [{ data: fotosData }, { data: cubiertas }, sectores] = await Promise.all([
+  sb.from("vendedor_fotos").select("id, url, url_mini, orden").eq("vendedor_id", t.id).order("orden"),
+  sb.from("vendedor_zonas").select("zona_id").eq("vendedor_id", t.id),
+  servicio && zonaPropia ? zonasDeMunicipio(sb, zonaPropia.municipio_id) : [],
+]);
+const fotos = fotosData ?? [];
+let elegidos = new Set((cubiertas ?? []).map((x) => x.zona_id));
+
+let error = Astro.url.searchParams.get("error") || "";
+const ok = { galeria: "Fotos guardadas.", datos: "Cambios guardados." }[Astro.url.searchParams.get("ok")] ?? "";
+let campos = { formas_pago: t.formas_pago ?? [], atiende_24h: t.atiende_24h, precios_referencia: t.precios_referencia ?? "" };
+
+if (Astro.request.method === "POST") {
+  const quiereJson = (Astro.request.headers.get("accept") || "").includes("application/json");
+  const f = await Astro.request.formData();
+
+  if (f.get("parte") === "galeria") {
+    // ---- Galería: subir las nuevas, quitar las marcadas y guardar el orden (1 a 6)
+    const grandes = f.getAll("foto").filter((x) => x instanceof File && x.size > 0);
+    const minis = f.getAll("mini").filter((x) => x instanceof File && x.size > 0);
+    const quitar = f.getAll("quitar_foto").map(Number);
+    const quedan = fotos.filter((x) => !quitar.includes(x.id));
+    const quitadas = fotos.filter((x) => quitar.includes(x.id));
+    if (quedan.length + grandes.length > MAX_FOTOS_GALERIA) error = `Puedes poner hasta ${MAX_FOTOS_GALERIA} fotos.`;
+    else if ([...grandes, ...minis].some((x) => !TIPOS_FOTO[x.type])) error = "Las fotos deben ser JPG, PNG o WebP.";
+    else if ([...grandes, ...minis].some((x) => x.size > MAX_PESO_FOTO)) error = "Una foto pesa más de 2 MB. Prueba con otra.";
+
+    if (!error) {
+      const almacen = sb.storage.from("vendedores");
+      const subir = (archivo, ruta) => almacen.upload(ruta, archivo, { contentType: archivo.type, cacheControl: "31536000", upsert: false });
+      const nuevas = [];
+      for (const [i, g] of grandes.entries()) {
+        const base = `${t.id}/g-${Date.now().toString(36)}${i}`;
+        const { error: eg } = await subir(g, `${base}.${TIPOS_FOTO[g.type]}`);
+        if (eg) { console.error("galeria", eg); error = "Una foto no se pudo subir. Intenta de nuevo."; continue; }
+        const url = almacen.getPublicUrl(`${base}.${TIPOS_FOTO[g.type]}`).data.publicUrl;
+        let urlMini = url;
+        const m = minis[i];
+        if (m && !(await subir(m, `${base}-mini.${TIPOS_FOTO[m.type]}`)).error) urlMini = almacen.getPublicUrl(`${base}-mini.${TIPOS_FOTO[m.type]}`).data.publicUrl;
+        nuevas.push({ url, url_mini: urlMini });
+      }
+      const final = [...quedan.map(({ url, url_mini }) => ({ url, url_mini })), ...nuevas]
+        .map((x, i) => ({ ...x, vendedor_id: t.id, orden: i + 1 }));
+      await sb.from("vendedor_fotos").delete().eq("vendedor_id", t.id);
+      if (final.length) {
+        const { error: ef } = await sb.from("vendedor_fotos").insert(final);
+        if (ef) { console.error("galeria", ef); error = "No se pudieron guardar las fotos. Intenta de nuevo."; }
+      }
+      const borrar = [...new Set(quitadas.flatMap((x) => [rutaEnAlmacen(x.url), rutaEnAlmacen(x.url_mini)]))]
+        .filter((r) => r && r.startsWith(`${t.id}/`));
+      if (borrar.length) await almacen.remove(borrar);
+    }
+    const ir = error ? `/panel/mas?error=${encodeURIComponent(error)}#galeria` : "/panel/mas?ok=galeria#galeria";
+    if (quiereJson) {
+      // Con error, la isla muestra el mensaje y deja intentar de nuevo sin perder las fotos elegidas
+      const cuerpo = error ? { ok: false, mensaje: error } : { ok: true, ir };
+      return new Response(JSON.stringify(cuerpo), { status: error ? 400 : 200, headers: { "content-type": "application/json" } });
+    }
+    return Astro.redirect(ir, 303);
+  }
+
+  // ---- Datos: formas de pago (todos) y, para servicios, sectores, 24 horas y precios
+  campos = {
+    formas_pago: f.getAll("pago").map(String).filter((p) => FORMAS_PAGO[p]),
+    atiende_24h: servicio && f.get("atiende_24h") === "on",
+    precios_referencia: servicio ? String(f.get("precios_referencia") || "").trim().slice(0, 1000) : t.precios_referencia,
+  };
+  const cambios = { formas_pago: [...new Set(campos.formas_pago)] };
+  if (servicio) {
+    cambios.atiende_24h = campos.atiende_24h;
+    cambios.precios_referencia = campos.precios_referencia || null;
+    if (campos.atiende_24h) { cambios.hora_desde = null; cambios.hora_hasta = null; } // 24 h = sin horario
+  }
+  const { error: e } = await sb.from("vendedores").update(cambios).eq("id", t.id);
+  if (e) { console.error("mas", e); error = "No pudimos guardar. Intenta de nuevo."; }
+
+  if (!error && servicio) {
+    const validos = new Set(sectores.map((z) => z.id));
+    const nuevos = f.get("todo_municipio") === "on" ? [...validos] : f.getAll("sector").map(Number).filter((id) => validos.has(id));
+    elegidos = new Set(nuevos);
+    const antes = (cubiertas ?? []).map((x) => x.zona_id);
+    const quitar = antes.filter((id) => !elegidos.has(id));
+    const poner = nuevos.filter((id) => !antes.includes(id));
+    const r1 = quitar.length ? await sb.from("vendedor_zonas").delete().eq("vendedor_id", t.id).in("zona_id", quitar) : {};
+    const r2 = poner.length ? await sb.from("vendedor_zonas").insert(poner.map((zona_id) => ({ vendedor_id: t.id, zona_id }))) : {};
+    if (r1.error || r2.error) { console.error("sectores", r1.error || r2.error); error = "Se guardó, pero no los sectores. Intenta de nuevo."; }
+  }
+  if (!error) return Astro.redirect("/panel/mas?ok=datos", 303);
+}
+const todos = sectores.length > 0 && sectores.every((z) => elegidos.has(z.id));
+---
+<Base titulo="Más sobre mi tienda">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/panel">‹ Mi tienda</a></p>
+    <h1 style="font-size:24px;margin:8px 0 4px">Más sobre mi tienda</h1>
+    <p class="texto-2" style="margin:0 0 12px;font-size:14px">Todo es opcional. Lo que pongas aquí se ve en tu página.</p>
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+    {ok && <p class="mensaje ok" role="status">{ok}</p>}
+
+    <form method="post" enctype="multipart/form-data" class="formulario tarjeta bloque" id="galeria">
+      <input type="hidden" name="parte" value="galeria" />
+      <fieldset class="opciones-radio">
+        <legend>Fotos {servicio ? "de tu trabajo" : "de tu local o tus productos"}</legend>
+        <small class="texto-2">{servicio ? "Trabajos que has hecho, tu equipo, tu vehículo, tus habitaciones…" : "Tu local por dentro y por fuera, tu vitrina, tus mejores productos…"}</small>
+        {fotos.length > 0 && (
+          <ul class="fotos-nuevas">
+            {fotos.map((x, i) => (
+              <li>
+                <img src={x.url_mini} alt={`Foto ${i + 1}`} width="96" height="96" />
+                <label class="radio" style="min-height:32px;font-size:14px"><input type="checkbox" name="quitar_foto" value={x.id} /> Quitar</label>
+              </li>
+            ))}
+          </ul>
+        )}
+        <FotosPublicacion client:visible maximo={MAX_FOTOS_GALERIA} ocupadas={fotos.length} enviando="Guardando…" nota="Se ven en tu página en este orden." />
+      </fieldset>
+      <button class="boton ancho" type="submit">Guardar fotos</button>
+    </form>
+
+    <form method="post" class="formulario" style="margin-top:20px">
+      <input type="hidden" name="parte" value="datos" />
+      <fieldset class="opciones-radio">
+        <legend>¿Cómo te pueden pagar?</legend>
+        <div class="casillas">
+          {Object.entries(FORMAS_PAGO).map(([k, txt]) => (
+            <label class="radio"><input type="checkbox" name="pago" value={k} checked={campos.formas_pago.includes(k)} /> {txt}</label>
+          ))}
+        </div>
+      </fieldset>
+
+      {servicio && (
+        <>
+          {sectores.length > 0 && (
+            <fieldset class="opciones-radio">
+              <legend>¿A qué sectores vas?</legend>
+              <small class="texto-2">Si vas a un sector, sales primero para la gente de ahí. Los demás igual te ven.</small>
+              <label class="radio"><input type="checkbox" name="todo_municipio" checked={todos} /> <strong>Todo {municipioNombre}</strong></label>
+              <div class="casillas">
+                {sectores.map((z) => (
+                  <label class="radio"><input type="checkbox" name="sector" value={z.id} checked={elegidos.has(z.id)} /> {z.nombre}</label>
+                ))}
+              </div>
+            </fieldset>
+          )}
+
+          <label class="radio" style="font-weight:600"><input type="checkbox" name="atiende_24h" checked={campos.atiende_24h} /> Atiendo las 24 horas</label>
+          <small class="texto-2" style="margin-top:-8px">Si lo marcas, se quita tu horario y sales siempre como disponible, salvo que toques "No disponible".</small>
+
+          <label>Precios de referencia (opcional)
+            <textarea name="precios_referencia" rows="4" maxlength="1000"
+              placeholder={"Ej.\nCarrera dentro del Centro: $1\nA La Macanilla: $5\nRevisión a domicilio: $10"}>{campos.precios_referencia}</textarea>
+            <small class="texto-2">Así la gente sabe más o menos cuánto cuesta antes de escribirte. Se muestra tal cual lo escribes.</small>
+          </label>
+        </>
+      )}
+
+      <button class="boton ancho" type="submit">Guardar cambios</button>
+    </form>
+  </main>
+</Base>

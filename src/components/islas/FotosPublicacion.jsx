@@ -1,9 +1,9 @@
-// Isla de Preact para /panel/publicar: comprime las fotos EN EL TELÉFONO (de ~3 MB a ~120 KB)
+// Isla de Preact para /panel/publicar y la galería de /panel/mas: comprime las fotos EN EL TELÉFONO (de ~3 MB a ~120 KB)
 // y envía el formulario. Sin JavaScript, el formulario igual funciona con las fotos originales.
 import { useEffect, useRef, useState } from "preact/hooks";
 import { comprimirImagen } from "@/lib/imagen.js";
 
-export default function FotosPublicacion({ maximo = 3, ocupadas = 0 }) {
+export default function FotosPublicacion({ maximo = 3, ocupadas = 0, enviando: textoEnviando = "Publicando…", nota = "La primera es la principal." }) {
   const raiz = useRef(null);
   const [fotos, setFotos] = useState([]); // { grande, miniatura, extension, vista }
   const [estado, setEstado] = useState("");
@@ -30,7 +30,7 @@ export default function FotosPublicacion({ maximo = 3, ocupadas = 0 }) {
         datos.append("mini", new File([f.miniatura], `mini.${f.extension}`, { type: f.miniatura.type }));
       }
       setEnviando(true);
-      setEstado("Publicando…");
+      setEstado(textoEnviando);
       try {
         const r = await fetch(form.action || location.href, { method: "POST", body: datos, headers: { accept: "application/json" } });
         const j = await r.json();
@@ -51,7 +51,7 @@ export default function FotosPublicacion({ maximo = 3, ocupadas = 0 }) {
   useEffect(() => {
     const boton = raiz.current.closest("form").querySelector('button[type="submit"]');
     if (!boton) return;
-    if (enviando) { boton.dataset.antes = boton.textContent; boton.disabled = true; boton.textContent = "Publicando…"; }
+    if (enviando) { boton.dataset.antes = boton.textContent; boton.disabled = true; boton.textContent = textoEnviando; }
     else if (boton.dataset.antes) { boton.disabled = false; boton.textContent = boton.dataset.antes; }
   }, [enviando]);
 
@@ -95,7 +95,7 @@ export default function FotosPublicacion({ maximo = 3, ocupadas = 0 }) {
           <input type="file" name="foto" accept="image/*" multiple onChange={alElegir} class="oculto-visual" />
         </label>
       )}
-      <small class="texto-2">Hasta {maximo} fotos. La primera es la principal.</small>
+      <small class="texto-2">Hasta {maximo} fotos. {nota}</small>
       {estado && <p class="texto-2" style="font-size:14px;margin:4px 0 0" role="status">{estado}</p>}
     </div>
   );

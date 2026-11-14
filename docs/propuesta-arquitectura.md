@@ -413,3 +413,8 @@ Meta: **tienda lista en menos de 2 minutos**, desde el teléfono.
 | 19 | Palabras prohibidas: "Bloquear" no deja publicar; "Revisar" guarda pero no sale hasta aprobarla | **Aprobado** (14/11/2026) |
 | 20 | La lista de palabras prohibidas empieza vacía y se llena desde el admin | **Aprobado** (14/11/2026) |
 | 21 | `/verificado` en versión corta desde el Módulo 6; la completa en el Módulo 12 | **Aprobado** (14/11/2026) |
+| 22 | Galería (hasta 6 fotos) y formas de pago para todas las tiendas, no solo servicios | **Aprobado** (14/11/2026) |
+| 23 | Servicios: el botón Abrir/Cerrar dice "Estoy disponible / No estoy disponible" y la ficha "Disponible ahora" (no hay un botón aparte) | **Aprobado** (14/11/2026) |
+| 24 | Formas de pago: Pago móvil, Efectivo en dólares, Efectivo en bolívares, Transferencia, Punto de venta, Zelle, Binance | **Aprobado** (14/11/2026) |
+| 25 | Los servicios marcan a qué sectores van ("Todo San Fernando" de atajo); ordena, no esconde | **Aprobado** (14/11/2026) |
+| 26 | Filtros "A domicilio" y "24 horas" en la lista de Servicios | **Aprobado** (14/11/2026) |

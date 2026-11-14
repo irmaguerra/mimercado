@@ -3,8 +3,10 @@
 import Icono from "./Icono.astro";
 import { MODALIDAD_COCINA } from "@/lib/vendedor.js";
 
-/** v: { slug, nombre, logo_url, zona, verificado, abierto, modalidad_cocina?, descripcion? } */
+/** v: { slug, nombre, logo_url, zona, verificado, abierto, modalidad_cocina?, descripcion?,
+ *       servicio?, a_domicilio?, atiende_24h? } */
 const { v, mostrarAbierto = true } = Astro.props;
+const estado = v.servicio ? (v.abierto ? "Disponible" : "No disponible") : (v.abierto ? "Abierto" : "Cerrado");
 ---
 <a href={`/${v.slug}`} class="tarjeta enlace-tarjeta vendedor-fila">
   {v.logo_url ? <img src={v.logo_url} alt="" width="56" height="56" class="logo-tienda" loading="lazy" decoding="async" />
@@ -13,10 +15,16 @@ const { v, mostrarAbierto = true } = Astro.props;
     <strong class="nombre-vendedor">{v.nombre}</strong>
     {v.verificado && <span class="insignia-verificado"><Icono nombre="verificado" tam={14} /> Verificado</span>}
     <span class="texto-2 detalle-vendedor">
-      {mostrarAbierto && <strong class:list={["estado-abierto", { cerrado: !v.abierto }]}>● {v.abierto ? "Abierto" : "Cerrado"}</strong>}
+      {mostrarAbierto && <strong class:list={["estado-abierto", { cerrado: !v.abierto }]}>● {estado}</strong>}
       {mostrarAbierto && v.zona && " · "}{v.zona}
       {v.modalidad_cocina && ` · ${MODALIDAD_COCINA[v.modalidad_cocina]}`}
     </span>
+    {(v.atiende_24h || (v.servicio && v.a_domicilio)) && (
+      <span class="etiquetas-vendedor">
+        {v.atiende_24h && <span>24 horas</span>}
+        {v.servicio && v.a_domicilio && <span>A domicilio</span>}
+      </span>
+    )}
     {v.descripcion && <span class="texto-2 descripcion-vendedor">{v.descripcion}</span>}
   </span>
 </a>

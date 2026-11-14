@@ -114,9 +114,10 @@ export async function zonasDeMunicipio(sb, municipioId) {
 }
 
 /** Pide uno de más para saber si hay que mostrar "Ver más". */
-export async function listarVendedores(sb, { municipioId, seccion, categorias = null, zonaId = null, limite = POR_PAGINA }) {
+export async function listarVendedores(sb, { municipioId, seccion, categorias = null, zonaId = null, limite = POR_PAGINA, aDomicilio = false, h24 = false }) {
   const { data, error } = await sb.rpc("listar_vendedores", {
     p_municipio_id: municipioId, p_seccion: seccion, p_categorias: categorias, p_zona_id: zonaId, p_limite: limite + 1,
+    p_a_domicilio: aDomicilio, p_24h: h24,
   });
   if (error) console.error("listar_vendedores", error);
   const lista = data ?? [];

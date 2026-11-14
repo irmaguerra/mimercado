@@ -149,7 +149,10 @@ const local = (n) => (/^58\d{10}$/.test(n || "") ? "0" + n.slice(2) : n || "");
         </>
       )}
 
-      <fieldset class="opciones-radio">
+{t.atiende_24h ? (
+        <p class="texto-2" style="margin:0">Horario: <strong>las 24 horas</strong>. Para cambiarlo, ve a <a href="/panel/mas">Fotos, pagos, sectores y precios</a>.</p>
+      ) : (
+            <fieldset class="opciones-radio">
         <legend>Horario</legend>
         <div class="fila" style="gap:12px">
           <label>Abro <input type="time" name="hora_desde" value={hora(t.hora_desde)} /></label>
@@ -157,6 +160,7 @@ const local = (n) => (/^58\d{10}$/.test(n || "") ? "0" + n.slice(2) : n || "");
         </div>
         <small class="texto-2">Si cierras después de medianoche (ej. 6:00 p. m. a 2:00 a. m.) también funciona. Vacío = siempre abierto.</small>
       </fieldset>
+      )}
 
       <fieldset class="opciones-radio">
         <legend>¿Hasta dónde envías?</legend>
