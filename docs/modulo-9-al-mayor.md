@@ -1,6 +1,6 @@
 # Módulo 9 — Al mayor y precios de origen
 
-**Estado:** 🛠️ publicado con `sql/11` y `sql/12` (dos precios, 15/11/2026) · falta probar en el teléfono
+**Estado:** ✅ aprobado por Irma el 15 de noviembre de 2026. Probado en el teléfono: publicar al mayor, "Mi precio sigue igual", envían a todo el país (/precios y /zulia), detal y mayor en un mismo producto, Belleza y cosméticos. **Queda pendiente probar "publicar sin señal"** (Irma lo hará después).
 
 La "puerta al mundo": que el queso de La Macanilla o el pescado de Cunaviche muestren su precio real de origen a gente de fuera de su comunidad.
 
