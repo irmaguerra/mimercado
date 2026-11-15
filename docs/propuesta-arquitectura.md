@@ -432,3 +432,4 @@ Meta: **tienda lista en menos de 2 minutos**, desde el teléfono.
 | 38 | Publicar sin señal para todos: se guarda en el teléfono y se envía al volver la señal | **Aprobado** (14/11/2026) |
 | 39 | Una sola lista de tipos al mayor (campo + Tiendas) con 3 nuevos: Productos de limpieza, Artesanía, Alimentos procesados. "Cirugías" (alisado) en Belleza y cosméticos | **Aprobado** (14/11/2026) |
 | 40 | Dos precios en una publicación: al detal y al mayor; `/precios` usa el de mayor | **Aprobado** (14/11/2026) |
+| 41 | Correo de la app (confirmar cuenta, recuperar contraseña) con **Resend**; Brevo no acepta cuentas de Venezuela. El logo se queda en minúscula ("lokl"); en los textos se escribe "Lokl" | **Aprobado** (15/11/2026) |

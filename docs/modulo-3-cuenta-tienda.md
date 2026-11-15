@@ -1,6 +1,6 @@
 # Módulo 3 — Cuenta del vendedor y su tienda
 
-**Estado:** ✅ aprobado por Irma el 8 de noviembre de 2026. Probado con DORCAS: crear tienda, logo (18 KB), vista previa con logo en WhatsApp y botón de WhatsApp. Quedan pendientes el correo (Brevo) y Google.
+**Estado:** ✅ aprobado por Irma el 8 de noviembre de 2026. Probado con DORCAS: crear tienda, logo (18 KB), vista previa con logo en WhatsApp y botón de WhatsApp. Quedan pendientes el correo (Resend) y Google.
 
 ## Pantallas
 
@@ -26,6 +26,6 @@
 1. **Authentication → URL Configuration**
    - Site URL: `https://lokl.usalokl-app.workers.dev`
    - Redirect URLs: `https://lokl.usalokl-app.workers.dev/**`, `https://*-lokl.usalokl-app.workers.dev/**`, `http://localhost:4321/**`
-2. **Correo propio (SMTP):** el correo de Supabase solo envía a los miembros del equipo del proyecto y unos pocos por hora. Para vendedores reales hace falta un servicio de correo. Elegido: **Brevo** (gratis, 300 correos/día; solo agrega registros en Namecheap sin tocar el reenvío de correo de usalokl.com). Pendiente: Irma crea la cuenta cuando tenga el teléfono a mano (verificación). Mientras tanto, las cuentas de prueba se crean en Supabase → Authentication → Users → Add user → Create new user, con "Auto Confirm User" marcado.
+2. **Correo propio (SMTP):** el correo de Supabase solo envía a los miembros del equipo del proyecto y unos pocos por hora. Para vendedores reales hace falta un servicio de correo. Elegido: **Resend** (gratis, 3.000 correos/mes; solo agrega registros en Namecheap, en el subdominio send.usalokl.com, sin tocar el reenvío de correo). Brevo se descartó el 15/11/2026 porque no acepta cuentas de Venezuela. Pasos en `docs/configurar-correo.md`. Mientras tanto, las cuentas de prueba se crean en Supabase → Authentication → Users → Add user → Create new user, con "Auto Confirm User" marcado.
 3. **Entrar con Google:** crear las credenciales en Google Cloud y pegarlas en Supabase (guía paso a paso cuando toque).
 4. Hacer admin a la cuenta de Irma (`sql/04`, después de que se registre).
