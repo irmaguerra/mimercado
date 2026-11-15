@@ -1,0 +1,70 @@
+---
+// "Instala Lokl en tu teléfono": aviso discreto encima de la barra de abajo.
+//  - Android (Chrome y otros): botón "Instalar" que abre la ventana del teléfono.
+//  - iPhone (Safari no tiene esa ventana): explica "Compartir → Agregar a inicio".
+//  - No aparece si Lokl ya está instalada, ni durante 30 días si la persona toca ✕.
+// Cualquier enlace con data-instalar (ej. en "Mi cuenta") abre lo mismo cuando la persona quiera.
+// ~1 KB en línea; las páginas siguen sin descargar JavaScript aparte.
+import Icono from "./Icono.astro";
+---
+<div id="instalar-lokl" class="instalar-lokl" role="dialog" aria-label="Instalar Lokl" hidden>
+  <img src="/icon-192.png" alt="" width="40" height="40" />
+  <p>
+    <strong>Instala Lokl en tu teléfono</strong>
+    <span data-texto="normal">Ábrela con un toque, como una app. Ocupa muy poco.</span>
+    <span data-texto="iphone" hidden>Toca <span class="ios-compartir" aria-label="Compartir"><Icono nombre="compartir" tam={16} /></span> <strong>Compartir</strong> y luego <strong>"Agregar a inicio"</strong>.</span>
+  </p>
+  <button type="button" class="boton" data-accion="instalar">Instalar</button>
+  <button type="button" class="boton-texto" data-accion="cerrar" aria-label="Ahora no">✕</button>
+</div>
+<script is:inline>
+  (() => {
+    const caja = document.getElementById("instalar-lokl");
+    if (!caja) return;
+    const instalada = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+    const iphone = /iphone|ipad|ipod/i.test(navigator.userAgent) && !/crios|fxios|edgios/i.test(navigator.userAgent);
+    const CLAVE = "lokl_instalar_no";
+    let pedido = null;
+    const leer = () => { try { return Number(localStorage.getItem(CLAVE)) || 0; } catch { return 0; } };
+    const callar = () => { try { localStorage.setItem(CLAVE, String(Date.now())); } catch {} };
+    const reciente = () => Date.now() - leer() < 30 * 864e5;
+    const boton = caja.querySelector('[data-accion="instalar"]');
+
+    function mostrar(aMano) {
+      if (instalada) return;
+      if (!aMano && reciente()) return;
+      const modoIphone = iphone && !pedido;
+      caja.querySelector('[data-texto="normal"]').hidden = modoIphone;
+      caja.querySelector('[data-texto="iphone"]').hidden = !modoIphone;
+      boton.hidden = !pedido;
+      caja.hidden = false;
+    }
+
+    addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      pedido = e;
+      setTimeout(() => mostrar(false), 3000);
+    });
+    if (iphone && !instalada) setTimeout(() => mostrar(false), 3000);
+
+    boton.addEventListener("click", async () => {
+      if (!pedido) return;
+      pedido.prompt();
+      await pedido.userChoice.catch(() => null);
+      pedido = null;
+      caja.hidden = true;
+    });
+    caja.querySelector('[data-accion="cerrar"]').addEventListener("click", () => { caja.hidden = true; callar(); });
+    addEventListener("appinstalled", () => { caja.hidden = true; });
+
+    document.querySelectorAll("[data-instalar]").forEach((a) => {
+      if (instalada) { a.hidden = true; return; }
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (pedido) boton.click();
+        else if (iphone) mostrar(true);
+        else alert("Abre el menú del navegador (⋮) y toca \"Instalar app\" o \"Agregar a la pantalla principal\".");
+      });
+    });
+  })();
+</script>

@@ -1,6 +1,7 @@
 ---
 import "@/styles/globals.css";
 import BarraInferior from "@/components/BarraInferior.astro";
+import InstalarApp from "@/components/InstalarApp.astro";
 
 const {
   titulo,
@@ -36,6 +37,7 @@ const urlImagen = new URL(imagen, Astro.url.origin).href;
   </head>
   <body class:list={{ "con-barra": barra }}>
     <slot />
+    {barra && <InstalarApp />}
     {barra && <BarraInferior />}
     <script is:inline>
       if ("serviceWorker" in navigator && location.hostname !== "localhost") {

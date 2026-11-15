@@ -104,6 +104,7 @@ const suspendida = t.estado !== "activo";
       <a href="/panel/publicaciones">Mis publicaciones <span aria-hidden="true">›</span></a>
       {t.tipo !== "persona" && <a href="/panel/resenas">Opiniones de mis clientes{resenasTotal ? ` (${resenasTotal})` : ""} <span aria-hidden="true">›</span></a>}
       <a href={`/${t.slug}`}>Ver mi tienda como la ven los clientes <span aria-hidden="true">›</span></a>
+      <a href="#instalar" data-instalar>Instalar Lokl en mi teléfono <span aria-hidden="true">›</span></a>
       {esAdmin && <a href="/admin">Administración de Lokl <span aria-hidden="true">›</span></a>}
     </nav>
 

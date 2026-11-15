@@ -284,3 +284,19 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .ver-clave[aria-pressed="true"] { color: var(--acento); }
 .ver-clave[hidden] { display: none; }
+
+/* ───────── Instalar Lokl en el teléfono ───────── */
+.instalar-lokl {
+  position: fixed; left: 8px; right: 8px; bottom: calc(72px + env(safe-area-inset-bottom)); z-index: 60;
+  display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 12px;
+  background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .18); max-width: 560px; margin: 0 auto;
+}
+.instalar-lokl[hidden] { display: none; }
+.instalar-lokl img { border-radius: 10px; flex-shrink: 0; }
+.instalar-lokl p { margin: 0; flex: 1; font-size: 14px; line-height: 1.3; }
+.instalar-lokl p > strong { display: block; font-size: 15px; }
+.instalar-lokl .boton { min-height: 40px; padding: 0 14px; }
+.instalar-lokl .boton[hidden] { display: none; }
+.instalar-lokl .boton-texto { padding: 8px; font-size: 18px; color: var(--texto-2); }
+.ios-compartir { display: inline-flex; vertical-align: -3px; color: #007AFF; }
