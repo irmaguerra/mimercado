@@ -1,0 +1,68 @@
+---
+// /admin/super/nuevo — Agregar un producto que no está en las sugerencias.
+// Entra ya marcado para vender; sin foto lleva el ícono del Súper. El precio se pone en Precios.
+import Base from "@/layouts/Base.astro";
+import { leerPrecio } from "@/lib/precio.js";
+import { municipioSuper, pasillosSuper } from "@/lib/super.js";
+
+const { sb } = Astro.locals;
+let aviso = "";
+let error = "";
+const muni = await municipioSuper(sb);
+const pasillos = await pasillosSuper(sb);
+const limpio = (v, n) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, n);
+
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  const nombre = limpio(f.get("nombre"), 80);
+  const marca = limpio(f.get("marca"), 40) || null;
+  const presentacion = limpio(f.get("presentacion"), 30) || null;
+  const pasillo_id = Number(f.get("pasillo_id")) || null;
+  const costo = leerPrecio(f.get("costo"));
+  if (nombre.length < 2) error = "Escribe el nombre del producto.";
+  else if (!pasillos.some((s) => s.id === pasillo_id)) error = "Elige el pasillo.";
+  else if (Number.isNaN(costo)) error = "No se entendió el costo (ej. 1,20).";
+  else {
+    const { data, error: e } = await sb.from("super_productos")
+      .insert({ municipio_id: muni, pasillo_id, nombre, marca, presentacion, en_catalogo: true })
+      .select("id").single();
+    if (e?.code === "23505") error = `"${nombre}${presentacion ? ` ${presentacion}` : ""}" ya está en la lista. Búscalo en Elegir qué vender.`;
+    else if (e) { console.error("nuevo super", e); error = "No se pudo agregar."; }
+    else {
+      if (costo !== null) await sb.rpc("super_guardar_costos", { p_items: [{ id: data.id, costo }] });
+      aviso = `"${nombre}" agregado${costo === null ? ", falta ponerle lo que te cuesta" : " con su precio"}.`;
+    }
+  }
+}
+---
+<Base titulo="Agregar producto · Súper">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/admin/super">‹ Lokl Súper</a></p>
+    <h1 style="font-size:24px;margin:8px 0 4px">Agregar un producto</h1>
+    <p class="texto-2" style="margin:0;font-size:14px">Para lo que no está en la lista de sugerencias. Queda marcado para vender.</p>
+    {aviso && <p class="mensaje ok" role="status">{aviso} <a href="/admin/super/precios">Ver precios ›</a></p>}
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+
+    <form method="post" class="formulario tarjeta bloque" style="margin-top:14px">
+      <label>Nombre
+        <input type="text" name="nombre" required maxlength="80" placeholder="Ej. Queso llanero" />
+      </label>
+      <label>Marca <small class="texto-2">(si tiene)</small>
+        <input type="text" name="marca" maxlength="40" placeholder="Ej. Polar" />
+      </label>
+      <label>Presentación
+        <input type="text" name="presentacion" maxlength="30" placeholder="Ej. 1 kg, 500 g, 1 L, cartón de 30" />
+      </label>
+      <label>Pasillo
+        <select name="pasillo_id" required>
+          <option value="">Elige…</option>
+          {pasillos.map((s) => <option value={s.id}>{s.nombre}</option>)}
+        </select>
+      </label>
+      <label>Me cuesta $ <small class="texto-2">(puedes dejarlo para después)</small>
+        <input type="text" name="costo" inputmode="decimal" placeholder="0,00" />
+      </label>
+      <button class="boton ancho" type="submit">Agregar</button>
+    </form>
+  </main>
+</Base>

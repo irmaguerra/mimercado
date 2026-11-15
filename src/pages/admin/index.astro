@@ -67,10 +67,11 @@ const porRevisar = (colaPubs?.length ?? 0) + (colaTiendas?.length ?? 0) + (colaR
       )}
     </section>
 
-    <section class="tarjeta bloque fila" style="gap:12px;margin-top:22px">
+    <a href="/admin/super" class="tarjeta bloque fila enlace-tarjeta" style="gap:12px;margin-top:22px">
       <span style="color:var(--marca)"><Icono nombre="super" tam={32} /></span>
-      <span><strong>Lokl Súper</strong><br /><span class="texto-2" style="font-size:14px">Catálogo, precios, costos, aliados y pedidos. Se construye en el Módulo 10.</span></span>
-    </section>
+      <span style="flex:1"><strong>Lokl Súper</strong><br /><span class="texto-2" style="font-size:14px">Qué vender, lo que te cuesta, márgenes, tasa del día y envío.</span></span>
+      <span aria-hidden="true">›</span>
+    </a>
 
     <nav class="menu-panel" aria-label="Más opciones">
       <span class="texto-2" style="padding:14px 0;font-size:14px">

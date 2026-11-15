@@ -1,0 +1,64 @@
+---
+// Catálogo del Súper (HTML puro, 0 KB de JS): buscador, pasillos y productos con precio en $ y Bs.
+// Lo usa la vista previa del admin (10A) y luego /super (10B, con carrito).
+// Nunca recibe costos ni márgenes: solo el precio final que viene de la base.
+import Icono from "./Icono.astro";
+import { mostrarPrecio } from "@/lib/precio.js";
+import { precioBs, textoTasa, CREDITO_FOTOS } from "@/lib/super.js";
+
+/**
+ * productos: [{ id, nombre, marca, presentacion, foto_url, precio }]
+ * pasillos: [{ id, nombre, slug }]   actual: slug o null   q: texto buscado
+ * base: ruta de esta página (ej. "/super")   tasa: { bs, fecha }   envio: { zona, gratis_desde }
+ */
+const { productos = [], pasillos = [], actual = null, q = "", base = "/super", tasa = null, envio = null } = Astro.props;
+const enlace = (slug) => (slug ? `${base}?pasillo=${slug}` : base);
+const tieneFotoOff = productos.some((p) => p.foto_url?.startsWith("/super/fotos/"));
+const tasaTxt = textoTasa(tasa);
+---
+{envio && (
+  <p class="tarjeta aviso-envio">
+    <strong>🛵 Envío gratis desde {mostrarPrecio(envio.gratis_desde)}</strong> en el {envio.zona ? envio.zona[0].toLowerCase() + envio.zona.slice(1) : "casco central"}.
+    <span class="texto-2">Otras zonas: te confirmamos el envío por WhatsApp.</span>
+  </p>
+)}
+
+<form action={base} role="search" style="margin-top:14px">
+  <div class="tarjeta fila" style="padding:0 12px">
+    <Icono nombre="buscar" tam={20} class="texto-2" />
+    <input name="q" type="search" class="campo-limpio" value={q} placeholder="Harina, arroz, queso…" maxlength="60" enterkeyhint="search" aria-label="Buscar en el Súper" />
+    <button type="submit" class="boton-texto">Buscar</button>
+  </div>
+</form>
+
+<ul class="chips" aria-label="Pasillos">
+  {pasillos.map((s) => (
+    <li><a href={enlace(s.slug)} class="chip" aria-current={actual === s.slug && !q ? "true" : undefined}>{s.nombre}</a></li>
+  ))}
+</ul>
+
+{q && <p class="texto-2" style="margin:14px 0 0">{productos.length ? `${productos.length} resultado${productos.length === 1 ? "" : "s"} para "${q}"` : `No encontramos "${q}" en el Súper.`} <a href={base}>Ver todo</a></p>}
+
+{productos.length > 0 ? (
+  <ul class="rejilla-productos">
+    {productos.map((p) => {
+      const bs = precioBs(p.precio, tasa);
+      return (
+        <li>
+          <div class="tarjeta producto producto-super">
+            {p.foto_url ? <img src={p.foto_url} alt="" width="240" height="240" loading="lazy" decoding="async" />
+              : <span class="foto-vacia foto-pasillo" aria-hidden="true"><Icono nombre="super" tam={44} /></span>}
+            <span class="nombre-producto">{p.nombre}</span>
+            {(p.marca || p.presentacion) && <span class="detalle-producto texto-2">{[p.marca, p.presentacion].filter(Boolean).join(" · ")}</span>}
+            <span class="precio-producto">{mostrarPrecio(p.precio)}{bs !== null && <span class="precio-bs texto-2"> · {mostrarPrecio(bs, "VES")}</span>}</span>
+          </div>
+        </li>
+      );
+    })}
+  </ul>
+) : !q && <p class="texto-2" style="margin-top:18px">Todavía no hay productos en este pasillo.</p>}
+
+<p class="texto-2 pie-super">
+  {tasaTxt && <>{tasaTxt}.<br /></>}
+  {tieneFotoOff && CREDITO_FOTOS}
+</p>

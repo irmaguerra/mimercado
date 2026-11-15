@@ -1,0 +1,60 @@
+---
+// /admin/super/margenes — Margen por pasillo (decisión 47). Vacío = margen general.
+// Al guardar, la base recalcula los precios de ese pasillo.
+import Base from "@/layouts/Base.astro";
+import { leerPrecio, precioParaCampo } from "@/lib/precio.js";
+import { configSuper } from "@/lib/super.js";
+
+const { sb } = Astro.locals;
+let aviso = "";
+let error = "";
+
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  const ids = String(f.get("ids") || "").split(",").map(Number).filter((n) => n > 0);
+  let cambios = 0;
+  for (const id of ids) {
+    const v = String(f.get(`m_${id}`) ?? "").trim();
+    if (v === String(f.get(`mo_${id}`) ?? "")) continue;
+    const m = leerPrecio(v);
+    if (Number.isNaN(m) || (m !== null && m > 100)) { error = "Un margen no se entendió: escribe un número de 0 a 100."; continue; }
+    const { error: e } = await sb.from("super_pasillos").update({ margen_pct: m }).eq("id", id);
+    if (e) { console.error("margen pasillo", e); error = "No se pudo guardar."; } else cambios++;
+  }
+  if (!error) aviso = cambios ? `Guardado. Se recalcularon los precios de ${cambios} pasillo${cambios === 1 ? "" : "s"}.` : "No había cambios.";
+}
+
+const [cfg, { data: pasillos }] = await Promise.all([configSuper(sb), sb.rpc("super_admin_pasillos")]);
+const general = precioParaCampo(cfg.margen ?? 7);
+---
+<Base titulo="Márgenes · Súper">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/admin/super">‹ Lokl Súper</a></p>
+    <h1 style="font-size:24px;margin:8px 0 4px">Márgenes por pasillo</h1>
+    <p class="texto-2" style="margin:0;font-size:14px">
+      Lo que el cliente compara mucho (harina, arroz, aceite) con margen bajo; el resto puede llevar más.
+      Vacío = margen general ({general}%, se cambia en <a href="/admin/super">Lokl Súper</a>). Un producto puede tener el suyo en Precios.
+    </p>
+    {aviso && <p class="mensaje ok" role="status">{aviso}</p>}
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+
+    <form method="post" class="formulario" style="margin-top:14px">
+      <input type="hidden" name="ids" value={(pasillos || []).map((p) => p.id).join(",")} />
+      <ul class="lista-precios">
+        {(pasillos || []).map((p) => {
+          const v = p.margen_pct != null ? precioParaCampo(p.margen_pct) : "";
+          return (
+            <li class="tarjeta fila-entre" style="padding:10px 12px">
+              <span><strong>{p.nombre}</strong><br /><span class="texto-2" style="font-size:13px">{p.productos} en el catálogo</span></span>
+              <label class="campo-margen">
+                <input type="text" name={`m_${p.id}`} value={v} inputmode="decimal" placeholder={general} aria-label={`Margen de ${p.nombre}`} autocomplete="off" /> %
+              </label>
+              <input type="hidden" name={`mo_${p.id}`} value={v} />
+            </li>
+          );
+        })}
+      </ul>
+      <div class="barra-guardar"><button class="boton ancho" type="submit">Guardar márgenes</button></div>
+    </form>
+  </main>
+</Base>

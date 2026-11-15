@@ -1,0 +1,112 @@
+---
+// /admin/super — Lokl Súper (Módulo 10A): tasa del día, margen general, envío y accesos.
+// Solo admin (lo verifica el middleware). Costos y márgenes nunca salen de aquí al cliente.
+import Base from "@/layouts/Base.astro";
+import { leerPrecio, mostrarPrecio, precioParaCampo } from "@/lib/precio.js";
+import { configSuper, municipioSuper, textoTasa, tasaDeHoy } from "@/lib/super.js";
+
+const { sb } = Astro.locals;
+let aviso = "";
+let error = "";
+
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  const que = String(f.get("que"));
+  if (que === "tasa") {
+    const bs = leerPrecio(f.get("bs"));
+    if (!(bs > 0)) error = "Escribe la tasa: cuántos bolívares vale $1 (ej. 240,50).";
+    else {
+      const { error: e } = await sb.rpc("super_poner_tasa", { p_bs: bs });
+      if (e) { console.error("tasa", e); error = "No se pudo guardar la tasa."; } else aviso = "Tasa del día guardada.";
+    }
+  } else if (que === "margen") {
+    const m = leerPrecio(f.get("margen"));
+    if (m === null || !(m >= 0 && m <= 100)) error = "El margen va de 0 a 100 (ej. 7).";
+    else {
+      const { data: n, error: e } = await sb.rpc("super_poner_margen", { p_margen: m });
+      if (e) { console.error("margen", e); error = "No se pudo guardar el margen."; }
+      else aviso = `Margen general: ${precioParaCampo(m)}%. Se recalcularon ${n ?? 0} precios.`;
+    }
+  } else if (que === "envio") {
+    const g = leerPrecio(f.get("gratis_desde")), t = leerPrecio(f.get("tarifa")), mi = leerPrecio(f.get("minimo"));
+    if ([g, t, mi].some((x) => x === null || Number.isNaN(x))) error = "Llena los tres montos del envío.";
+    else {
+      const { error: e } = await sb.rpc("super_poner_envio", { p_gratis_desde: g, p_tarifa: t, p_minimo: mi });
+      if (e) { console.error("envio", e); error = "No se pudo guardar el envío."; } else aviso = "Reglas de envío guardadas.";
+    }
+  }
+}
+
+const muni = await municipioSuper(sb);
+const [cfg, { data: todos }] = await Promise.all([
+  configSuper(sb),
+  sb.rpc("super_admin_productos", { p_municipio_id: muni, p_en_catalogo: null }),
+]);
+const lista = todos || [];
+const enCatalogo = lista.filter((p) => p.en_catalogo);
+const sinPrecio = enCatalogo.filter((p) => p.costo == null).length;
+const visibles = enCatalogo.filter((p) => p.costo != null && p.disponible).length;
+const tasaHoy = tasaDeHoy(cfg.tasa);
+---
+<Base titulo="Lokl Súper · Admin">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/admin">‹ Administración</a></p>
+    <h1 style="font-size:24px;margin:8px 0 4px">Lokl Súper</h1>
+    <p class="texto-2" style="margin:0;font-size:14px">Solo tú ves esta página. Los costos y márgenes nunca le llegan al cliente.</p>
+    {aviso && <p class="mensaje ok" role="status">{aviso}</p>}
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+
+    <div class="rejilla-secciones" style="margin-top:16px">
+      <a href="/admin/super/precios" class="tarjeta bloque enlace-tarjeta" style="margin:0"><strong style="font-size:28px">{visibles}</strong><br /><span class="texto-2">a la venta ›</span></a>
+      <a href="/admin/super/precios?sin=1" class="tarjeta bloque enlace-tarjeta" style="margin:0"><strong style="font-size:28px" class:list={{ "texto-alerta": sinPrecio > 0 }}>{sinPrecio}</strong><br /><span class="texto-2">elegidos sin precio ›</span></a>
+    </div>
+
+    <nav class="menu-panel" aria-label="Catálogo del Súper">
+      <a href="/admin/super/productos">1. Elegir qué vender ({enCatalogo.length} de {lista.length}) <span aria-hidden="true">›</span></a>
+      <a href="/admin/super/precios">2. Poner lo que me cuesta cada uno <span aria-hidden="true">›</span></a>
+      <a href="/admin/super/margenes">Márgenes por pasillo <span aria-hidden="true">›</span></a>
+      <a href="/admin/super/nuevo">Agregar un producto que no está <span aria-hidden="true">›</span></a>
+      <a href="/admin/super/vista">Ver el Súper como lo verá el cliente <span aria-hidden="true">›</span></a>
+    </nav>
+
+    <form method="post" class="formulario tarjeta bloque" style="margin-top:22px">
+      <input type="hidden" name="que" value="tasa" />
+      <h2 style="font-size:18px;margin:0">Tasa del día</h2>
+      <p class="texto-2" style="margin:0;font-size:14px">
+        {textoTasa(cfg.tasa) ?? "Todavía no hay tasa: los precios se muestran solo en dólares."}
+        {cfg.tasa?.bs && !tasaHoy && <strong class="texto-alerta"> · No es de hoy.</strong>}
+      </p>
+      <label>Bolívares por $1
+        <input type="text" name="bs" inputmode="decimal" required placeholder="Ej. 240,50" value={cfg.tasa?.bs ? precioParaCampo(cfg.tasa.bs) : ""} />
+      </label>
+      <button class="boton ancho" type="submit">Guardar tasa</button>
+    </form>
+
+    <form method="post" class="formulario tarjeta bloque">
+      <input type="hidden" name="que" value="margen" />
+      <h2 style="font-size:18px;margin:0">Margen general</h2>
+      <p class="texto-2" style="margin:0;font-size:14px">Se usa en los pasillos y productos que no tienen margen propio. Precio = lo que te cuesta + el margen.</p>
+      <label>Margen (%)
+        <input type="text" name="margen" inputmode="decimal" required value={cfg.margen != null ? precioParaCampo(cfg.margen) : "7"} />
+      </label>
+      <button class="boton ancho" type="submit">Guardar margen</button>
+    </form>
+
+    <form method="post" class="formulario tarjeta bloque">
+      <input type="hidden" name="que" value="envio" />
+      <h2 style="font-size:18px;margin:0">Envío · {cfg.envio?.zona ?? "Casco central"}</h2>
+      <p class="texto-2" style="margin:0;font-size:14px">Otras zonas: el precio del envío se confirma por WhatsApp (decisión 51).</p>
+      <label>Envío gratis desde ($)
+        <input type="text" name="gratis_desde" inputmode="decimal" required value={precioParaCampo(cfg.envio?.gratis_desde ?? 20)} />
+      </label>
+      <label>Si el pedido es menor, el envío cuesta ($)
+        <input type="text" name="tarifa" inputmode="decimal" required value={precioParaCampo(cfg.envio?.tarifa ?? 1)} />
+      </label>
+      <label>Pedido mínimo ($)
+        <input type="text" name="minimo" inputmode="decimal" required value={precioParaCampo(cfg.envio?.minimo ?? 5)} />
+      </label>
+      <button class="boton ancho" type="submit">Guardar envío</button>
+      <p class="texto-2" style="margin:0;font-size:14px">Hoy: gratis desde {mostrarPrecio(cfg.envio?.gratis_desde ?? 20)}, si no {mostrarPrecio(cfg.envio?.tarifa ?? 1)}; mínimo {mostrarPrecio(cfg.envio?.minimo ?? 5)}.</p>
+    </form>
+  </main>
+</Base>

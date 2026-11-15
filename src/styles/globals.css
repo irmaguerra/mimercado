@@ -300,3 +300,29 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .instalar-lokl .boton[hidden] { display: none; }
 .instalar-lokl .boton-texto { padding: 8px; font-size: 18px; color: var(--texto-2); }
 .ios-compartir { display: inline-flex; vertical-align: -3px; color: #007AFF; }
+
+/* ───────── Lokl Súper (Módulo 10A) ───────── */
+.aviso-envio { padding: 12px 14px; margin: 14px 0 0; font-size: 15px; line-height: 1.4; }
+.aviso-envio .texto-2 { display: block; font-size: 14px; }
+.producto-super img { background: #fff; object-fit: contain; }
+.foto-pasillo { display: grid; place-items: center; color: var(--marca); }
+.detalle-producto { padding: 2px 10px 0; font-size: 13px; }
+.precio-bs { font-weight: 600; font-size: 13px; }
+.pie-super { margin: 22px 0 8px; font-size: 13px; text-align: center; }
+.grupo-super { margin-top: 22px; scroll-margin-top: 12px; }
+.lista-elegir, .lista-precios { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; }
+.fila-producto-super { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--borde); border-radius: 12px; background: var(--tarjeta); font-size: 15px; line-height: 1.3; cursor: pointer; }
+.fila-producto-super input { flex: 0 0 auto; width: 22px; height: 22px; accent-color: var(--primario); }
+.fila-producto-super img, .lista-precios img { flex: 0 0 auto; border-radius: 8px; background: #fff; object-fit: contain; }
+.mini-pasillo { flex: 0 0 auto; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 8px; background: color-mix(in srgb, var(--borde) 50%, var(--tarjeta)); color: var(--marca); }
+.fila-producto-super .texto-2 { font-size: 13px; }
+.fila-precio { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; }
+.datos-precio { display: grid; gap: 2px; flex: 1; min-width: 0; font-size: 15px; }
+.campos-precio { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin-top: 6px; }
+.formulario .campos-precio label { font-size: 13px; font-weight: 600; gap: 2px; }
+.formulario .campos-precio input[type=text] { width: 92px; min-height: 42px; }
+.formulario .agotado-caja { display: flex; align-items: center; gap: 6px; min-height: 42px; }
+.venta-precio { font-size: 14px; margin-top: 4px; }
+.campo-margen { display: flex !important; align-items: center; gap: 6px; }
+.formulario .campo-margen input[type=text] { width: 72px; min-height: 42px; }
+.barra-guardar { position: sticky; bottom: 76px; padding: 10px 0; margin-top: 12px; background: linear-gradient(transparent, var(--fondo) 30%); }

@@ -1,0 +1,130 @@
+---
+// /admin/super/precios — Lo que te cuesta cada producto elegido (decisiones 46, 47 y 53).
+// Escribes el costo; la base calcula el precio con el margen (producto → pasillo → general).
+// Solo se envían las filas que cambiaron. Costo vacío = el producto no se muestra al cliente.
+import Base from "@/layouts/Base.astro";
+import Icono from "@/components/Icono.astro";
+import { leerPrecio, mostrarPrecio, precioParaCampo } from "@/lib/precio.js";
+import { configSuper, municipioSuper, pasillosSuper, precioBs } from "@/lib/super.js";
+
+const { sb } = Astro.locals;
+const url = Astro.url;
+const soloSin = url.searchParams.get("sin") === "1";
+const pasilloSlug = url.searchParams.get("pasillo") || "";
+let aviso = "";
+let error = "";
+const muni = await municipioSuper(sb);
+
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  const ids = String(f.get("ids") || "").split(",").map(Number).filter((n) => n > 0);
+  const items = [];
+  const agotar = [], reponer = [];
+  const malos = [];
+  for (const id of ids) {
+    const c = String(f.get(`c_${id}`) ?? "").trim(), co = String(f.get(`co_${id}`) ?? "");
+    const m = String(f.get(`m_${id}`) ?? "").trim(), mo = String(f.get(`mo_${id}`) ?? "");
+    if (c !== co || m !== mo) {
+      const costo = leerPrecio(c);
+      const margen = leerPrecio(m);
+      if (Number.isNaN(costo) || Number.isNaN(margen) || (margen !== null && margen > 100)) { malos.push(id); continue; }
+      items.push({ id, costo, margen: margen === null ? "" : margen });
+    }
+    const ag = f.get(`a_${id}`) === "1", ago = f.get(`ao_${id}`) === "1";
+    if (ag !== ago) (ag ? agotar : reponer).push(id);
+  }
+  const r = await Promise.all([
+    items.length ? sb.rpc("super_guardar_costos", { p_items: items }) : { error: null },
+    agotar.length ? sb.from("super_productos").update({ disponible: false }).in("id", agotar) : { error: null },
+    reponer.length ? sb.from("super_productos").update({ disponible: true }).in("id", reponer) : { error: null },
+  ]);
+  const e = r.find((x) => x.error)?.error;
+  if (e) { console.error("precios", e); error = "No se pudo guardar. Revisa los montos."; }
+  else if (malos.length) error = `${malos.length} montos no se entendieron (escribe por ejemplo 1,20). Lo demás se guardó.`;
+  else aviso = items.length + agotar.length + reponer.length ? `Guardado: ${items.length} precios${agotar.length + reponer.length ? `, ${agotar.length + reponer.length} cambios de agotado` : ""}.` : "No había cambios.";
+}
+
+const [cfg, pasillos, { data }] = await Promise.all([
+  configSuper(sb),
+  pasillosSuper(sb),
+  sb.rpc("super_admin_productos", { p_municipio_id: muni, p_en_catalogo: true }),
+]);
+const pasillo = pasillos.find((s) => s.slug === pasilloSlug) || null;
+let productos = data || [];
+const totalSin = productos.filter((p) => p.costo == null).length;
+if (soloSin) productos = productos.filter((p) => p.costo == null);
+if (pasillo) productos = productos.filter((p) => p.pasillo_id === pasillo.id);
+const nombrePasillo = Object.fromEntries(pasillos.map((s) => [s.id, s.nombre]));
+const con = (cambios) => {
+  const u = new URLSearchParams();
+  const sin = "sin" in cambios ? cambios.sin : soloSin;
+  const pas = "pasillo" in cambios ? cambios.pasillo : pasilloSlug;
+  if (sin) u.set("sin", "1");
+  if (pas) u.set("pasillo", pas);
+  const s = u.toString();
+  return `/admin/super/precios${s ? `?${s}` : ""}`;
+};
+const pct = (n) => `${precioParaCampo(Number(n))}%`;
+---
+<Base titulo="Precios · Súper">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/admin/super">‹ Lokl Súper</a></p>
+    <h1 style="font-size:24px;margin:8px 0 4px">Lo que me cuesta</h1>
+    <p class="texto-2" style="margin:0;font-size:14px">
+      Escribe cuánto te cuesta cada producto (en dólares) y toca <strong>Guardar</strong>. El precio de venta se calcula solo con el margen.
+      Deja el margen vacío para usar el del pasillo o el general ({pct(cfg.margen ?? 7)}).
+    </p>
+    {aviso && <p class="mensaje ok" role="status">{aviso}</p>}
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+
+    <ul class="chips" aria-label="Filtrar">
+      <li><a class="chip" href={con({ sin: !soloSin })} aria-current={soloSin ? "true" : undefined}>{soloSin ? "✓ " : ""}Sin precio ({totalSin})</a></li>
+      <li><a class="chip" href={con({ pasillo: "" })} aria-current={!pasillo ? "true" : undefined}>Todos</a></li>
+      {pasillos.map((s) => <li><a class="chip" href={con({ pasillo: s.slug })} aria-current={pasillo?.id === s.id ? "true" : undefined}>{s.nombre}</a></li>)}
+    </ul>
+
+    {!productos.length ? (
+      <p class="texto-2" style="margin-top:18px">{soloSin ? "Todos los productos elegidos tienen precio. 🎉" : <>No hay productos elegidos aquí. <a href="/admin/super/productos">Elegir qué vender ›</a></>}</p>
+    ) : (
+      <form method="post" class="formulario" style="margin-top:14px">
+        <input type="hidden" name="ids" value={productos.map((p) => p.id).join(",")} />
+        <ul class="lista-precios">
+          {productos.map((p) => {
+            const c = p.costo != null ? precioParaCampo(p.costo) : "";
+            const m = p.margen_producto != null ? precioParaCampo(p.margen_producto) : "";
+            const bs = precioBs(p.precio, cfg.tasa);
+            return (
+              <li class="tarjeta fila-precio">
+                {p.foto_url ? <img src={p.foto_url} alt="" width="56" height="56" loading="lazy" decoding="async" />
+                  : <span class="mini-pasillo" aria-hidden="true"><Icono nombre="super" tam={24} /></span>}
+                <div class="datos-precio">
+                  <strong>{p.nombre}</strong>
+                  <span class="texto-2" style="font-size:13px">{[p.marca, p.presentacion].filter(Boolean).join(" · ")}{!pasillo && ` · ${nombrePasillo[p.pasillo_id] ?? ""}`}</span>
+                  <div class="campos-precio">
+                    <label>Me cuesta $
+                      <input type="text" name={`c_${p.id}`} value={c} inputmode="decimal" placeholder="0,00" autocomplete="off" />
+                    </label>
+                    <label>Margen %
+                      <input type="text" name={`m_${p.id}`} value={m} inputmode="decimal" placeholder={precioParaCampo(Number(p.margen))} autocomplete="off" />
+                    </label>
+                    <label class="radio agotado-caja"><input type="checkbox" name={`a_${p.id}`} value="1" checked={!p.disponible} /> Agotado</label>
+                  </div>
+                  <input type="hidden" name={`co_${p.id}`} value={c} />
+                  <input type="hidden" name={`mo_${p.id}`} value={m} />
+                  <input type="hidden" name={`ao_${p.id}`} value={p.disponible ? "" : "1"} />
+                  <span class="venta-precio">
+                    {p.precio != null ? <>Se vende a <strong>{mostrarPrecio(p.precio)}</strong>{bs !== null && ` · ${mostrarPrecio(bs, "VES")}`} <span class="texto-2">(margen {pct(p.margen)})</span></>
+                      : <span class="texto-2">Sin precio: el cliente no lo ve.</span>}
+                  </span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        <div class="barra-guardar">
+          <button class="boton ancho" type="submit">Guardar precios</button>
+        </div>
+      </form>
+    )}
+  </main>
+</Base>
