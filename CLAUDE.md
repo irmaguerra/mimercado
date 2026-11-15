@@ -14,7 +14,8 @@ Visión, decisiones aprobadas y plan por módulos: `docs/propuesta-arquitectura.
 ## Reglas del proyecto
 
 - Rama de trabajo: `rediseno-modular`. **No tocar `main`** ni usalokl.com (app vieja en Vercel) hasta el Módulo 12.
-- Cada push a `rediseno-modular` se publica solo en https://lokl.usalokl-app.workers.dev (Cloudflare Workers).
+- Cada push a `rediseno-modular` se publica solo en https://lokl.usalokl-app.workers.dev (Cloudflare Workers) y, cuando el dominio esté activo en Cloudflare, en https://app.usalokl.com (decisión 42, `docs/dominio-app-usalokl.md`).
+- Correo de la app (confirmar cuenta, recuperar contraseña): Resend con no-responder@usalokl.com (`docs/configurar-correo.md`).
 - **SQL para Supabase**: todo script que Irma pega en el SQL Editor se guarda numerado en `sql/` (`03-...sql`, `04-...sql`) y se registra en `sql/README.md`. Un archivo ya ejecutado no se modifica: se crea el siguiente. La fuente para la CLI sigue en `supabase/migrations/` y `supabase/seed.sql`.
 - `npx supabase db push` no conecta desde su red: los cambios de base se aplican pegando el archivo de `sql/` en el SQL Editor.
 - En Windows PowerShell usar `npx.cmd` / `npm.cmd` (la política de scripts bloquea `npx`).
