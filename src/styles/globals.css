@@ -273,3 +273,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .fila-precio .donde, .fila-precio .cuando { font-size: 13px; color: var(--texto-2); }
 .fila-precio .cuando { text-align: right; }
 .aviso-cola { margin-top: 12px; }
+
+/* ───────── Contraseña con ojito ───────── */
+.campo-clave { position: relative; display: block; }
+.formulario .campo-clave input:not([type=radio]):not([type=checkbox]) { width: 100%; padding-right: 52px; }
+.ver-clave {
+  position: absolute; top: 0; right: 0; height: 100%; min-width: 48px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: 0; color: var(--texto-2); cursor: pointer;
+}
+.ver-clave[aria-pressed="true"] { color: var(--acento); }
+.ver-clave[hidden] { display: none; }

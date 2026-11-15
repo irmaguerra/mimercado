@@ -3,6 +3,7 @@
 // "Continuar con Google" (un toque) o correo + contraseña. Formularios normales: sin JavaScript.
 import Base from "@/layouts/Base.astro";
 import Logo from "@/components/Logo.astro";
+import CampoClave from "@/components/CampoClave.astro";
 import { destinoSeguro, mensajeError } from "@/lib/sesion.js";
 
 const { sb, usuario } = Astro.locals;
@@ -75,19 +76,25 @@ const enlace = (m) => `/entrar?modo=${m}${siguiente !== "/panel" ? `&siguiente=$
         <input type="email" name="correo" value={correo} required autocomplete="email" inputmode="email" />
       </label>
       {modo !== "olvide" && (
-        <label>Contraseña
-          <input type="password" name="clave" required minlength="8"
-            autocomplete={modo === "registro" ? "new-password" : "current-password"} />
-          {modo === "registro" && <small class="texto-2">Mínimo 8 caracteres.</small>}
-        </label>
+        <CampoClave
+          etiqueta={modo === "registro" ? "Crea una contraseña" : "Contraseña"}
+          autocompletar={modo === "registro" ? "new-password" : "current-password"}
+          ayuda={modo === "registro" ? "Mínimo 8 caracteres. Toca el ojito para ver lo que escribes." : ""} />
       )}
       <button class="boton ancho" type="submit">
         {modo === "registro" ? "Crear mi cuenta" : modo === "olvide" ? "Enviarme el enlace" : "Entrar"}
       </button>
     </form>
 
+    {modo === "entrar" && (
+      <div class="tarjeta bloque" style="text-align:center">
+        <p style="margin:0 0 10px"><strong>¿Primera vez en Lokl?</strong><br /><span class="texto-2" style="font-size:14px">Vende o publica gratis, sin pagos ni aprobaciones.</span></p>
+        <a href={enlace("registro")} class="boton boton-claro ancho">Crear mi cuenta gratis</a>
+      </div>
+    )}
+
     <p class="enlaces-pie">
-      {modo === "entrar" && <><a href={enlace("registro")}>¿No tienes cuenta? Crea tu tienda</a><a href={enlace("olvide")}>Olvidé mi contraseña</a></>}
+      {modo === "entrar" && <a href={enlace("olvide")}>Olvidé mi contraseña</a>}
       {modo === "registro" && <a href={enlace("entrar")}>¿Ya tienes cuenta? Entrar</a>}
       {modo === "olvide" && <a href={enlace("entrar")}>Volver a entrar</a>}
     </p>

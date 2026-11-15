@@ -11,6 +11,8 @@ export const ICONOS = {
   "hogar-oficios": "<path d=\"M3.5 11L12 4l8.5 7\"/><path d=\"M6 9.5V20h12V9.5\"/><path d=\"M10 20v-5h4v5\"/>",
   "hospedaje": "<path d=\"M3 19V6\"/><path d=\"M3 15h18v4\"/><path d=\"M21 15v-3a2 2 0 0 0-2-2h-8v5\"/><circle cx=\"7\" cy=\"11.5\" r=\"1.8\"/>",
   "inicio": "<path d=\"M3.5 10.5 12 3.5l8.5 7\"/><path d=\"M5.5 9v10.5h4.5v-6h4v6h4.5V9\"/>",
+  "ojo-tachado": "<path d=\"M10.6 5.6A10 10 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-2.7 3.4M6.6 6.6C3.9 8.4 2.5 12 2.5 12S6 18.5 12 18.5a9.6 9.6 0 0 0 5.4-1.6\"/><path d=\"M9.9 9.9a3 3 0 0 0 4.2 4.2\"/><path d=\"m3 3 18 18\"/>",
+  "ojo": "<path d=\"M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>",
   "presupuesto": "<path d=\"M4 4h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H9l-4 3v-3H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z\"/><path d=\"M19 9h1a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1v3l-4-3h-3a2 2 0 0 1-1.5-.7\"/>",
   "publicar": "<rect x=\"3.5\" y=\"3.5\" width=\"17\" height=\"17\" rx=\"4.5\"/><path d=\"M12 8v8M8 12h8\"/>",
   "queso": "<path d=\"M3 11l15-6 3 6v8H3Z\"/><path d=\"M3 11h18\"/><circle cx=\"8\" cy=\"15\" r=\"1.3\"/><circle cx=\"15.5\" cy=\"15.5\" r=\"1.6\"/><circle cx=\"16\" cy=\"8.4\" r=\".8\"/>",
