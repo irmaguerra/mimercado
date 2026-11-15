@@ -5,5 +5,12 @@
   "name": "lokl",
   "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat"],
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // Dominio propio (decisión 43): usalokl.com, y www.usalokl.com que lleva a usalokl.com.
+  // workers.dev sigue funcionando para pruebas.
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "usalokl.com", "custom_domain": true },
+    { "pattern": "www.usalokl.com", "custom_domain": true }
+  ]
 }

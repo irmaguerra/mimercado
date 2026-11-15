@@ -1,0 +1,28 @@
+---
+// /super — Lokl Súper. Se construye en el Módulo 10; mientras tanto, "Muy pronto" (decisión 43).
+// Para no dejar a la persona sin nada, la lleva a las bodegas y víveres de su ciudad.
+// No se cachea: el enlace depende de la ubicación guardada en el teléfono.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import Icono from "@/components/Icono.astro";
+import { leerUbicacion, rutaUbicacion } from "@/lib/ubicacion.js";
+
+const ubic = leerUbicacion(Astro.cookies);
+const viveres = ubic?.municipio ? `${rutaUbicacion(ubic)}/tiendas/viveres` : null;
+---
+<Base titulo="Lokl Súper" descripcion="Lokl Súper: tu supermercado en 30 minutos a tu puerta. Muy pronto.">
+  <main class="contenedor angosto">
+    <Cabecera />
+    <section class="tarjeta bloque" style="text-align:center;margin-top:24px;padding:28px 18px">
+      <span style="color:var(--marca)"><Icono nombre="super" tam={56} /></span>
+      <h1 style="font-size:26px;margin:10px 0 4px">Lokl Súper</h1>
+      <p class="etiqueta-estado" style="margin:0 0 12px;font-size:16px">Muy pronto</p>
+      <p style="margin:0">Estamos preparando el supermercado de Lokl: haces tu pedido desde el teléfono y te llega <strong>en 30 minutos a tu puerta</strong>.</p>
+    </section>
+
+    <div class="pila-botones" style="margin-top:18px">
+      {viveres && <a class="boton ancho" href={viveres}>Mientras tanto, ver bodegas y víveres</a>}
+      <a class="boton boton-claro ancho" href="/">Volver al inicio</a>
+    </div>
+  </main>
+</Base>

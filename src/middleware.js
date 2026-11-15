@@ -9,6 +9,13 @@ const REQUIERE_SESION = ["/panel", "/admin"];
 const empieza = (ruta, lista) => lista.some((p) => ruta === p || ruta.startsWith(p + "/"));
 
 export const onRequest = defineMiddleware(async (ctx, next) => {
+  // Una sola dirección: www.usalokl.com → usalokl.com (decisión 43)
+  if (ctx.url.hostname.startsWith("www.")) {
+    const destino = new URL(ctx.url);
+    destino.hostname = destino.hostname.slice(4);
+    return ctx.redirect(destino.href, 301);
+  }
+
   const ruta = ctx.url.pathname;
   if (!empieza(ruta, CON_SESION)) return next();
 
