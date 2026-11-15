@@ -11,17 +11,19 @@
 
 ## Pasos para mover usalokl.com a la app nueva
 
-1. **Quitar los registros de la app vieja.** Cloudflare → **usalokl.com** → **DNS** → **Records**, borrar **solo** estos dos (⋯ o **Edit** → **Delete**):
+**En vivo desde el 15/11/2026:** https://usalokl.com (www lleva ahí; workers.dev sigue para pruebas).
+
+1. ✅ **Quitar los registros de la app vieja.** Cloudflare → **usalokl.com** → **DNS** → **Records**, borrar **solo** estos dos (⋯ o **Edit** → **Delete**):
    - **A** · `usalokl.com` · `216.198.79.1`
    - **CNAME** · `www` · `c9a1e8f0dec54208.vercel-dns-017.com`
 
    Los de correo (rsend, send, TXT, MX) **no se tocan**.
-2. **Conectar los dominios a la app.** Cloudflare → **Workers & Pages** → **lokl** → pestaña **Domains** → **+ Add** → **Custom domain**:
+2. ✅ **Conectar los dominios a la app.** Cloudflare → **Workers & Pages** → **lokl** → pestaña **Domains** → **+ Add** → **Custom domain**:
    - `usalokl.com` → **Add domain**
    - otra vez **+ Add** → `www.usalokl.com` → **Add domain**
 
    Cloudflare crea los registros y el certificado 🔒. Esperar a que digan **Active**.
-3. **Quien programa** sube la configuración (`wrangler.jsonc` ya trae los dos dominios) para que no se pierdan en las próximas publicaciones.
+3. ✅ **Quien programa** sube la configuración (`wrangler.jsonc` ya trae los dos dominios) para que no se pierdan en las próximas publicaciones.
 4. **Supabase** → **Authentication** → **URL Configuration**:
    - **Site URL:** `https://usalokl.com`
    - **Redirect URLs:** agregar `https://usalokl.com/**` (las demás se quedan).
