@@ -113,6 +113,10 @@ const filtrando = aDomicilio || h24;
       </form>
     )}
 
+    {sec.clave === "al_mayor" && (
+      <p style="margin:12px 0 0"><a href={`/precios?lugar=${m.estado.slug}/${m.slug}`}>Ver la tabla de precios de origen ›</a></p>
+    )}
+
     {!m.activo && (
       <p class="tarjeta aviso">Lokl está empezando en {m.nombre}. Aquí verás a los vendedores de la zona a medida que se registren.</p>
     )}

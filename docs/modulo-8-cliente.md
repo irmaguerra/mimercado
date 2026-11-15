@@ -1,6 +1,6 @@
 # Módulo 8 — Cliente: favoritos, reseñas y contador
 
-**Estado:** 🛠️ publicado · `sql/10` corrido · falta probar en el teléfono · 14 de noviembre de 2026
+**Estado:** ✅ aprobado por Irma el 14 de noviembre de 2026. Probado en el teléfono: favoritos, lo nuevo de tus favoritos, reseñas (solo tras contactar), respuesta del vendedor, contador semanal y reportar reseñas.
 
 Todo funciona **sin cuenta**. El teléfono se reconoce por un dato guardado en el navegador (la cookie `lokl_cliente`), que es privado: ni los vendedores pueden verlo.
 
@@ -38,7 +38,7 @@ Todo funciona **sin cuenta**. El teléfono se reconoce por un dato guardado en e
 ## Pendiente
 
 1. ✅ `sql/10` corrido el 14/11/2026.
-2. Subir el código y **probar en el teléfono**:
+2. ✅ Publicado y probado en el teléfono (14/11/2026):
    - En una tienda, tocar **♡ Guardar** y luego el **♡ de arriba**: debe aparecer en Mis favoritos. Después quitarla.
    - Tocar **Dejar mi opinión** sin haberle escrito antes: debe pedir que primero le escribas.
    - Tocar **Escribir por WhatsApp** (no hace falta enviar el mensaje), volver y opinar. La reseña debe verse en la tienda.

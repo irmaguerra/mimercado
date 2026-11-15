@@ -12,6 +12,7 @@ import {
 import { leerPrecio, precioParaCampo } from "@/lib/precio.js";
 import { categoriasDeSeccion, categoriasMarcables } from "@/lib/listados.js";
 import { MENSAJE_PALABRA } from "@/lib/moderacion.js";
+import { UNIDADES, leerAlMayor } from "@/lib/al-mayor.js";
 
 const { sb, usuario } = Astro.locals;
 const t = await miTienda(sb, usuario.id);
@@ -37,6 +38,22 @@ const existentes = fotosOrdenadas(p ?? {});
 // Clasificados: cada anuncio elige su categoría (decisión 15). El resto usa las de su tienda.
 const categorias = seccion === "clasificados" ? categoriasMarcables(await categoriasDeSeccion(sb, "clasificados")) : [];
 
+// Al mayor (decisión 33): los productores siempre; las tiendas, si lo marcan.
+// Cada producto al mayor elige su tipo para la tabla de /precios (decisión 35).
+const siempreMayor = seccion === "al_mayor";
+const puedeMayor = siempreMayor || seccion === "tiendas";
+const categoriasMayor = puedeMayor
+  ? [...categoriasMarcables(await categoriasDeSeccion(sb, "al_mayor")),
+     ...(seccion === "tiendas" ? categoriasMarcables(await categoriasDeSeccion(sb, "tiendas")) : [])]
+  : [];
+let mayor = {
+  activo: p ? p.es_al_mayor : siempreMayor,
+  unidad: p?.unidad ?? "",
+  cantidad_minima: p?.cantidad_minima ? String(Number(p.cantidad_minima)).replace(".", ",") : "",
+  disponibilidad: p?.disponibilidad ?? "",
+  categoria: p?.categoria_id ?? null,
+};
+
 let error = "";
 let campos = {
   titulo: p?.titulo ?? "",
@@ -59,6 +76,14 @@ if (Astro.request.method === "POST") {
   };
   if (!categorias.some((c) => c.id === campos.categoria)) campos.categoria = null;
   const precio = leerPrecio(campos.precio);
+  mayor = {
+    activo: siempreMayor || (puedeMayor && f.get("es_al_mayor") === "on"),
+    unidad: String(f.get("unidad") || ""),
+    cantidad_minima: txt("cantidad_minima", 12),
+    disponibilidad: txt("disponibilidad", 100),
+    categoria: Number(f.get("categoria_mayor")) || null,
+  };
+  const alMayor = mayor.activo ? leerAlMayor(f, { categoriasPermitidas: categoriasMayor }) : null;
 
   const grandes = f.getAll("foto").filter((x) => x instanceof File && x.size > 0);
   const minis = f.getAll("mini").filter((x) => x instanceof File && x.size > 0);
@@ -70,6 +95,8 @@ if (Astro.request.method === "POST") {
   else if (categorias.length && !campos.categoria) error = "Elige de qué es tu anuncio (por ejemplo, Vehículos y motos).";
   else if (campos.titulo.length < 3) error = `Escribe el nombre del ${cosa} (mínimo 3 letras).`;
   else if (Number.isNaN(precio)) error = "Revisa el precio. Escríbelo así: 5 o 5,50. Si no quieres ponerlo, déjalo vacío.";
+  else if (alMayor?.error) error = alMayor.error;
+  else if (alMayor && precio !== null && !alMayor.datos.unidad) error = "Elige la unidad del precio (kilo, litro, saco…).";
   else if (quedan.length + grandes.length > MAX_FOTOS) error = `Puedes poner hasta ${MAX_FOTOS} fotos.`;
   else if ([...grandes, ...minis].some((x) => !TIPOS_FOTO[x.type])) error = "Las fotos deben ser JPG, PNG o WebP.";
   else if ([...grandes, ...minis].some((x) => x.size > MAX_PESO_FOTO)) error = "Una foto pesa más de 2 MB. Prueba con otra.";
@@ -78,6 +105,8 @@ if (Astro.request.method === "POST") {
   if (!error) {
     const datos = { titulo: campos.titulo, descripcion: campos.descripcion || null, precio, moneda: campos.moneda };
     if (categorias.length) datos.categoria_id = campos.categoria;
+    if (alMayor) Object.assign(datos, alMayor.datos);
+    else if (puedeMayor) datos.es_al_mayor = false;
     const consulta = p
       ? sb.from("publicaciones").update(datos).eq("id", p.id)
       : sb.from("publicaciones").insert({ ...datos, vendedor_id: t.id, seccion, zona_id: t.zona_id });
@@ -193,6 +222,39 @@ const titulo = p ? `Editar ${cosa}` : `Publicar ${cosa === "anuncio" ? "un anunc
         </div>
         <small class="texto-2">Se muestra tal cual lo escribes. Vacío = "Pregunta el precio".</small>
       </fieldset>
+
+      {puedeMayor && (
+        <details class="caja-suave" open={mayor.activo}>
+          <summary>{siempreMayor ? "Venta al mayor" : "¿Lo vendes al mayor?"}</summary>
+          <div class="formulario" style="margin-top:8px">
+            {!siempreMayor && (
+              <label class="radio" style="font-weight:600"><input type="checkbox" name="es_al_mayor" checked={mayor.activo} /> Sí, esto lo vendo al mayor</label>
+            )}
+            <label>El precio es por
+              <select name="unidad">
+                <option value="">Elige la unidad…</option>
+                {Object.entries(UNIDADES).map(([k, u]) => <option value={k} selected={mayor.unidad === k}>{u.uno}</option>)}
+              </select>
+            </label>
+            <label>Pedido mínimo (opcional)
+              <input type="text" name="cantidad_minima" value={mayor.cantidad_minima} inputmode="decimal" maxlength="12" placeholder="Ej. 20" />
+              <small class="texto-2">Solo el número; la unidad es la de arriba.</small>
+            </label>
+            <label>¿Cuándo hay? (opcional)
+              <input type="text" name="disponibilidad" value={mayor.disponibilidad} maxlength="100" placeholder="Ej. Lunes y jueves · Todo el año · Desde diciembre" />
+            </label>
+            <fieldset class="opciones-radio">
+              <legend>¿Qué es?</legend>
+              <small class="texto-2">Así sale en la tabla de precios de origen.</small>
+              <div class="casillas">
+                {categoriasMayor.map((c) => (
+                  <label class="radio"><input type="radio" name="categoria_mayor" value={c.id} checked={mayor.categoria === c.id} required={siempreMayor} /> {c.nombre}</label>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+        </details>
+      )}
 
       <label>Descripción (opcional)
         <textarea name="descripcion" rows="4" maxlength="2000" placeholder="Tamaño, sabor, estado, qué incluye…">{campos.descripcion}</textarea>

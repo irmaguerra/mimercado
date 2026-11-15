@@ -7,6 +7,7 @@ import Base from "@/layouts/Base.astro";
 import Cabecera from "@/components/Cabecera.astro";
 import Icono from "@/components/Icono.astro";
 import PaginaTienda from "@/components/PaginaTienda.astro";
+import TarjetaVendedor from "@/components/TarjetaVendedor.astro";
 import { supabasePublico } from "@/lib/supabase/servidor.js";
 import { buscarEstado, municipiosActivos } from "@/lib/ubicacion.js";
 import { PUBLICA } from "@/lib/cache.js";
@@ -55,7 +56,7 @@ if (!estado) {
 }
 Astro.cache.set(PUBLICA);
 
-let municipios = [], activosAqui = [], otrosLugares = [];
+let municipios = [], activosAqui = [], otrosLugares = [], nacionales = [];
 if (estado) {
   const [{ data }, activos] = await Promise.all([
     supabasePublico().from("municipios").select("nombre, slug, activo").eq("estado_id", estado.id).order("nombre"),
@@ -63,6 +64,10 @@ if (estado) {
   ]);
   municipios = data ?? [];
   activosAqui = municipios.filter((m) => m.activo);
+  if (!activosAqui.length) {
+    const { data: n } = await supabasePublico().rpc("productores_nacionales", { p_limite: 12 });
+    nacionales = n ?? [];
+  }
   otrosLugares = activos.filter((c) => c.estado.slug !== estado.slug);
 }
 ---
@@ -75,8 +80,21 @@ if (estado) {
     {activosAqui.length === 0 && (
       <div class="tarjeta aviso">
         <strong style="display:block">Lokl todavía no llega a {estado.nombre}.</strong>
-        Pero puedes ver lo que se vende en otros lugares, y pronto los productores que envían a todo el país.
+        Pero puedes ver lo que se vende en otros lugares y lo que te envían a todo el país.
       </div>
+    )}
+
+    {nacionales.length > 0 && (
+      <>
+        <h2 style="font-size:18px;margin:24px 0 4px">Envían a todo el país</h2>
+        <p class="texto-2" style="margin:0;font-size:14px">Productores y tiendas que mandan por encomienda hasta {estado.nombre}.</p>
+        <ul class="lista-vendedores">
+          {nacionales.map((v) => (
+            <li><TarjetaVendedor v={{ ...v, zona: [v.municipio, v.estado].join(", "), descripcion: v.envio_detalle }} mostrarAbierto={false} /></li>
+          ))}
+        </ul>
+        <p style="margin:10px 0 0"><a href="/precios?nacional=1">Ver sus precios de origen ›</a></p>
+      </>
     )}
 
     {otrosLugares.length > 0 && activosAqui.length === 0 && (

@@ -1,0 +1,124 @@
+---
+// /precios — Precios de origen al mayor: producto · dónde · precio · actualizado. HTML puro, 0 KB de JS.
+// Por defecto muestra todo el país (puerta al mundo). Filtros: ?lugar=apure o apure/san-fernando,
+// ?tipo=queso-lacteos y ?nacional=1 (solo quienes envían a todo el país).
+// Solo salen los precios actualizados en los últimos 30 días (decisión 36).
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import { supabasePublico } from "@/lib/supabase/servidor.js";
+import { PUBLICA } from "@/lib/cache.js";
+import { leerLugar } from "@/lib/listados.js";
+import { buscarEstado, buscarMunicipio, todosLosEstados } from "@/lib/ubicacion.js";
+import { precioPorUnidad, minimoTexto, haceCuanto, DIAS_PRECIO } from "@/lib/al-mayor.js";
+
+const params = Astro.url.searchParams;
+const sb = supabasePublico();
+const lugar = leerLugar(params.get("lugar"));
+const m = lugar?.municipio ? await buscarMunicipio(lugar.estado, lugar.municipio) : null;
+const e = !m && lugar ? await buscarEstado(lugar.estado) : null;
+const nacional = params.get("nacional") === "1";
+
+const [{ data: tipos }, estados] = await Promise.all([
+  sb.from("categorias").select("id, nombre, slug").eq("seccion", "al_mayor").eq("activa", true).is("padre_id", null).order("orden"),
+  todosLosEstados(),
+]);
+const tipo = (tipos ?? []).find((c) => c.slug === params.get("tipo")) ?? null;
+
+const estadoId = e?.id ?? null;
+const { data: filas, error } = await sb.rpc("precios_origen", {
+  p_estado_id: estadoId,
+  p_municipio_id: m?.id ?? null,
+  p_categoria_id: tipo?.id ?? null,
+  p_solo_nacional: nacional,
+  p_dias: DIAS_PRECIO,
+  p_limite: 300,
+});
+if (error) console.error("precios", error);
+Astro.cache.set(PUBLICA);
+
+// Agrupar por tipo de producto, en el orden que da la base
+const grupos = [];
+for (const f of filas ?? []) {
+  let g = grupos.at(-1);
+  if (!g || g.slug !== f.categoria_slug) grupos.push((g = { slug: f.categoria_slug, nombre: f.categoria, filas: [] }));
+  g.filas.push(f);
+}
+
+const nombreLugar = m ? `${m.nombre}, ${m.estado.nombre}` : e?.nombre ?? "todo el país";
+const valorLugar = m ? `${m.estado.slug}/${m.slug}` : e?.slug ?? "";
+const con = (cambios) => {
+  const u = new URLSearchParams();
+  const l = "lugar" in cambios ? cambios.lugar : valorLugar;
+  const t = "tipo" in cambios ? cambios.tipo : tipo?.slug;
+  const n = "nacional" in cambios ? cambios.nacional : nacional;
+  if (l) u.set("lugar", l);
+  if (t) u.set("tipo", t);
+  if (n) u.set("nacional", "1");
+  const s = u.toString();
+  return s ? `/precios?${s}` : "/precios";
+};
+---
+<Base titulo="Precios de origen" descripcion={`Precios al mayor de productores de ${nombreLugar}: queso, ganado, pescado, cosechas. Directo con el productor por WhatsApp.`}>
+  <main class="contenedor">
+    <Cabecera lugar={m?.nombre} />
+    <h1 style="font-size:24px;margin:20px 0 2px">Precios de origen</h1>
+    <p class="texto-2" style="margin:0;font-size:14px">
+      Precios al mayor de productores de <strong>{nombreLugar}</strong>, tal como los publican ellos.
+      Solo se muestran los actualizados en los últimos {DIAS_PRECIO} días.
+    </p>
+
+    <ul class="chips" aria-label="Tipo de producto">
+      <li><a href={con({ nacional: !nacional })} class="chip" aria-current={nacional ? "true" : undefined}>{nacional && "✓ "}Envían a todo el país</a></li>
+      <li><a href={con({ tipo: null })} class="chip" aria-current={!tipo ? "true" : undefined}>Todo</a></li>
+      {(tipos ?? []).map((c) => (
+        <li><a href={con({ tipo: c.slug })} class="chip" aria-current={tipo?.id === c.id ? "true" : undefined}>{c.nombre}</a></li>
+      ))}
+    </ul>
+
+    <form method="get" action="/precios" class="filtro-sector">
+      <label for="lugar" class="texto-2">Dónde</label>
+      <select id="lugar" name="lugar">
+        <option value="">Todo el país</option>
+        {m && <option value={valorLugar} selected>{m.nombre}, {m.estado.nombre}</option>}
+        {estados.map((x) => <option value={x.slug} selected={!m && e?.slug === x.slug}>{x.nombre}</option>)}
+      </select>
+      {tipo && <input type="hidden" name="tipo" value={tipo.slug} />}
+      {nacional && <input type="hidden" name="nacional" value="1" />}
+      <button type="submit" class="boton boton-claro">Ver</button>
+    </form>
+
+    {grupos.map((g) => (
+      <section class="grupo-precios">
+        <h2 style="font-size:18px;margin:0">{g.nombre} <span class="texto-2" style="font-size:14px;font-weight:400">· {g.filas.length}</span></h2>
+        <ul class="lista-precios">
+          {g.filas.map((f) => (
+            <li>
+              <a href={`/p/${f.id}`} class="tarjeta fila-precio">
+                <strong>{f.titulo}</strong>
+                <span class="monto">{precioPorUnidad(f.precio, f.moneda, f.unidad)}</span>
+                <span class="donde">
+                  {[f.zona, f.municipio, f.estado].filter(Boolean).join(", ")} · {f.vendedor_nombre}{f.verificado && " ✓"}
+                  {minimoTexto(f.cantidad_minima, f.unidad) && ` · ${minimoTexto(f.cantidad_minima, f.unidad)}`}
+                  {f.nacional && " · Envía a todo el país"}
+                </span>
+                <span class="cuando">{haceCuanto(f.actualizado)}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+
+    {!grupos.length && (
+      <div class="tarjeta aviso">
+        <strong style="display:block">Todavía no hay precios{tipo && ` de ${tipo.nombre.toLowerCase()}`} en {nombreLugar}.</strong>
+        {(tipo || nacional || valorLugar) && <p style="margin:6px 0 0"><a href="/precios">Ver todos los precios del país</a></p>}
+        <p style="margin:6px 0 0">¿Eres productor? <a href="/panel/crear?que=al_mayor">Publica tus precios gratis</a> y que te encuentren desde cualquier parte.</p>
+      </div>
+    )}
+
+    <p class="texto-2" style="font-size:13px;margin-top:20px">
+      Lokl no vende ni cobra: los precios los pone cada productor y se acuerdan directo con él por WhatsApp.
+    </p>
+  </main>
+</Base>

@@ -424,3 +424,9 @@ Meta: **tienda lista en menos de 2 minutos**, desde el teléfono.
 | 30 | El vendedor responde una vez cada reseña | **Aprobado** (14/11/2026) |
 | 31 | Las reseñas se reportan y se ocultan con 3 reportes; el vendedor no puede borrarlas | **Aprobado** (14/11/2026) |
 | 32 | Favoritos y reseñas solo para tiendas, puestos, productores y servicios (no para personas de Clasificados) | **Aprobado** (14/11/2026) |
+| 33 | Venden al mayor los productores (siempre) y las tiendas que marquen "Esto lo vendo al mayor" | **Aprobado** (14/11/2026) |
+| 34 | Unidades: kilo, litro, unidad, docena, cesta, saco o bulto, caja, cabeza, tonelada | **Aprobado** (14/11/2026) |
+| 35 | Cada producto al mayor elige qué es (categoría) para la tabla de precios | **Aprobado** (14/11/2026) |
+| 36 | `/precios` solo muestra lo actualizado en 30 días; botón "Mi precio sigue igual" | **Aprobado** (14/11/2026) |
+| 37 | "Envían a todo el país": filtro en `/precios` y sección en los estados sin Lokl | **Aprobado** (14/11/2026) |
+| 38 | Publicar sin señal para todos: se guarda en el teléfono y se envía al volver la señal | **Aprobado** (14/11/2026) |

@@ -7,7 +7,7 @@ import { estaAbiertoAhora } from "@/lib/horario.js";
 import { enlaceCompartir } from "@/lib/whatsapp.js";
 import { ALCANCE_ENVIO, MODALIDAD_COCINA, QUE_HACES, FORMAS_PAGO, esServicio, textoAbierto } from "@/lib/vendedor.js";
 import { miniatura, PRODUCTOS_POR_PAGINA } from "@/lib/publicacion.js";
-import { mostrarPrecio } from "@/lib/precio.js";
+import { precioPorUnidad } from "@/lib/al-mayor.js";
 import ListaResenas from "./ListaResenas.astro";
 import { MIN_PARA_PROMEDIO, estrellas, promedioTexto, cuantasResenas } from "@/lib/resenas.js";
 
@@ -105,7 +105,7 @@ const hora = (h) => String(h).slice(0, 5);
       <ul class="rejilla-productos">
         {productos.map((p, i) => {
           const mini = miniatura(p);
-          const precio = mostrarPrecio(p.precio, p.moneda);
+          const precio = precioPorUnidad(p.precio, p.moneda, p.unidad);
           return (
             <li id={i === primeroNuevo && i > 0 ? "mas" : undefined}>
               <a href={`/p/${p.id}`} class:list={["tarjeta enlace-tarjeta producto", { agotado: p.agotado }]}>

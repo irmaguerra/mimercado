@@ -262,3 +262,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .respuesta-vendedor { margin: 8px 0 4px; padding: 8px 10px; border-left: 3px solid var(--acento); background: color-mix(in srgb, var(--acento) 8%, var(--tarjeta)); font-size: 14px; border-radius: 0 8px 8px 0; }
 .resumen-semana { list-style: none; padding: 0; margin: 8px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .resumen-semana strong { display: block; font-size: 26px; line-height: 1.1; }
+
+/* ───────── Al mayor y precios de origen (Módulo 9) ───────── */
+.datos-al-mayor { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 15px; }
+.datos-al-mayor li + li::before { content: "· "; color: var(--texto-2); }
+.grupo-precios { margin-top: 22px; }
+.lista-precios { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; }
+.fila-precio { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 12px 14px; text-decoration: none; color: var(--texto); }
+.fila-precio .monto { font-weight: 800; text-align: right; white-space: nowrap; }
+.fila-precio .donde, .fila-precio .cuando { font-size: 13px; color: var(--texto-2); }
+.fila-precio .cuando { text-align: right; }
+.aviso-cola { margin-top: 12px; }

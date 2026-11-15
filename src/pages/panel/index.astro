@@ -68,6 +68,7 @@ const suspendida = t.estado !== "activo";
         <a href="/panel/tienda#categorias">Elegir mis categorías</a>
       </p>
     )}
+    <p id="cola-envios" class="mensaje ok aviso-cola" role="status" hidden></p>
     {zonaPendiente && <p class="mensaje ok">Tu zona "{t.zonas.nombre}" está en revisión. Tu tienda ya funciona.</p>}
 
     <section class="tarjeta bloque">
@@ -111,6 +112,27 @@ const suspendida = t.estado !== "activo";
     </form>
   </main>
   <script is:inline>
+    // Publicar sin señal: avisa lo que sigue guardado en el teléfono (src/lib/cola-envios.js).
+    // Los que fallaron por un error del formulario se avisan una vez y se quitan.
+    try {
+      const r = indexedDB.open("lokl-cola", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("envios", { keyPath: "id", autoIncrement: true });
+      r.onsuccess = () => {
+        const s = r.result.transaction("envios", "readwrite").objectStore("envios");
+        const q = s.getAll();
+        q.onsuccess = () => {
+          const l = q.result || [];
+          if (!l.length) return;
+          const malos = l.filter((x) => x.final), esperando = l.filter((x) => !x.final);
+          const t = [];
+          if (esperando.length) t.push(`${esperando.length === 1 ? "1 publicación espera" : esperando.length + " publicaciones esperan"} señal para enviarse${esperando[0].error ? ` (${esperando[0].error})` : ""}.`);
+          malos.forEach((x) => { t.push(`No se pudo publicar "${x.titulo}": ${x.error} Vuelve a publicarlo.`); s.delete(x.id); });
+          const p = document.getElementById("cola-envios");
+          p.textContent = t.join(" ");
+          p.hidden = false;
+        };
+      };
+    } catch {}
     // Botón "Copiar": solo aparece si el teléfono lo permite.
     document.querySelectorAll("[data-copiar]").forEach((b) => {
       if (!navigator.clipboard) return;

@@ -71,6 +71,11 @@ const base = `/${m.estado.slug}/${m.slug}`;
       </>
     )}
 
+    <a href={`/precios?lugar=${m.estado.slug}/${m.slug}`} class="tarjeta enlace-tarjeta fila" style="gap:12px;margin-top:20px;padding:14px">
+      <span style="color:var(--marca)"><Icono nombre="al-mayor" tam={28} /></span>
+      <span><strong style="display:block">Precios de origen</strong><span class="texto-2" style="font-size:14px">Queso, ganado, pescado y cosechas al mayor</span></span>
+    </a>
+
     <p class="texto-2" style="font-size:14px;margin-top:24px">
       <a href={`/${m.estado.slug}`}>Ver todo {m.estado.nombre}</a>
     </p>

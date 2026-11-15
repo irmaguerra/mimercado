@@ -24,6 +24,7 @@ Cada archivo se corre **una sola vez** y nunca se modifica después de correrlo:
 | 08 | `08-modulo-6-moderacion.sql` | Moderación: palabras que bloquean o mandan a revisión, reportes de la gente (3 ocultan una publicación), acciones del admin con bitácora, verificaciones y lo que buscan sin encontrar. Corrige que lo enviado a revisión no se podía guardar | ✅ 14/11/2026 |
 | 09 | `09-modulo-7-servicios.sql` | Servicios: formas de pago permitidas, precios de referencia y filtros "A domicilio" y "24 horas" en las listas | ✅ 14/11/2026 |
 | 10 | `10-modulo-8-cliente.sql` | Cliente: favoritos, reseñas (solo quien escribió o llamó desde Lokl), respuesta del vendedor, reportar reseñas y contador semanal. Oculta a los vendedores el código del teléfono de sus clientes | ✅ 14/11/2026 |
+| 11 | `11-modulo-9-al-mayor.sql` | Al mayor: unidades, pedido mínimo, cuándo hay, fecha del precio y "Mi precio sigue igual", tabla de precios de origen y quienes envían a todo el país | ✅ 14/11/2026 |
 
 ## Para quien programa
 
