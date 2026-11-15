@@ -38,6 +38,12 @@ if (Astro.request.method === "POST") {
     const { data, error: e } = await sb.auth.signUp({ email: correo, password: clave, options: { emailRedirectTo: volver } });
     if (e) error = mensajeError(e);
     else if (data.session) return Astro.redirect(siguiente, 303); // si la confirmación de correo está apagada
+    // Si el correo ya tenía cuenta, Supabase no manda nada y devuelve un usuario sin "identities":
+    // hay que decirlo, si no la persona se queda esperando un correo que nunca llega.
+    else if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      modo = "entrar";
+      error = "Ese correo ya tiene una cuenta en Lokl. Entra con tu contraseña o toca \"Olvidé mi contraseña\".";
+    }
     else aviso = `Te enviamos un correo a ${correo}. Toca el enlace que trae para activar tu cuenta (revisa también spam).`;
   } else {
     const { error: e } = await sb.auth.signInWithPassword({ email: correo, password: clave });
