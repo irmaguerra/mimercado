@@ -1,5 +1,7 @@
 # Configurar el correo de Lokl con Resend
 
+**Estado:** ✅ funcionando desde el 15/11/2026. Dominio verificado, SMTP en Supabase, plantillas en español; probados "Activa tu cuenta" y "Crea tu contraseña nueva". Los DNS de usalokl.com ahora están en Cloudflare: los registros de Resend se editan allí.
+
 **Para qué:** que los correos de "Activa tu cuenta" y "Olvidé mi contraseña" les lleguen a todos, no solo al equipo de Supabase (decisión 4).
 
 **Servicio:** **Resend**, gratis hasta 3.000 correos al mes (100 por día). Primero se eligió Brevo, pero Brevo no acepta cuentas de Venezuela (15/11/2026).
