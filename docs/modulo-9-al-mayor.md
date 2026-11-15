@@ -1,6 +1,6 @@
 # Módulo 9 — Al mayor y precios de origen
 
-**Estado:** 🛠️ publicado · `sql/11` corrido · falta probar en el teléfono · 14 de noviembre de 2026
+**Estado:** 🛠️ publicado con `sql/11` y `sql/12` (dos precios, 15/11/2026) · falta probar en el teléfono
 
 La "puerta al mundo": que el queso de La Macanilla o el pescado de Cunaviche muestren su precio real de origen a gente de fuera de su comunidad.
 
@@ -14,6 +14,8 @@ La "puerta al mundo": que el queso de La Macanilla o el pescado de Cunaviche mue
 | 36 | `/precios` muestra solo lo actualizado en los **últimos 30 días**. El botón **"Mi precio sigue igual"** renueva la fecha con un toque |
 | 37 | **"Envían a todo el país"**: filtro en `/precios` y sección en la página de los estados donde Lokl todavía no llega |
 | 38 | **Publicar sin señal** para todos, no solo al mayor |
+| 39 | **Una sola lista de tipos al mayor**: los 7 del campo + los de Tiendas, con 3 nuevos: **Productos de limpieza, Artesanía y Alimentos procesados**. Las "cirugías" (tratamientos para alisar el cabello) entran en **Belleza y cosméticos** (el buscador entiende "cirugía", "alisado" y "keratina"). En `/precios` los botones de tipo se arman con los que tienen precios |
+| 40 | **Dos precios en una sola publicación**: precio al detal y precio al mayor (con su unidad y pedido mínimo). En listas y tiendas se ve el de detal; si solo vende al mayor, el de mayor ("$4 el kilo"). `/precios` usa siempre el de mayor |
 
 ## Pantallas
 
@@ -27,6 +29,16 @@ La "puerta al mundo": que el queso de La Macanilla o el pescado de Cunaviche mue
 | `/zulia` (estados sin Lokl) | Sección **Envían a todo el país** con los productores que mandan por encomienda | 0 KB |
 | `/panel` | Aviso si hay publicaciones esperando señal, o si una no se pudo publicar | ~0,6 KB en línea |
 
+## Dos precios (decisión 40)
+
+| Quién | Qué llena en Publicar |
+|---|---|
+| Solo detal (lo normal) | Solo "Precio al detal". Nada cambia |
+| Detal **y** mayor | Los dos precios en la misma publicación: "$2" y debajo "Al mayor: $1,50 c/u · Mínimo 50 unidades" |
+| Solo mayor (ej. ganado) | Deja vacío el detal y llena solo el precio al mayor |
+
+Lo que ya estaba publicado al mayor se acomodó solo (`sql/12`): su precio pasó a ser el precio al mayor, sin cambiar la fecha.
+
 ## Publicar sin señal (decisión 38)
 
 1. Si se toca **Publicar** sin conexión, el formulario se guarda en el teléfono con las fotos ya comprimidas, y aparece el aviso *"Lo guardamos en tu teléfono…"*.
@@ -39,9 +51,11 @@ La "puerta al mundo": que el queso de La Macanilla o el pescado de Cunaviche mue
 ## Pendiente
 
 1. ✅ `sql/11` corrido el 14/11/2026.
+1. ✅ `sql/12` corrido el 15/11/2026.
 2. Subir el código y **probar en el teléfono**:
    - Con un **productor**: publicar con precio, unidad, mínimo, "cuándo hay" y tipo. Revisar la ficha y `/precios`.
    - Tocar **Mi precio sigue igual** en Mis publicaciones.
    - Con una **tienda**: publicar un producto marcando "Esto lo vendo al mayor".
    - Marcar "A todo el país" en Editar mi tienda del productor y verlo en `/precios` → "Envían a todo el país" y en `/zulia`.
+   - Publicar un producto con **precio al detal y al mayor** a la vez, y uno de **Belleza y cosméticos** al mayor.
    - **Sin señal:** con la pantalla de Publicar abierta, poner el teléfono en **modo avión**, publicar, ver el aviso, quitar el modo avión y comprobar que se publica.

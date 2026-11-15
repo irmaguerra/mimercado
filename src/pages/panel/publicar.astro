@@ -39,15 +39,17 @@ const existentes = fotosOrdenadas(p ?? {});
 const categorias = seccion === "clasificados" ? categoriasMarcables(await categoriasDeSeccion(sb, "clasificados")) : [];
 
 // Al mayor (decisión 33): los productores siempre; las tiendas, si lo marcan.
-// Cada producto al mayor elige su tipo para la tabla de /precios (decisión 35).
+// Cada producto al mayor elige su tipo para la tabla de /precios (decisión 35), de una sola lista:
+// los del campo + los de Tiendas (decisión 39). Un producto puede tener precio al detal y al mayor (decisión 40).
 const siempreMayor = seccion === "al_mayor";
 const puedeMayor = siempreMayor || seccion === "tiendas";
 const categoriasMayor = puedeMayor
   ? [...categoriasMarcables(await categoriasDeSeccion(sb, "al_mayor")),
-     ...(seccion === "tiendas" ? categoriasMarcables(await categoriasDeSeccion(sb, "tiendas")) : [])]
+     ...categoriasMarcables(await categoriasDeSeccion(sb, "tiendas"))]
   : [];
 let mayor = {
   activo: p ? p.es_al_mayor : siempreMayor,
+  precio: precioParaCampo(p?.precio_mayor),
   unidad: p?.unidad ?? "",
   cantidad_minima: p?.cantidad_minima ? String(Number(p.cantidad_minima)).replace(".", ",") : "",
   disponibilidad: p?.disponibilidad ?? "",
@@ -78,6 +80,7 @@ if (Astro.request.method === "POST") {
   const precio = leerPrecio(campos.precio);
   mayor = {
     activo: siempreMayor || (puedeMayor && f.get("es_al_mayor") === "on"),
+    precio: txt("precio_mayor", 20),
     unidad: String(f.get("unidad") || ""),
     cantidad_minima: txt("cantidad_minima", 12),
     disponibilidad: txt("disponibilidad", 100),
@@ -96,7 +99,6 @@ if (Astro.request.method === "POST") {
   else if (campos.titulo.length < 3) error = `Escribe el nombre del ${cosa} (mínimo 3 letras).`;
   else if (Number.isNaN(precio)) error = "Revisa el precio. Escríbelo así: 5 o 5,50. Si no quieres ponerlo, déjalo vacío.";
   else if (alMayor?.error) error = alMayor.error;
-  else if (alMayor && precio !== null && !alMayor.datos.unidad) error = "Elige la unidad del precio (kilo, litro, saco…).";
   else if (quedan.length + grandes.length > MAX_FOTOS) error = `Puedes poner hasta ${MAX_FOTOS} fotos.`;
   else if ([...grandes, ...minis].some((x) => !TIPOS_FOTO[x.type])) error = "Las fotos deben ser JPG, PNG o WebP.";
   else if ([...grandes, ...minis].some((x) => x.size > MAX_PESO_FOTO)) error = "Una foto pesa más de 2 MB. Prueba con otra.";
@@ -214,13 +216,13 @@ const titulo = p ? `Editar ${cosa}` : `Publicar ${cosa === "anuncio" ? "un anunc
       </label>
 
       <fieldset class="opciones-radio">
-        <legend>Precio (opcional)</legend>
+        <legend>{puedeMayor ? "Precio al detal (opcional)" : "Precio (opcional)"}</legend>
         <div class="fila" style="gap:12px;flex-wrap:wrap">
           <input type="text" name="precio" value={campos.precio} inputmode="decimal" maxlength="20" placeholder="Ej. 5,50" style="flex:1;min-width:120px" aria-label="Precio" />
           <label class="radio"><input type="radio" name="moneda" value="USD" checked={campos.moneda !== "VES"} /> Dólares</label>
           <label class="radio"><input type="radio" name="moneda" value="VES" checked={campos.moneda === "VES"} /> Bolívares</label>
         </div>
-        <small class="texto-2">Se muestra tal cual lo escribes. Vacío = "Pregunta el precio".</small>
+        <small class="texto-2">Se muestra tal cual lo escribes. Vacío = "Pregunta el precio".{puedeMayor && " La moneda vale también para el precio al mayor."}</small>
       </fieldset>
 
       {puedeMayor && (
@@ -230,12 +232,18 @@ const titulo = p ? `Editar ${cosa}` : `Publicar ${cosa === "anuncio" ? "un anunc
             {!siempreMayor && (
               <label class="radio" style="font-weight:600"><input type="checkbox" name="es_al_mayor" checked={mayor.activo} /> Sí, esto lo vendo al mayor</label>
             )}
-            <label>El precio es por
+            <div class="fila" style="gap:10px;flex-wrap:wrap;align-items:flex-end">
+            <label style="flex:1;min-width:120px">Precio al mayor
+              <input type="text" name="precio_mayor" value={mayor.precio} inputmode="decimal" maxlength="20" placeholder="Ej. 4,50" />
+            </label>
+            <label style="flex:1;min-width:140px">por
               <select name="unidad">
                 <option value="">Elige la unidad…</option>
                 {Object.entries(UNIDADES).map(([k, u]) => <option value={k} selected={mayor.unidad === k}>{u.uno}</option>)}
               </select>
             </label>
+            </div>
+            <small class="texto-2" style="margin-top:-6px">Este es el precio que sale en la tabla de Precios de origen.</small>
             <label>Pedido mínimo (opcional)
               <input type="text" name="cantidad_minima" value={mayor.cantidad_minima} inputmode="decimal" maxlength="12" placeholder="Ej. 20" />
               <small class="texto-2">Solo el número; la unidad es la de arriba.</small>

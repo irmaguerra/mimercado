@@ -1,5 +1,5 @@
 // Al mayor y precios de origen (Módulo 9).
-import { mostrarPrecio } from "./precio.js";
+import { mostrarPrecio, leerPrecio } from "./precio.js";
 
 /** Unidades (decisión 34, 14/11/2026). Las mismas claves acepta la base. */
 export const UNIDADES = {
@@ -22,6 +22,17 @@ export function precioPorUnidad(precio, moneda, unidad) {
   const p = mostrarPrecio(precio, moneda);
   if (!p) return null;
   return UNIDADES[unidad] ? `${p} ${UNIDADES[unidad].precio}` : p;
+}
+
+/** Precio al mayor de una publicación: "$1,50 c/u", o null. */
+export const precioMayorTexto = (p) => precioPorUnidad(p?.precio_mayor, p?.moneda, p?.unidad);
+
+/**
+ * El precio que se ve en listas y tiendas (decisión 40): el de detal; si solo vende al mayor,
+ * el precio al mayor con su unidad ("$4 el kilo"); si no hay ninguno, null.
+ */
+export function precioVisible(p) {
+  return mostrarPrecio(p?.precio, p?.moneda) ?? precioMayorTexto(p);
 }
 
 const NUM = new Intl.NumberFormat("es-VE", { maximumFractionDigits: 2 });
@@ -54,7 +65,10 @@ export function leerAlMayor(f, { categoriasPermitidas = [] } = {}) {
   const cantidad_minima = minTexto ? Number(minTexto) : null;
   const disponibilidad = String(f.get("disponibilidad") || "").trim().slice(0, 100) || null;
   const categoria_id = Number(f.get("categoria_mayor")) || null;
+  const precio_mayor = leerPrecio(f.get("precio_mayor"));
+  if (Number.isNaN(precio_mayor)) return { error: "Revisa el precio al mayor. Escríbelo así: 4 o 4,50." };
+  if (precio_mayor !== null && !unidad) return { error: "Elige la unidad del precio al mayor (kilo, litro, saco…)." };
   if (minTexto && !(cantidad_minima > 0 && cantidad_minima < 1e7)) return { error: "Revisa el pedido mínimo: escribe solo el número, por ejemplo 20." };
   if (!categoriasPermitidas.some((c) => c.id === categoria_id)) return { error: "Elige qué tipo de producto es (por ejemplo, Queso y lácteos)." };
-  return { datos: { es_al_mayor: true, unidad, cantidad_minima, disponibilidad, categoria_id } };
+  return { datos: { es_al_mayor: true, precio_mayor, unidad, cantidad_minima, disponibilidad, categoria_id } };
 }

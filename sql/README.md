@@ -25,6 +25,7 @@ Cada archivo se corre **una sola vez** y nunca se modifica después de correrlo:
 | 09 | `09-modulo-7-servicios.sql` | Servicios: formas de pago permitidas, precios de referencia y filtros "A domicilio" y "24 horas" en las listas | ✅ 14/11/2026 |
 | 10 | `10-modulo-8-cliente.sql` | Cliente: favoritos, reseñas (solo quien escribió o llamó desde Lokl), respuesta del vendedor, reportar reseñas y contador semanal. Oculta a los vendedores el código del teléfono de sus clientes | ✅ 14/11/2026 |
 | 11 | `11-modulo-9-al-mayor.sql` | Al mayor: unidades, pedido mínimo, cuándo hay, fecha del precio y "Mi precio sigue igual", tabla de precios de origen y quienes envían a todo el país | ✅ 14/11/2026 |
+| 12 | `12-modulo-9-dos-precios.sql` | Al mayor (ajuste): tipos de Tiendas también al mayor, 3 tipos nuevos (Productos de limpieza, Artesanía, Alimentos procesados), "cirugía" y "alisado" en Belleza, y dos precios por publicación (detal y mayor) | ✅ 15/11/2026 |
 
 ## Para quien programa
 

@@ -68,7 +68,7 @@ const comoTienda = (r) => ({
   verificado: r.verificado, abierto: r.abierto, descripcion: r.subtitulo, servicio: r.seccion === "servicios",
 });
 const comoProducto = (r) => ({
-  id: r.id, titulo: r.titulo, precio: r.precio, moneda: r.moneda, foto_mini: r.foto_mini, agotado: r.agotado, zona: r.zona,
+  id: r.id, titulo: r.titulo, precio: r.precio, moneda: r.moneda, precio_mayor: r.precio_mayor, unidad: r.unidad, foto_mini: r.foto_mini, agotado: r.agotado, zona: r.zona,
 });
 const raiz = m ? `/${m.estado.slug}/${m.slug}` : null;
 ---

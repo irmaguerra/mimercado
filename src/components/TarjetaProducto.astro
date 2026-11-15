@@ -1,10 +1,10 @@
 ---
 // Un producto en una cuadrícula (clasificados, "Lo nuevo", buscador). HTML puro.
-import { precioPorUnidad } from "@/lib/al-mayor.js";
+import { precioVisible } from "@/lib/al-mayor.js";
 
-/** p: { id, titulo, precio, moneda, unidad?, foto_mini, agotado, zona? } */
+/** p: { id, titulo, precio, moneda, precio_mayor?, unidad?, foto_mini, agotado, zona? } */
 const { p, id } = Astro.props;
-const precio = precioPorUnidad(p.precio, p.moneda, p.unidad);
+const precio = precioVisible(p);
 ---
 <li id={id}>
   <a href={`/p/${p.id}`} class:list={["tarjeta enlace-tarjeta producto", { agotado: p.agotado }]}>

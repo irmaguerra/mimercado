@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { precioPorUnidad, minimoTexto, haceCuanto, precioVencido, leerAlMayor, UNIDADES } from "./al-mayor.js";
+import { precioPorUnidad, minimoTexto, haceCuanto, precioVencido, leerAlMayor, UNIDADES, precioVisible, precioMayorTexto } from "./al-mayor.js";
 
 test("las 9 unidades aprobadas, con las mismas claves que la base", () => {
   assert.deepEqual(Object.keys(UNIDADES), ["kilo", "litro", "unidad", "docena", "cesta", "saco", "caja", "cabeza", "tonelada"]);
@@ -34,8 +34,17 @@ test("leer los campos al mayor de un formulario", () => {
   const f = (o) => { const x = new FormData(); for (const [k, v] of Object.entries(o)) x.append(k, v); return x; };
   const cats = [{ id: 7 }];
   assert.deepEqual(leerAlMayor(f({ unidad: "kilo", cantidad_minima: "20", disponibilidad: " lunes ", categoria_mayor: "7" }), { categoriasPermitidas: cats }).datos,
-    { es_al_mayor: true, unidad: "kilo", cantidad_minima: 20, disponibilidad: "lunes", categoria_id: 7 });
+    { es_al_mayor: true, precio_mayor: null, unidad: "kilo", cantidad_minima: 20, disponibilidad: "lunes", categoria_id: 7 });
+  assert.equal(leerAlMayor(f({ precio_mayor: "4,50", unidad: "kilo", categoria_mayor: "7" }), { categoriasPermitidas: cats }).datos.precio_mayor, 4.5);
+  assert.match(leerAlMayor(f({ precio_mayor: "4", categoria_mayor: "7" }), { categoriasPermitidas: cats }).error, /unidad/);
   assert.match(leerAlMayor(f({ categoria_mayor: "99" }), { categoriasPermitidas: cats }).error, /tipo de producto/);
   assert.match(leerAlMayor(f({ cantidad_minima: "veinte", categoria_mayor: "7" }), { categoriasPermitidas: cats }).error, /mínimo/);
   assert.equal(leerAlMayor(f({ unidad: "gramo", categoria_mayor: "7" }), { categoriasPermitidas: cats }).datos.unidad, null);
+});
+
+test("dos precios: se ve el de detal; si no hay, el de mayor con su unidad", () => {
+  assert.equal(precioVisible({ precio: 2, precio_mayor: 1.5, moneda: "USD", unidad: "unidad" }), "$2");
+  assert.equal(precioVisible({ precio: null, precio_mayor: 4, moneda: "USD", unidad: "kilo" }), "$4 el kilo");
+  assert.equal(precioVisible({ precio: null, precio_mayor: null, moneda: "USD" }), null);
+  assert.equal(precioMayorTexto({ precio_mayor: 1.5, moneda: "USD", unidad: "unidad" }), "$1,50 c/u");
 });

@@ -3,6 +3,7 @@
 // Por defecto muestra todo el país (puerta al mundo). Filtros: ?lugar=apure o apure/san-fernando,
 // ?tipo=queso-lacteos y ?nacional=1 (solo quienes envían a todo el país).
 // Solo salen los precios actualizados en los últimos 30 días (decisión 36).
+// Los botones de tipo se arman con los tipos que tienen precios publicados (decisión 39).
 import Base from "@/layouts/Base.astro";
 import Cabecera from "@/components/Cabecera.astro";
 import { supabasePublico } from "@/lib/supabase/servidor.js";
@@ -18,23 +19,24 @@ const m = lugar?.municipio ? await buscarMunicipio(lugar.estado, lugar.municipio
 const e = !m && lugar ? await buscarEstado(lugar.estado) : null;
 const nacional = params.get("nacional") === "1";
 
-const [{ data: tipos }, estados] = await Promise.all([
-  sb.from("categorias").select("id, nombre, slug").eq("seccion", "al_mayor").eq("activa", true).is("padre_id", null).order("orden"),
+const [estados, { data: todas, error }] = await Promise.all([
   todosLosEstados(),
+  sb.rpc("precios_origen", {
+    p_estado_id: e?.id ?? null,
+    p_municipio_id: m?.id ?? null,
+    p_solo_nacional: nacional,
+    p_dias: DIAS_PRECIO,
+    p_limite: 500,
+  }),
 ]);
-const tipo = (tipos ?? []).find((c) => c.slug === params.get("tipo")) ?? null;
-
-const estadoId = e?.id ?? null;
-const { data: filas, error } = await sb.rpc("precios_origen", {
-  p_estado_id: estadoId,
-  p_municipio_id: m?.id ?? null,
-  p_categoria_id: tipo?.id ?? null,
-  p_solo_nacional: nacional,
-  p_dias: DIAS_PRECIO,
-  p_limite: 300,
-});
 if (error) console.error("precios", error);
 Astro.cache.set(PUBLICA);
+
+// Tipos que tienen precios en este lugar, en el orden de la base
+const tipos = [];
+for (const f of todas ?? []) if (!tipos.some((t) => t.slug === f.categoria_slug)) tipos.push({ slug: f.categoria_slug, nombre: f.categoria });
+const tipo = tipos.find((c) => c.slug === params.get("tipo")) ?? null;
+const filas = tipo ? (todas ?? []).filter((f) => f.categoria_slug === tipo.slug) : todas ?? [];
 
 // Agrupar por tipo de producto, en el orden que da la base
 const grupos = [];
@@ -69,9 +71,9 @@ const con = (cambios) => {
 
     <ul class="chips" aria-label="Tipo de producto">
       <li><a href={con({ nacional: !nacional })} class="chip" aria-current={nacional ? "true" : undefined}>{nacional && "✓ "}Envían a todo el país</a></li>
-      <li><a href={con({ tipo: null })} class="chip" aria-current={!tipo ? "true" : undefined}>Todo</a></li>
-      {(tipos ?? []).map((c) => (
-        <li><a href={con({ tipo: c.slug })} class="chip" aria-current={tipo?.id === c.id ? "true" : undefined}>{c.nombre}</a></li>
+      {tipos.length > 1 && <li><a href={con({ tipo: null })} class="chip" aria-current={!tipo ? "true" : undefined}>Todo</a></li>}
+      {tipos.length > 1 && tipos.map((c) => (
+        <li><a href={con({ tipo: c.slug })} class="chip" aria-current={tipo?.slug === c.slug ? "true" : undefined}>{c.nombre}</a></li>
       ))}
     </ul>
 

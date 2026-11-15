@@ -68,7 +68,7 @@ export function cuantosVer(valor) {
 export async function productosDeTienda(sb, vendedorId, limite = PRODUCTOS_POR_PAGINA) {
   const { data, error } = await sb
     .from("publicaciones")
-    .select("id, titulo, precio, moneda, unidad, agotado, vence_en, estado, publicacion_fotos(url_mini, orden)")
+    .select("id, titulo, precio, moneda, precio_mayor, unidad, agotado, vence_en, estado, publicacion_fotos(url_mini, orden)")
     .eq("vendedor_id", vendedorId)
     .eq("estado", "publicada")
     .gt("vence_en", new Date().toISOString())

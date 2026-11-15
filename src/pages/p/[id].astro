@@ -5,7 +5,7 @@ import Cabecera from "@/components/Cabecera.astro";
 import Icono from "@/components/Icono.astro";
 import { supabasePublico } from "@/lib/supabase/servidor.js";
 import { fotosOrdenadas, vencida } from "@/lib/publicacion.js";
-import { precioPorUnidad, minimoTexto, haceCuanto } from "@/lib/al-mayor.js";
+import { precioVisible, precioMayorTexto, minimoTexto, haceCuanto } from "@/lib/al-mayor.js";
 import { estaAbiertoAhora } from "@/lib/horario.js";
 import { enlaceCompartir } from "@/lib/whatsapp.js";
 import { esServicio, textoAbierto } from "@/lib/vendedor.js";
@@ -17,7 +17,7 @@ if (!Number.isInteger(id) || id <= 0) return Astro.rewrite("/404");
 const { data: p, error } = await supabasePublico()
   .from("publicaciones")
   .select(`id, titulo, descripcion, precio, moneda, seccion, estado, agotado, vence_en,
-    es_al_mayor, unidad, cantidad_minima, disponibilidad, precio_actualizado_en,
+    es_al_mayor, precio_mayor, unidad, cantidad_minima, disponibilidad, precio_actualizado_en,
     publicacion_fotos(url, url_mini, orden),
     vendedores!publicaciones_vendedor_id_fkey(nombre, slug, logo_url, estado, tipo, seccion_principal, verificado_en, telefono,
       hora_desde, hora_hasta, forzar_abierto, en_pausa,
@@ -31,7 +31,9 @@ if (!p || !t || t.estado !== "activo" || vencida(p)) return Astro.rewrite("/404"
 Astro.cache.set(PUBLICA);
 
 const fotos = fotosOrdenadas(p);
-const precio = precioPorUnidad(p.precio, p.moneda, p.unidad);
+const precio = precioVisible(p);
+// Si tiene precio al detal, el de mayor va abajo; si solo vende al mayor, ya es el precio grande.
+const precioMayor = p.es_al_mayor && p.precio !== null ? precioMayorTexto(p) : null;
 const minimo = p.es_al_mayor ? minimoTexto(p.cantidad_minima, p.unidad) : null;
 const lugar = [t.zonas?.nombre, t.zonas?.municipios?.nombre].filter(Boolean).join(", ");
 const esPersona = t.tipo === "persona";
@@ -60,10 +62,10 @@ const descripcion = [precio, p.descripcion?.slice(0, 150), `${t.nombre}${lugar ?
     {p.agotado && <p class="etiqueta-estado apagada" style="display:inline-block;margin-top:6px">Agotado por ahora</p>}
     {p.es_al_mayor && (
       <ul class="datos-al-mayor">
-        <li><strong>Venta al mayor</strong></li>
+        <li><strong>{precioMayor ? `Al mayor: ${precioMayor}` : "Venta al mayor"}</strong></li>
         {minimo && <li>{minimo}</li>}
         {p.disponibilidad && <li>Hay: {p.disponibilidad}</li>}
-        {precio && <li class="texto-2">Precio actualizado {haceCuanto(p.precio_actualizado_en)}</li>}
+        {p.precio_mayor !== null && <li class="texto-2">Precio al mayor actualizado {haceCuanto(p.precio_actualizado_en)}</li>}
       </ul>
     )}
 

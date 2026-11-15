@@ -5,7 +5,7 @@ import Base from "@/layouts/Base.astro";
 import Icono from "@/components/Icono.astro";
 import { miTienda } from "@/lib/sesion.js";
 import { NOMBRE_COSA, DIAS_CLASIFICADO, seccionDe, miniatura, vencida, diasRestantes, rutaEnAlmacen } from "@/lib/publicacion.js";
-import { precioPorUnidad, haceCuanto, precioVencido, DIAS_PRECIO } from "@/lib/al-mayor.js";
+import { precioVisible, precioMayorTexto, haceCuanto, precioVencido, DIAS_PRECIO } from "@/lib/al-mayor.js";
 import { enlaceCompartir } from "@/lib/whatsapp.js";
 
 const { sb, usuario } = Astro.locals;
@@ -51,7 +51,7 @@ if (Astro.request.method === "POST") {
 
 const { data } = await sb
   .from("publicaciones")
-  .select("id, titulo, precio, moneda, unidad, es_al_mayor, precio_actualizado_en, seccion, estado, motivo_estado, agotado, vence_en, publicacion_fotos(url_mini, orden)")
+  .select("id, titulo, precio, moneda, precio_mayor, unidad, es_al_mayor, precio_actualizado_en, seccion, estado, motivo_estado, agotado, vence_en, publicacion_fotos(url_mini, orden)")
   .eq("vendedor_id", t.id)
   .neq("estado", "borrada")
   .order("creado_en", { ascending: false })
@@ -105,8 +105,9 @@ function estadoDe(p) {
         {lista.map((p) => {
           const e = estadoDe(p);
           const mini = miniatura(p);
-          const precio = precioPorUnidad(p.precio, p.moneda, p.unidad);
-          const mayorConPrecio = p.es_al_mayor && p.precio !== null && p.estado === "publicada";
+          const precio = precioVisible(p);
+          const mayorConPrecio = p.es_al_mayor && p.precio_mayor !== null && p.estado === "publicada";
+          const ambos = mayorConPrecio && p.precio !== null;
           const esClasificado = p.seccion === "clasificados";
           return (
             <li id={`p${p.id}`} class="tarjeta">
@@ -115,10 +116,10 @@ function estadoDe(p) {
                   : <span class="foto-lista foto-vacia" aria-hidden="true"></span>}
                 <div style="min-width:0;flex:1">
                   <strong style="display:block;word-break:break-word">{p.titulo}</strong>
-                  {precio && <span>{precio}</span>}
+                  {precio && <span>{precio}{ambos && ` · al mayor ${precioMayorTexto(p)}`}</span>}
                   {mayorConPrecio && (
                     <span class="texto-2" style="display:block;font-size:13px">
-                      Precio de {haceCuanto(p.precio_actualizado_en)}{precioVencido(p.precio_actualizado_en) && ` · ya no sale en Precios de origen (más de ${DIAS_PRECIO} días)`}
+                      Precio al mayor de {haceCuanto(p.precio_actualizado_en)}{precioVencido(p.precio_actualizado_en) && ` · ya no sale en Precios de origen (más de ${DIAS_PRECIO} días)`}
                     </span>
                   )}
                   <p style="margin:2px 0 0;font-size:14px">

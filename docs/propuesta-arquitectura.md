@@ -430,3 +430,5 @@ Meta: **tienda lista en menos de 2 minutos**, desde el teléfono.
 | 36 | `/precios` solo muestra lo actualizado en 30 días; botón "Mi precio sigue igual" | **Aprobado** (14/11/2026) |
 | 37 | "Envían a todo el país": filtro en `/precios` y sección en los estados sin Lokl | **Aprobado** (14/11/2026) |
 | 38 | Publicar sin señal para todos: se guarda en el teléfono y se envía al volver la señal | **Aprobado** (14/11/2026) |
+| 39 | Una sola lista de tipos al mayor (campo + Tiendas) con 3 nuevos: Productos de limpieza, Artesanía, Alimentos procesados. "Cirugías" (alisado) en Belleza y cosméticos | **Aprobado** (14/11/2026) |
+| 40 | Dos precios en una publicación: al detal y al mayor; `/precios` usa el de mayor | **Aprobado** (14/11/2026) |
