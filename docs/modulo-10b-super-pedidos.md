@@ -1,6 +1,6 @@
 # Módulo 10B — Lokl Súper: carrito y pedidos
 
-**Estado:** 🛠️ construido el 15/11/2026. Falta que Irma corra `sql/15` y haga un pedido de prueba.
+**Estado:** ✅ probado por Irma el 15/11/2026 (sql/15 corrido, pedido de prueba hecho). Módulo 10 completo.
 
 ## Decisiones de Irma (15/11/2026): 54 a 63
 
@@ -34,10 +34,10 @@
 
 ## Pruebas
 
-- [ ] `usalokl.com/super`: Agregar productos, usar − y +, ver la barra "Ver pedido".
-- [ ] Ver pedido: cambiar cantidades, ver el total y "Te faltan $X para el envío gratis".
-- [ ] Hacer el pedido → "Pedido listo" → **Enviar por WhatsApp** → llega al 0424-3232671.
-- [ ] Admin → Lokl Súper → **Pedidos**: verlo, pasarlo por los estados, escribirle al cliente.
-- [ ] **Mis pedidos** → **Repetir pedido**.
-- [ ] Buscar "harina" en el buscador general: sale primero "En Lokl Súper".
-- [ ] Un pedido de "Otra zona": el mensaje dice "Envío: por confirmar".
+- [x] `usalokl.com/super`: Agregar productos, usar − y +, ver la barra "Ver pedido".
+- [x] Ver pedido: cambiar cantidades, ver el total y "Te faltan $X para el envío gratis".
+- [x] Hacer el pedido → "Pedido listo" → **Enviar por WhatsApp** → llega al 0424-3232671.
+- [x] Admin → Lokl Súper → **Pedidos**: verlo, pasarlo por los estados, escribirle al cliente.
+- [x] **Mis pedidos** → **Repetir pedido**.
+- [x] Buscar "harina" en el buscador general: sale primero "En Lokl Súper".
+- [x] Un pedido de "Otra zona": el mensaje dice "Envío: por confirmar".
