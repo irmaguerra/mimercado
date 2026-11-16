@@ -38,9 +38,10 @@ if (Astro.request.method === "POST") {
 }
 
 const muni = await municipioSuper(sb);
-const [cfg, { data: todos }] = await Promise.all([
+const [cfg, { data: todos }, { count: nuevos }] = await Promise.all([
   configSuper(sb),
   sb.rpc("super_admin_productos", { p_municipio_id: muni, p_en_catalogo: null }),
+  sb.from("super_pedidos").select("id", { count: "exact", head: true }).in("estado", ["nuevo", "confirmado", "comprando", "en_camino"]),
 ]);
 const lista = todos || [];
 const enCatalogo = lista.filter((p) => p.en_catalogo);
@@ -61,12 +62,17 @@ const tasaHoy = tasaDeHoy(cfg.tasa);
       <a href="/admin/super/precios?sin=1" class="tarjeta bloque enlace-tarjeta" style="margin:0"><strong style="font-size:28px" class:list={{ "texto-alerta": sinPrecio > 0 }}>{sinPrecio}</strong><br /><span class="texto-2">elegidos sin precio ›</span></a>
     </div>
 
+    <a href="/admin/super/pedidos" class="tarjeta bloque fila-entre enlace-tarjeta" style="margin-top:12px">
+      <span><strong style="font-size:20px" class:list={{ "texto-alerta": (nuevos ?? 0) > 0 }}>{nuevos ?? 0}</strong> pedidos por atender</span>
+      <span aria-hidden="true">›</span>
+    </a>
+
     <nav class="menu-panel" aria-label="Catálogo del Súper">
       <a href="/admin/super/productos">1. Elegir qué vender ({enCatalogo.length} de {lista.length}) <span aria-hidden="true">›</span></a>
       <a href="/admin/super/precios">2. Poner lo que me cuesta cada uno <span aria-hidden="true">›</span></a>
       <a href="/admin/super/margenes">Márgenes por pasillo <span aria-hidden="true">›</span></a>
       <a href="/admin/super/nuevo">Agregar un producto que no está <span aria-hidden="true">›</span></a>
-      <a href="/admin/super/vista">Ver el Súper como lo verá el cliente <span aria-hidden="true">›</span></a>
+      <a href="/super">Ver el Súper como lo ve el cliente <span aria-hidden="true">›</span></a>
     </nav>
 
     <form method="post" class="formulario tarjeta bloque" style="margin-top:22px">

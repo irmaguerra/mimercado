@@ -1,6 +1,6 @@
 # Módulo 10A — Lokl Súper: catálogo y administración
 
-**Estado:** 🛠️ construido el 15/11/2026, falta que Irma corra `sql/13` y `sql/14` y lo pruebe. `/super` sigue en "Muy pronto" para el público hasta el Módulo 10B (carrito y pedidos); el admin ve la vista previa.
+**Estado:** ✅ aprobado por Irma el 15/11/2026 (sql/13 y sql/14 corridos; probados precios, agotado, margen por pasillo y el buscador). La vista previa del admin se reemplazó por `/super` abierto al público en el Módulo 10B.
 
 ## Decisiones de Irma (15/11/2026)
 
@@ -28,7 +28,7 @@ Lo que te cuesta y los márgenes **solo los ve el admin**: la base de datos no s
 | `/admin/super/precios` | **Lo que me cuesta**: costo, margen propio (opcional) y "Agotado" de cada producto elegido. Filtros "Sin precio" y por pasillo. Muestra el precio de venta en $ y Bs |
 | `/admin/super/margenes` | Margen por pasillo |
 | `/admin/super/nuevo` | Agregar un producto que no está en las sugerencias |
-| `/admin/super/vista` | El Súper como lo verá el cliente: buscador, pasillos, fotos, precio en $ y Bs, aviso de envío |
+| `/super` | (desde el 10B) El Súper como lo ve el cliente |
 
 ## Sugerencias (sql/14)
 

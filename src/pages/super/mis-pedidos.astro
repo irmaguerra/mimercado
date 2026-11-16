@@ -1,0 +1,39 @@
+---
+// /super/mis-pedidos — Los últimos 10 pedidos de este teléfono, con "Repetir pedido" (decisión 61).
+// Repetir arma el carrito con los mismos productos a los precios de HOY (lo que ya no está se avisa).
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import { supabasePublico } from "@/lib/supabase/servidor.js";
+import { leerCliente } from "@/lib/cliente-cookie.js";
+import { mostrarPrecio } from "@/lib/precio.js";
+import { carritoATexto, ESTADOS_PEDIDO } from "@/lib/super.js";
+
+const cliente = leerCliente(Astro.cookies);
+const { data } = cliente ? await supabasePublico().rpc("super_mis_pedidos", { p_cliente: cliente }) : { data: [] };
+const pedidos = data || [];
+const fecha = (t) => new Intl.DateTimeFormat("es-VE", { timeZone: "America/Caracas", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(t));
+---
+<Base titulo="Mis pedidos · Lokl Súper">
+  <main class="contenedor angosto">
+    <Cabecera />
+    <p style="margin:14px 0 0"><a href="/super">‹ Lokl Súper</a></p>
+    <h1 style="font-size:24px;margin:8px 0 0">Mis pedidos</h1>
+    {!pedidos.length ? (
+      <p class="texto-2">Todavía no has hecho pedidos desde este teléfono. <a href="/super">Ir al Súper</a></p>
+    ) : (
+      <ul class="lista-opciones" style="margin-top:12px">
+        {pedidos.map((p) => (
+          <li class="tarjeta tarjeta-pedido">
+            <div class="fila-entre">
+              <strong>Pedido #{p.id}</strong>
+              <span class:list={["chip-estado", p.estado]}>{ESTADOS_PEDIDO[p.estado]?.texto ?? p.estado}</span>
+            </div>
+            <span class="texto-2" style="font-size:14px">{fecha(p.creado_en)} · {p.items.length} productos · {mostrarPrecio(p.total ?? p.subtotal)}{p.total == null && " + envío"}</span>
+            <span style="font-size:14px">{p.items.slice(0, 4).map((i) => `${i.cantidad} × ${i.nombre}`).join(", ")}{p.items.length > 4 && "…"}</span>
+            <a class="boton boton-claro" href={`/super/pedido?c=${carritoATexto(p.items.map((i) => ({ id: i.id, cantidad: i.cantidad })))}`}>Repetir pedido</a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </main>
+</Base>

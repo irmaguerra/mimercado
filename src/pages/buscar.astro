@@ -12,6 +12,8 @@ import { supabasePublico } from "@/lib/supabase/servidor.js";
 import { leerUbicacion, buscarMunicipio, buscarEstado } from "@/lib/ubicacion.js";
 import { PUBLICA } from "@/lib/cache.js";
 import { SECCIONES, seccionPorSlug, agruparResultados, leerLugar, contar } from "@/lib/listados.js";
+import { MUNICIPIO_SUPER, municipioSuper } from "@/lib/super.js";
+import { mostrarPrecio } from "@/lib/precio.js";
 
 const params = Astro.url.searchParams;
 
@@ -36,7 +38,7 @@ const q = (params.get("q") || "").trim().slice(0, 80);
 const sec = seccionPorSlug(params.get("seccion") || "");
 const abiertos = params.get("abiertos") === "1";
 
-let grupos = [], total = 0, fallo = false;
+let grupos = [], total = 0, fallo = false, delSuper = [];
 if (q.length >= 2) {
   const { data, error } = await supabasePublico().rpc("buscar", {
     q,
@@ -48,6 +50,13 @@ if (q.length >= 2) {
   if (error) { console.error("buscar", error); fallo = true; }
   total = data?.length ?? 0;
   grupos = agruparResultados(data ?? []);
+  // Lokl Súper primero (decisión 63): solo donde reparte (San Fernando) o si no se eligió lugar.
+  if (!sec && !abiertos && (!lugar?.municipio || m?.slug === MUNICIPIO_SUPER)) {
+    const pub = supabasePublico();
+    const muniSuper = await municipioSuper(pub);
+    const { data: s } = await pub.rpc("super_buscar", { p_municipio_id: muniSuper, p_q: q, p_limite: 4 });
+    delSuper = s ?? [];
+  }
 } else {
   Astro.cache.set(PUBLICA); // la página vacía es igual para todos
 }
@@ -100,6 +109,29 @@ const raiz = m ? `/${m.estado.slug}/${m.slug}` : null;
 
     {fallo && <p class="mensaje error" role="alert">No pudimos buscar en este momento. Intenta de nuevo en un rato.</p>}
 
+    {delSuper.length > 0 && (
+      <section class="grupo-resultados">
+        <h2 class="fila-entre" style="font-size:18px;margin:0">
+          <span style="display:inline-flex;align-items:center;gap:6px"><span style="color:var(--marca)"><Icono nombre="super" tam={22} /></span>En Lokl Súper</span>
+          <span class="texto-2" style="font-size:14px;font-weight:400">Te llega a tu puerta</span>
+        </h2>
+        <ul class="rejilla-productos">
+          {delSuper.map((p) => (
+            <li>
+              <a href={`/super?q=${encodeURIComponent(q)}`} class="tarjeta enlace-tarjeta producto producto-super">
+                {p.foto_url ? <img src={p.foto_url} alt="" width="240" height="240" loading="lazy" decoding="async" />
+                  : <span class="foto-vacia foto-pasillo" aria-hidden="true"><Icono nombre="super" tam={44} /></span>}
+                <span class="nombre-producto">{p.nombre}</span>
+                {(p.marca || p.presentacion) && <span class="detalle-producto texto-2">{[p.marca, p.presentacion].filter(Boolean).join(" · ")}</span>}
+                <span class="precio-producto">{mostrarPrecio(p.precio)}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p style="margin:10px 0 0;font-size:14px"><a href={`/super?q=${encodeURIComponent(q)}`}>Pedir en Lokl Súper ›</a></p>
+      </section>
+    )}
+
     {grupos.map((g) => (
       <section class="grupo-resultados">
         <h2 class="fila-entre" style="font-size:18px;margin:0">
@@ -124,7 +156,7 @@ const raiz = m ? `/${m.estado.slug}/${m.slug}` : null;
       </section>
     ))}
 
-    {q.length >= 2 && !fallo && total === 0 && (
+    {q.length >= 2 && !fallo && total === 0 && !delSuper.length && (
       <div class="tarjeta aviso">
         <strong style="display:block">No encontramos "{q}"{sec && ` en ${sec.nombre}`}{abiertos && " abierto ahora"}.</strong>
         <ul style="margin:8px 0 0;padding-left:20px">

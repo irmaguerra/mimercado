@@ -78,3 +78,78 @@ export async function pasillosSuper(sb) {
   const { data } = await sb.from("super_pasillos").select("id, nombre, slug, orden").order("orden");
   return data || [];
 }
+
+// ───────── Pedidos (Módulo 10B) ─────────
+
+/** Formas de pago del Súper: solo digitales (decisión 56). */
+export const PAGOS_SUPER = { pago_movil: "Pago móvil", transferencia: "Transferencia", zelle: "Zelle", binance: "Binance" };
+
+/** Si falta un producto (decisión 56). */
+export const SI_FALTA = { escribeme: "Escríbeme y decidimos", parecido: "Cámbialo por uno parecido", quitar: "Quítalo del pedido" };
+
+/** Estados del pedido, en orden, con el siguiente paso para el tablero. */
+export const ESTADOS_PEDIDO = {
+  nuevo: { texto: "Nuevo", siguiente: "confirmado", boton: "Confirmar" },
+  confirmado: { texto: "Confirmado", siguiente: "comprando", boton: "Comprando" },
+  comprando: { texto: "Comprando", siguiente: "en_camino", boton: "Salió en camino" },
+  en_camino: { texto: "En camino", siguiente: "entregado", boton: "Entregado" },
+  entregado: { texto: "Entregado", siguiente: null },
+  cancelado: { texto: "Cancelado", siguiente: null },
+};
+
+/** "07:30" → "7:30 am"; "20:00" → "8:00 pm". */
+export function hora12(hhmm) {
+  const [h, m] = String(hhmm || "0:00").split(":").map(Number);
+  const sufijo = h >= 12 ? "pm" : "am";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m || 0).padStart(2, "0")} ${sufijo}`;
+}
+
+/**
+ * ¿Atiende ahora? Misma regla que super_atendiendo() en la base: abre <= hora < cierra (hora de Venezuela).
+ * Devuelve { abierto, texto }.
+ */
+export function horarioSuper(horario, ahora = new Date()) {
+  const h = { abre: "07:30", cierra: "20:00", ...(horario || {}) };
+  const partes = new Intl.DateTimeFormat("en-GB", { timeZone: "America/Caracas", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(ahora);
+  const abierto = h.abre <= partes && partes < h.cierra;
+  return {
+    abierto,
+    texto: abierto ? `Abierto · Recibimos pedidos hasta las ${hora12(h.cierra)}` : `Cerrado ahora · Abrimos a las ${hora12(h.abre)}`,
+  };
+}
+
+/** Carrito en la dirección: "12x2.15x1" ⇄ [{ id: 12, cantidad: 2 }, { id: 15, cantidad: 1 }]. */
+export function leerCarrito(texto) {
+  const items = new Map();
+  for (const parte of String(texto || "").split(".").slice(0, 100)) {
+    const m = /^(\d{1,9})x(\d{1,2})$/.exec(parte);
+    if (!m) continue;
+    const id = Number(m[1]), cantidad = Math.min(Number(m[2]), 50);
+    if (id > 0 && cantidad > 0) items.set(id, Math.min((items.get(id) || 0) + cantidad, 50));
+  }
+  return [...items].map(([id, cantidad]) => ({ id, cantidad }));
+}
+export function carritoATexto(items) {
+  return items.filter((i) => i.cantidad > 0).map((i) => `${i.id}x${Math.min(i.cantidad, 50)}`).join(".");
+}
+
+/** Mensaje de WhatsApp del pedido (decisión 57). */
+export function mensajePedido(p) {
+  const l = [`🛒 Pedido Lokl Súper #${p.id}`];
+  for (const it of p.items || []) {
+    l.push(`${it.cantidad} × ${[it.nombre, it.marca, it.presentacion].filter(Boolean).join(" ")} — ${mostrarPrecio(it.total)}`);
+  }
+  const envio = p.envio === null || p.envio === undefined ? "por confirmar" : Number(p.envio) === 0 ? "gratis" : mostrarPrecio(p.envio);
+  let totales = `Subtotal: ${mostrarPrecio(p.subtotal)} · Envío: ${envio}`;
+  if (p.total !== null && p.total !== undefined) {
+    const bs = precioBs(p.total, p.tasa_bs);
+    totales += ` · Total: ${mostrarPrecio(p.total)}${bs !== null ? ` (${mostrarPrecio(bs, "VES")})` : ""}`;
+  }
+  l.push(totales);
+  l.push(`📍 ${p.en_casco ? "Casco central" : "Otra zona"} · ${p.sector} · ${p.direccion}`);
+  l.push(`💳 ${PAGOS_SUPER[p.forma_pago] ?? p.forma_pago} · Si falta algo: ${(SI_FALTA[p.si_falta] ?? SI_FALTA.escribeme).toLowerCase()}`);
+  if (p.nota) l.push(`📝 ${p.nota}`);
+  l.push(`👤 ${p.nombre}`);
+  return l.join("\n");
+}

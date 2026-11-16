@@ -1,0 +1,188 @@
+---
+// /super/pedido?c=12x2.15x1 — Revisar el carrito y hacer el pedido (decisiones 54 a 58).
+// El carrito viaja en la dirección, así los precios que se muestran son los de HOY (salen de la base).
+// Al enviar, la base arma el pedido (precios, envío, total) y se pasa a "Pedido listo" para mandarlo por WhatsApp.
+// No se cachea. ~1 KB en línea: recuerda los datos del cliente y mantiene el carrito del teléfono al día.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import Icono from "@/components/Icono.astro";
+import { supabasePublico } from "@/lib/supabase/servidor.js";
+import { clienteDeCookie } from "@/lib/cliente-cookie.js";
+import { mostrarPrecio } from "@/lib/precio.js";
+import { normalizarNumero, esCelularValido } from "@/lib/whatsapp.js";
+import {
+  configSuper, municipioSuper, horarioSuper, precioBs, calcularEnvio,
+  leerCarrito, carritoATexto, PAGOS_SUPER, SI_FALTA,
+} from "@/lib/super.js";
+
+const pub = supabasePublico();
+let error = "";
+const MENSAJES_BASE = /^(Escribe|Elige|Tu carrito|El pedido|Hiciste|Opción)/;
+
+let enviado = {};
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  enviado = Object.fromEntries([...f.entries()].map(([k, v]) => [k, String(v)]));
+  const items = leerCarrito(enviado.c);
+  const whatsapp = normalizarNumero(enviado.whatsapp);
+  if (!items.length) error = "Tu carrito está vacío.";
+  else if (!esCelularValido(whatsapp)) error = "Escribe tu número de WhatsApp (ej. 0414 123 4567).";
+  else {
+    const cliente = clienteDeCookie(Astro.cookies);
+    const { data, error: e } = await pub.rpc("super_crear_pedido", {
+      p_cliente: cliente, p_items: items, p_nombre: enviado.nombre, p_whatsapp: whatsapp,
+      p_en_casco: enviado.zona !== "otra", p_sector: enviado.sector, p_direccion: enviado.direccion,
+      p_pago: enviado.pago, p_si_falta: enviado.si_falta || "escribeme", p_nota: enviado.nota,
+    });
+    if (e) {
+      console.error("super_crear_pedido", e);
+      error = MENSAJES_BASE.test(e.message || "") ? e.message : "No se pudo hacer el pedido. Intenta de nuevo.";
+    } else {
+      return Astro.redirect(`/super/pedido/listo?id=${data.id}`, 303);
+    }
+  }
+}
+
+const pedidos = leerCarrito(enviado.c ?? Astro.url.searchParams.get("c"));
+const [muni, cfg, { data: horario }] = await Promise.all([
+  municipioSuper(pub), configSuper(pub),
+  pub.from("configuracion").select("valor").eq("clave", "super_horario").maybeSingle(),
+]);
+let lineas = [];
+if (pedidos.length) {
+  const { data } = await pub.from("super_productos")
+    .select("id, nombre, marca, presentacion, foto_url, precio")
+    .eq("municipio_id", muni).in("id", pedidos.map((p) => p.id));
+  const porId = new Map((data || []).map((p) => [p.id, p]));
+  lineas = pedidos.filter((p) => porId.has(p.id)).map((p) => {
+    const prod = porId.get(p.id);
+    return { ...prod, cantidad: p.cantidad, total: Math.round(prod.precio * p.cantidad * 100) / 100 };
+  });
+}
+const yaNoEstan = pedidos.length - lineas.length;
+const carrito = lineas.map((l) => ({ id: l.id, cantidad: l.cantidad }));
+const c = carritoATexto(carrito);
+const subtotal = Math.round(lineas.reduce((s, l) => s + l.total, 0) * 100) / 100;
+const env = calcularEnvio(subtotal, true, cfg.envio);
+const reglas = { gratis_desde: 20, tarifa: 1, minimo: 5, ...(cfg.envio || {}) };
+const h = horarioSuper(horario?.valor);
+const con = (id, delta) => {
+  const nuevo = carrito.map((x) => (x.id === id ? { ...x, cantidad: Math.max(0, Math.min(x.cantidad + delta, 50)) } : x));
+  const t = carritoATexto(nuevo);
+  return t ? `/super/pedido?c=${t}` : "/super/pedido";
+};
+const bs = (usd) => { const v = precioBs(usd, cfg.tasa); return v === null ? "" : ` · ${mostrarPrecio(v, "VES")}`; };
+const v = (k, porDefecto = "") => enviado[k] ?? porDefecto;
+---
+<Base titulo="Mi pedido · Lokl Súper">
+  <main class="contenedor angosto">
+    <Cabecera />
+    <p style="margin:14px 0 0"><a href="/super">‹ Seguir comprando</a></p>
+    <h1 style="font-size:24px;margin:8px 0 0">Mi pedido</h1>
+    <span class:list={["estado-super", h.abierto ? "abierto" : "cerrado"]}>{h.texto}</span>
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+    {yaNoEstan > 0 && <p class="mensaje">{yaNoEstan === 1 ? "Un producto ya no está disponible y lo quitamos." : `${yaNoEstan} productos ya no están disponibles y los quitamos.`}</p>}
+
+    {!lineas.length ? (
+      <section class="tarjeta bloque" style="text-align:center">
+        <p style="margin:0 0 12px">Tu carrito está vacío.</p>
+        <a class="boton" href="/super">Ir al Súper</a>
+      </section>
+    ) : (
+      <>
+        <ul class="lineas-pedido">
+          {lineas.map((l) => (
+            <li class="tarjeta linea-pedido">
+              {l.foto_url ? <img src={l.foto_url} alt="" width="48" height="48" loading="lazy" decoding="async" />
+                : <span class="mini-pasillo" aria-hidden="true"><Icono nombre="super" tam={22} /></span>}
+              <span class="datos">
+                <strong>{l.nombre}</strong>
+                {(l.marca || l.presentacion) && <span class="texto-2" style="font-size:13px"><br />{[l.marca, l.presentacion].filter(Boolean).join(" · ")}</span>}
+                <br /><span>{mostrarPrecio(l.precio)} × {l.cantidad} = <strong>{mostrarPrecio(l.total)}</strong></span>
+              </span>
+              <span class="paso-enlaces">
+                <a href={con(l.id, -1)} aria-label={`Quitar un ${l.nombre}`}>−</a>
+                <span>{l.cantidad}</span>
+                <a href={con(l.id, 1)} aria-label={`Agregar otro ${l.nombre}`}>+</a>
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <div class="tarjeta totales-pedido">
+          <div class="fila-entre"><span>Productos</span><span>{mostrarPrecio(subtotal)}</span></div>
+          <div class="fila-entre"><span>Envío en el casco central</span><span>{env.gratis ? "Gratis 🎉" : mostrarPrecio(env.costo)}</span></div>
+          <div class="fila-entre"><span>Total en el casco central</span><strong>{mostrarPrecio(subtotal + (env.costo ?? 0))}<span class="texto-2" style="font-size:14px;font-weight:600">{bs(subtotal + (env.costo ?? 0))}</span></strong></div>
+          {!env.gratis && env.minimoOk && <span class="texto-2" style="font-size:14px">Te faltan {mostrarPrecio(env.falta)} para el envío gratis.</span>}
+          <span class="texto-2" style="font-size:14px">Otras zonas: el envío te lo confirmamos por WhatsApp.</span>
+        </div>
+
+        {!env.minimoOk ? (
+          <p class="mensaje">El pedido mínimo es de <strong>{mostrarPrecio(reglas.minimo)}</strong>. Te faltan {mostrarPrecio(Math.round((reglas.minimo - subtotal) * 100) / 100)}. <a href="/super">Agregar más</a></p>
+        ) : (
+          <form method="post" class="formulario tarjeta bloque" id="form-pedido" data-enviado={Astro.request.method === "POST" ? "1" : undefined}>
+            <input type="hidden" name="c" value={c} />
+            <h2 style="font-size:18px;margin:0">¿A dónde lo llevamos?</h2>
+            <label>Tu nombre
+              <input type="text" name="nombre" required maxlength="60" autocomplete="name" value={v("nombre")} />
+            </label>
+            <label>Tu WhatsApp
+              <input type="tel" name="whatsapp" required maxlength="20" inputmode="tel" autocomplete="tel" placeholder="0414 123 4567" value={v("whatsapp")} />
+            </label>
+            <fieldset class="opciones-radio">
+              <legend>Zona</legend>
+              <label class="radio"><input type="radio" name="zona" value="casco" checked={v("zona", "casco") !== "otra"} /> Casco central de San Fernando <span class="texto-2">· envío {env.gratis ? "gratis" : mostrarPrecio(env.costo)}</span></label>
+              <label class="radio"><input type="radio" name="zona" value="otra" checked={v("zona") === "otra"} /> Otra zona <span class="texto-2">· te confirmamos el envío</span></label>
+            </fieldset>
+            <label>Tu sector
+              <input type="text" name="sector" required maxlength="60" placeholder="Ej. Centro, El Recreo, Parque de Ferias" value={v("sector")} />
+            </label>
+            <label>Dirección y punto de referencia
+              <textarea name="direccion" required maxlength="200" rows="2" placeholder="Ej. Calle Comercio, casa azul frente a la plaza">{v("direccion")}</textarea>
+            </label>
+            <fieldset class="opciones-radio">
+              <legend>¿Cómo vas a pagar?</legend>
+              {Object.entries(PAGOS_SUPER).map(([k, txt]) => (
+                <label class="radio"><input type="radio" name="pago" value={k} required checked={v("pago") === k} /> {txt}</label>
+              ))}
+              <small class="texto-2">Te mandamos los datos para pagar por WhatsApp cuando confirmemos tu pedido.</small>
+            </fieldset>
+            <fieldset class="opciones-radio">
+              <legend>Si falta algún producto</legend>
+              {Object.entries(SI_FALTA).map(([k, txt]) => (
+                <label class="radio"><input type="radio" name="si_falta" value={k} checked={v("si_falta", "escribeme") === k} /> {txt}</label>
+              ))}
+            </fieldset>
+            <label>Nota <small class="texto-2">(opcional)</small>
+              <input type="text" name="nota" maxlength="300" placeholder="Ej. tocar el portón negro" value={v("nota")} />
+            </label>
+            <button class="boton ancho" type="submit">Hacer pedido</button>
+            {!h.abierto && <small class="texto-2" style="text-align:center">Estamos cerrados: lo atendemos mañana a primera hora.</small>}
+          </form>
+        )}
+      </>
+    )}
+  </main>
+  <script is:inline define:vars={{ carrito: lineas.map((l) => [l.id, l.cantidad, Number(l.precio)]) }}>
+    (() => {
+      // El carrito del teléfono queda igual a lo que se ve aquí (cantidades y precios de hoy).
+      try {
+        const c = {};
+        for (const [id, n, p] of carrito) c[id] = { c: n, p };
+        localStorage.setItem("lokl_carrito", JSON.stringify(c));
+      } catch {}
+      // Recordar los datos del cliente para la próxima vez.
+      const form = document.getElementById("form-pedido");
+      if (!form) return;
+      const K = "lokl_datos_super", CAMPOS = ["nombre", "whatsapp", "zona", "sector", "direccion", "pago", "si_falta"];
+      let d = {};
+      try { d = JSON.parse(localStorage.getItem(K)) || {}; } catch {}
+      if (!form.dataset.enviado) for (const k of CAMPOS) if (form.elements[k] && d[k]) form.elements[k].value = d[k];
+      form.addEventListener("submit", () => {
+        const g = {};
+        for (const k of CAMPOS) g[k] = form.elements[k]?.value ?? "";
+        try { localStorage.setItem(K, JSON.stringify(g)); } catch {}
+      });
+    })();
+  </script>
+</Base>

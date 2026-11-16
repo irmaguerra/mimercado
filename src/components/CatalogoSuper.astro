@@ -10,8 +10,9 @@ import { precioBs, textoTasa, CREDITO_FOTOS } from "@/lib/super.js";
  * productos: [{ id, nombre, marca, presentacion, foto_url, precio }]
  * pasillos: [{ id, nombre, slug }]   actual: slug o null   q: texto buscado
  * base: ruta de esta página (ej. "/super")   tasa: { bs, fecha }   envio: { zona, gratis_desde }
+ * carrito: true = botones "Agregar" y barra "Ver pedido" (carrito guardado en el teléfono, ~1,3 KB en línea).
  */
-const { productos = [], pasillos = [], actual = null, q = "", base = "/super", tasa = null, envio = null } = Astro.props;
+const { productos = [], pasillos = [], actual = null, q = "", base = "/super", tasa = null, envio = null, carrito = false } = Astro.props;
 const enlace = (slug) => (slug ? `${base}?pasillo=${slug}` : base);
 const tieneFotoOff = productos.some((p) => p.foto_url?.startsWith("/super/fotos/"));
 const tasaTxt = textoTasa(tasa);
@@ -51,6 +52,16 @@ const tasaTxt = textoTasa(tasa);
             <span class="nombre-producto">{p.nombre}</span>
             {(p.marca || p.presentacion) && <span class="detalle-producto texto-2">{[p.marca, p.presentacion].filter(Boolean).join(" · ")}</span>}
             <span class="precio-producto">{mostrarPrecio(p.precio)}{bs !== null && <span class="precio-bs texto-2"> · {mostrarPrecio(bs, "VES")}</span>}</span>
+            {carrito && (
+              <div class="control-carrito" data-id={p.id} data-p={p.precio} data-n="0">
+                <button type="button" class="boton boton-agregar" data-agregar>Agregar</button>
+                <span class="paso-carrito">
+                  <button type="button" data-menos aria-label={`Quitar un ${p.nombre}`}>−</button>
+                  <span class="cuantos" aria-live="polite">0</span>
+                  <button type="button" data-mas aria-label={`Agregar otro ${p.nombre}`}>+</button>
+                </span>
+              </div>
+            )}
           </div>
         </li>
       );
@@ -62,3 +73,48 @@ const tasaTxt = textoTasa(tasa);
   {tasaTxt && <>{tasaTxt}.<br /></>}
   {tieneFotoOff && CREDITO_FOTOS}
 </p>
+
+{carrito && (
+  <>
+    <a id="barra-carrito" class="barra-carrito" href="/super/pedido" hidden>
+      <span data-resumen></span><strong>Ver pedido ›</strong>
+    </a>
+    <script is:inline>
+      (() => {
+        const K = "lokl_carrito";
+        let c = {};
+        try { c = JSON.parse(localStorage.getItem(K)) || {}; } catch {}
+        const guardar = () => { try { localStorage.setItem(K, JSON.stringify(c)); } catch {} };
+        const barra = document.getElementById("barra-carrito");
+        const plata = (n) => "$" + n.toFixed(2).replace(".", ",").replace(",00", "");
+        function pintar() {
+          document.querySelectorAll(".control-carrito").forEach((caja) => {
+            const n = c[caja.dataset.id]?.c || 0;
+            caja.dataset.n = n;
+            caja.querySelector(".cuantos").textContent = n;
+          });
+          let n = 0, t = 0;
+          const partes = [];
+          for (const [id, v] of Object.entries(c)) { n += v.c; t += v.c * v.p; partes.push(id + "x" + v.c); }
+          barra.hidden = !n;
+          barra.querySelector("[data-resumen]").textContent = n + (n === 1 ? " producto · " : " productos · ") + plata(t);
+          barra.href = "/super/pedido?c=" + partes.join(".");
+        }
+        document.addEventListener("click", (e) => {
+          const b = e.target.closest("[data-agregar],[data-mas],[data-menos]");
+          if (!b) return;
+          const caja = b.closest(".control-carrito");
+          const id = caja.dataset.id;
+          const v = c[id] || { c: 0 };
+          v.p = Number(caja.dataset.p);
+          v.c = b.hasAttribute("data-menos") ? v.c - 1 : Math.min(v.c + 1, 50);
+          if (v.c <= 0) delete c[id]; else c[id] = v;
+          guardar();
+          pintar();
+        });
+        addEventListener("pageshow", () => { try { c = JSON.parse(localStorage.getItem(K)) || {}; } catch {} pintar(); });
+        pintar();
+      })();
+    </script>
+  </>
+)}

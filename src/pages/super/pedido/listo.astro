@@ -1,0 +1,55 @@
+---
+// /super/pedido/listo?id=27 — El pedido ya quedó guardado; falta mandarlo por WhatsApp al Súper.
+// Solo lo ve el teléfono que lo hizo (código anónimo en la cookie). Vacía el carrito del teléfono.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import Icono from "@/components/Icono.astro";
+import { supabasePublico } from "@/lib/supabase/servidor.js";
+import { leerCliente } from "@/lib/cliente-cookie.js";
+import { enlaceWhatsApp } from "@/lib/whatsapp.js";
+import { mensajePedido, horarioSuper } from "@/lib/super.js";
+
+const pub = supabasePublico();
+const cliente = leerCliente(Astro.cookies);
+const id = Number(Astro.url.searchParams.get("id")) || 0;
+const [{ data: pedido }, { data: config }] = await Promise.all([
+  cliente && id ? pub.rpc("super_mi_pedido", { p_cliente: cliente, p_id: id }) : { data: null },
+  pub.from("configuracion").select("clave, valor").in("clave", ["super_whatsapp", "super_horario"]),
+]);
+const cfg = Object.fromEntries((config || []).map((r) => [r.clave, r.valor]));
+const texto = pedido ? mensajePedido(pedido) : "";
+const enlace = pedido && cfg.super_whatsapp ? enlaceWhatsApp(cfg.super_whatsapp, texto) : null;
+const h = horarioSuper(cfg.super_horario);
+---
+<Base titulo="Pedido listo · Lokl Súper">
+  <main class="contenedor angosto">
+    <Cabecera />
+    {!pedido ? (
+      <section class="tarjeta bloque" style="text-align:center;margin-top:20px">
+        <p style="margin:0 0 12px">No encontramos ese pedido en este teléfono.</p>
+        <a class="boton" href="/super/mis-pedidos">Ver mis pedidos</a>
+      </section>
+    ) : (
+      <>
+        <section style="text-align:center;margin-top:20px">
+          <span style="color:var(--acento)"><Icono nombre="super" tam={48} /></span>
+          <h1 style="font-size:24px;margin:6px 0 4px">Pedido #{pedido.id} listo</h1>
+          <p style="margin:0">Último paso: <strong>mándalo por WhatsApp</strong> para que lo preparemos.</p>
+          {pedido.fuera_de_horario && !h.abierto && <p class="texto-2" style="margin:6px 0 0">Estamos cerrados: lo atendemos mañana a primera hora.</p>}
+        </section>
+        {enlace && (
+          <a class="boton ancho fila" style="justify-content:center;gap:8px;margin-top:16px" href={enlace}>
+            <Icono nombre="whatsapp" tam={22} /> Enviar pedido por WhatsApp
+          </a>
+        )}
+        <pre class="tarjeta mensaje-pedido" style="margin-top:14px">{texto}</pre>
+        <p class="texto-2" style="font-size:14px">Te confirmamos por WhatsApp si hay todo, el total y los datos para pagar.</p>
+        <div class="pila-botones" style="margin-top:12px">
+          <a class="boton boton-claro ancho" href="/super/mis-pedidos">Mis pedidos</a>
+          <a class="boton boton-claro ancho" href="/super">Volver al Súper</a>
+        </div>
+      </>
+    )}
+  </main>
+  {pedido && <script is:inline>try { localStorage.removeItem("lokl_carrito"); } catch {}</script>}
+</Base>

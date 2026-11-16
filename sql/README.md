@@ -28,6 +28,7 @@ Cada archivo se corre **una sola vez** y nunca se modifica después de correrlo:
 | 12 | `12-modulo-9-dos-precios.sql` | Al mayor (ajuste): tipos de Tiendas también al mayor, 3 tipos nuevos (Productos de limpieza, Artesanía, Alimentos procesados), "cirugía" y "alisado" en Belleza, y dos precios por publicación (detal y mayor) | ✅ 15/11/2026 |
 | 13 | `13-modulo-10a-super-catalogo.sql` | Súper: pasillos con su margen, precio = costo + margen (producto → pasillo → general 7%), tasa del día, reglas de envío y buscador del Súper | ✅ 15/11/2026 |
 | 14 | `14-modulo-10a-super-sugerencias.sql` | Súper: 213 productos sugeridos (154 con foto de Open Food Facts), sin precio y sin marcar. Correr después del 13 | ✅ 15/11/2026 |
+| 15 | `15-modulo-10b-super-pedidos.sql` | Súper: pedidos (precios y envío los calcula la base), WhatsApp 0424-3232671, horario 7:30 am a 8:00 pm todos los días, pagos digitales, "Mis pedidos" y tablero del admin | ⏳ |
 
 ## Para quien programa
 

@@ -1,0 +1,106 @@
+---
+// /admin/super/pedidos — Tablero de pedidos del Súper (decisión 59).
+// Nuevo → Confirmado → Comprando → En camino → Entregado (o Cancelado). Botón de WhatsApp al cliente.
+// Arriba: lo vendido en 7 días y de qué sectores piden (para negociar con los deliverys).
+import Base from "@/layouts/Base.astro";
+import { mostrarPrecio } from "@/lib/precio.js";
+import { enlaceWhatsApp } from "@/lib/whatsapp.js";
+import { ESTADOS_PEDIDO, PAGOS_SUPER, SI_FALTA, precioBs } from "@/lib/super.js";
+
+const { sb } = Astro.locals;
+const filtro = Astro.url.searchParams.get("ver") || "activos";
+let aviso = "";
+let error = "";
+
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  const id = Number(f.get("id"));
+  const estado = String(f.get("estado"));
+  if (id > 0 && ESTADOS_PEDIDO[estado]) {
+    const { error: e } = await sb.rpc("super_cambiar_estado", { p_id: id, p_estado: estado });
+    if (e) { console.error("estado pedido", e); error = "No se pudo cambiar."; }
+    else aviso = `Pedido #${id}: ${ESTADOS_PEDIDO[estado].texto}.`;
+  }
+}
+
+const ACTIVOS = ["nuevo", "confirmado", "comprando", "en_camino"];
+let consulta = sb.from("super_pedidos").select("*").order("creado_en", { ascending: false }).limit(60);
+if (filtro === "activos") consulta = consulta.in("estado", ACTIVOS);
+else if (ESTADOS_PEDIDO[filtro]) consulta = consulta.eq("estado", filtro);
+const [{ data: pedidos }, { data: resumen }] = await Promise.all([consulta, sb.rpc("super_resumen_pedidos", { p_dias: 7 })]);
+const r = resumen || { pedidos: 0, entregados: 0, vendido: 0, por_sector: [] };
+const fecha = (t) => new Intl.DateTimeFormat("es-VE", { timeZone: "America/Caracas", weekday: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(t));
+const FILTROS = [["activos", "Por atender"], ["entregado", "Entregados"], ["cancelado", "Cancelados"], ["todos", "Todos"]];
+---
+<Base titulo="Pedidos · Súper">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/admin/super">‹ Lokl Súper</a></p>
+    <h1 style="font-size:24px;margin:8px 0 4px">Pedidos</h1>
+    {aviso && <p class="mensaje ok" role="status">{aviso}</p>}
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+
+    <div class="rejilla-secciones" style="margin-top:12px">
+      <div class="tarjeta bloque" style="margin:0"><strong style="font-size:24px">{r.pedidos}</strong><br /><span class="texto-2" style="font-size:14px">pedidos en 7 días</span></div>
+      <div class="tarjeta bloque" style="margin:0"><strong style="font-size:24px">{mostrarPrecio(r.vendido) ?? "$0"}</strong><br /><span class="texto-2" style="font-size:14px">vendido ({r.entregados} entregados)</span></div>
+    </div>
+    {r.por_sector?.length > 0 && (
+      <details class="tarjeta bloque">
+        <summary><strong>De dónde piden</strong> <span class="texto-2">(7 días)</span></summary>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          {r.por_sector.map((s) => <li>{s.sector}: {s.pedidos} {s.pedidos === 1 ? "pedido" : "pedidos"}{!s.en_casco && <span class="texto-2"> · fuera del casco</span>}</li>)}
+        </ul>
+      </details>
+    )}
+
+    <ul class="chips" aria-label="Ver">
+      {FILTROS.map(([k, txt]) => <li><a class="chip" href={`/admin/super/pedidos?ver=${k}`} aria-current={filtro === k ? "true" : undefined}>{txt}</a></li>)}
+    </ul>
+
+    {!pedidos?.length ? <p class="texto-2" style="margin-top:16px">No hay pedidos aquí.</p> : (
+      <ul class="lista-opciones" style="margin-top:12px">
+        {pedidos.map((p) => {
+          const est = ESTADOS_PEDIDO[p.estado];
+          const saludo = `Hola ${p.nombre}, te escribimos de Lokl Súper por tu pedido #${p.id}.`;
+          const bs = precioBs(p.total, p.tasa_bs);
+          return (
+            <li class="tarjeta tarjeta-pedido">
+              <div class="fila-entre">
+                <strong>#{p.id} · {p.nombre}</strong>
+                <span class:list={["chip-estado", p.estado]}>{est?.texto}</span>
+              </div>
+              <span class="texto-2" style="font-size:14px">{fecha(p.creado_en)}{p.fuera_de_horario && " · llegó fuera de horario"}</span>
+              <ul>{p.items.map((i) => <li>{i.cantidad} × {[i.nombre, i.marca, i.presentacion].filter(Boolean).join(" ")} — {mostrarPrecio(i.total)}</li>)}</ul>
+              <span>
+                Productos {mostrarPrecio(p.subtotal)} · Envío {p.envio == null ? <strong class="texto-alerta">por confirmar</strong> : Number(p.envio) === 0 ? "gratis" : mostrarPrecio(p.envio)}
+                {p.total != null && <> · <strong>Total {mostrarPrecio(p.total)}</strong>{bs !== null && ` (${mostrarPrecio(bs, "VES")})`}</>}
+              </span>
+              <span>📍 {p.en_casco ? "Casco central" : <strong>Otra zona</strong>} · {p.sector} · {p.direccion}</span>
+              <span>💳 {PAGOS_SUPER[p.forma_pago] ?? p.forma_pago} · Si falta: {SI_FALTA[p.si_falta]?.toLowerCase() ?? "escríbeme"}</span>
+              {p.nota && <span>📝 {p.nota}</span>}
+              <div class="acciones-publicacion">
+                <a class="boton" href={enlaceWhatsApp(p.whatsapp, saludo)}>WhatsApp</a>
+                {est?.siguiente && (
+                  <form method="post">
+                    <input type="hidden" name="id" value={p.id} />
+                    <input type="hidden" name="estado" value={est.siguiente} />
+                    <button class="boton boton-claro" type="submit">{est.boton} ›</button>
+                  </form>
+                )}
+                {ACTIVOS.includes(p.estado) && (
+                  <details class="confirmar-borrar">
+                    <summary class="boton-texto">Cancelar</summary>
+                    <form method="post">
+                      <input type="hidden" name="id" value={p.id} />
+                      <input type="hidden" name="estado" value="cancelado" />
+                      ¿Cancelar el pedido #{p.id}? <button class="boton-texto texto-alerta" type="submit">Sí, cancelar</button>
+                    </form>
+                  </details>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    )}
+  </main>
+</Base>
