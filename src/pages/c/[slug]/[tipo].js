@@ -4,6 +4,7 @@
 import { supabasePublico } from "@/lib/supabase/servidor.js";
 import { enlaceWhatsApp, enlaceLlamada } from "@/lib/whatsapp.js";
 import { clienteDeCookie } from "@/lib/cliente-cookie.js";
+import { esIdPresupuesto, mensajeRespuesta } from "@/lib/presupuesto.js";
 
 export async function GET({ params, url, redirect, cookies }) {
   const { slug, tipo } = params;
@@ -32,10 +33,19 @@ export async function GET({ params, url, redirect, cookies }) {
   const cliente_id = clienteDeCookie(cookies);
   await sb.from("contactos").insert({ vendedor_id: t.id, tipo, publicacion_id: pub?.id ?? null, cliente_id });
 
+  // Si viene de un presupuesto (?pr=<id>), el mensaje dice su precio y lo que pidió (decisión 70)
+  const prId = url.searchParams.get("pr");
+  let presupuesto = null;
+  if (esIdPresupuesto(prId)) {
+    const { data } = await sb.rpc("presupuesto_ver", { p_cliente: cliente_id, p_id: prId });
+    const r = data?.respuestas?.find((x) => x.vendedor_id === t.id);
+    if (r) presupuesto = mensajeRespuesta(data, r);
+  }
+
   const host = url.host;
-  const mensaje = pub
+  const mensaje = presupuesto ?? (pub
     ? `Hola, me interesa "${pub.titulo}" que vi en Lokl (${host}/p/${pub.id})`
-    : `Hola, te escribo desde Lokl (${host}/${slug})`;
+    : `Hola, te escribo desde Lokl (${host}/${slug})`);
   const destino = tipo === "llamada" && t.telefono ? enlaceLlamada(t.telefono) : enlaceWhatsApp(t.whatsapp, mensaje);
   return new Response(null, { status: 302, headers: { Location: destino, "Cache-Control": "no-store" } });
 }

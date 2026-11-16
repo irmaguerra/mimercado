@@ -1,0 +1,37 @@
+---
+// /presupuesto/mios — Los últimos 20 pedidos de presupuesto de este teléfono (decisión 70).
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import { supabasePublico } from "@/lib/supabase/servidor.js";
+import { leerCliente } from "@/lib/cliente-cookie.js";
+import { textoEstado, hace } from "@/lib/presupuesto.js";
+
+const cliente = leerCliente(Astro.cookies);
+const { data } = cliente ? await supabasePublico().rpc("mis_presupuestos", { p_cliente: cliente }) : { data: [] };
+const lista = data || [];
+---
+<Base titulo="Mis presupuestos">
+  <main class="contenedor angosto">
+    <Cabecera />
+    <h1 style="font-size:24px;margin:16px 0 0">Mis presupuestos</h1>
+    {!lista.length ? (
+      <p class="texto-2">Todavía no has pedido presupuestos desde este teléfono.</p>
+    ) : (
+      <ul class="lista-opciones" style="margin-top:12px">
+        {lista.map((p) => (
+          <li>
+            <a href={`/presupuesto/${p.id}`} class="tarjeta enlace-tarjeta tarjeta-pedido">
+              <div class="fila-entre" style="gap:8px">
+                <strong>{p.categoria}</strong>
+                <span class:list={["chip-estado", { apagado: p.estado !== "abierto" || p.oculto }]}>{textoEstado(p)}</span>
+              </div>
+              <span style="font-size:15px">{p.descripcion}</span>
+              <span class="texto-2" style="font-size:14px">{hace(p.creado_en)} · <strong>{p.respuestas} {p.respuestas === 1 ? "respuesta" : "respuestas"}</strong> ›</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+    <a class="boton ancho" href="/presupuesto" style="margin-top:16px">Pedir presupuesto a varios</a>
+  </main>
+</Base>

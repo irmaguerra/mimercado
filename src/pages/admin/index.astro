@@ -27,7 +27,9 @@ const [{ count: vendedores }, { data: zonasPendientes }, { count: sugeridas }, t
   sb.rpc("cola_vendedores"),
   sb.rpc("cola_resenas"),
 ]);
-const porRevisar = (colaPubs?.length ?? 0) + (colaTiendas?.length ?? 0) + (colaResenas?.length ?? 0);
+const { data: colaP } = await sb.rpc("cola_presupuestos");
+const porRevisar = (colaPubs?.length ?? 0) + (colaTiendas?.length ?? 0) + (colaResenas?.length ?? 0)
+  + (colaP?.presupuestos?.length ?? 0) + (colaP?.respuestas?.length ?? 0);
 ---
 <Base titulo="Administración">
   <main class="contenedor angosto" style="padding-top:20px">
@@ -45,6 +47,7 @@ const porRevisar = (colaPubs?.length ?? 0) + (colaTiendas?.length ?? 0) + (colaR
       <a href="/admin/tiendas">Tiendas: verificar y suspender <span aria-hidden="true">›</span></a>
       <a href="/admin/palabras">Palabras prohibidas <span aria-hidden="true">›</span></a>
       <a href="/admin/busquedas">Lo que buscan y no encuentran <span aria-hidden="true">›</span></a>
+      <a href="/admin/presupuestos">Pedidos de presupuesto: lo que piden y nadie atiende <span aria-hidden="true">›</span></a>
       <a href="/admin/bitacora">Bitácora <span aria-hidden="true">›</span></a>
     </nav>
 

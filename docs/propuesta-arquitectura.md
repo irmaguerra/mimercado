@@ -455,3 +455,13 @@ Meta: **tienda lista en menos de 2 minutos**, desde el teléfono.
 | 61 | "Mis pedidos" y **"Repetir pedido"** (mismos productos a precios de hoy) | **Aprobado** (15/11/2026) |
 | 62 | `/super` se abre al público con los productos que tienen precio | **Aprobado** (15/11/2026) |
 | 63 | El buscador muestra primero **"En Lokl Súper"** (hasta 4 productos) en San Fernando o sin lugar elegido; las bodegas siguen apareciendo debajo | **Aprobado** (15/11/2026) |
+| 64 | Pedir presupuesto **sin cuenta**: qué necesita, **una foto** opcional, categoría, sector, nombre y WhatsApp | **Aprobado** (16/11/2026) |
+| 65 | El WhatsApp del cliente **no se les da a los vendedores**: responden dentro de Lokl y el cliente decide a quién escribir | **Aprobado** (16/11/2026) |
+| 66 | Lo reciben **hasta 8 vendedores** de esa categoría en el municipio, primero los de su sector y los verificados; Tiendas, Servicios, Comida (encargos) y Al mayor; **Clasificados no** | **Aprobado** (16/11/2026) |
+| 67 | La solicitud **vence a los 3 días**; antes, el cliente puede tocar **"Ya lo conseguí"** y se cierra | **Aprobado** (16/11/2026) |
+| 68 | En el panel, **"Pedidos de presupuesto"**: una respuesta por solicitud (precio o "desde $X" y un mensaje corto), corregible mientras no venza; **"No lo tengo"** la quita de su lista | **Aprobado** (16/11/2026) |
+| 69 | Cada vendedor decide si recibe solicitudes ("Recibir presupuestos", encendido de entrada) | **Aprobado** (16/11/2026) |
+| 70 | El cliente ve las respuestas **ordenadas por precio** (tienda, verificado, estrellas y botón de WhatsApp con el mensaje ya escrito) y las encuentra en **"Mis presupuestos"** | **Aprobado** (16/11/2026) |
+| 71 | **Avisos gratis en el teléfono**: al vendedor cuando le llega una solicitud y al cliente cuando le responden. Android desde el navegador; iPhone con la app instalada | **Aprobado** (16/11/2026) |
+| 72 | Máximo **3 solicitudes por día** por teléfono, **palabras prohibidas** y **reportes** que llegan a "Por revisar" | **Aprobado** (16/11/2026) |
+| 73 | Botón **"Pedir presupuesto a varios"** en los listados, en el buscador sin resultados y en la portada; si no hay vendedores se dice con honestidad y el admin lo ve como **demanda sin atender** | **Aprobado** (16/11/2026) |

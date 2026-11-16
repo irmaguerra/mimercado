@@ -4,6 +4,8 @@
 import Base from "@/layouts/Base.astro";
 import { resumirMotivos } from "@/lib/moderacion.js";
 import { estrellas } from "@/lib/resenas.js";
+import { avisar } from "@/lib/avisos-servidor.js";
+import { avisoVendedor, textoPrecio, hace } from "@/lib/presupuesto.js";
 
 const { sb } = Astro.locals;
 let aviso = "";
@@ -13,13 +15,22 @@ if (Astro.request.method === "POST") {
   const f = await Astro.request.formData();
   const accion = String(f.get("accion") || "");
   const nota = String(f.get("nota") || "").trim().slice(0, 300) || null;
-  const { error: e } = f.get("publicacion")
+  const { data: res, error: e } = f.get("presupuesto")
+    ? await sb.rpc("moderar_presupuesto", { p_id: String(f.get("presupuesto")), p_accion: accion, p_nota: nota })
+    : f.get("respuesta")
+    ? await sb.rpc("moderar_respuesta", { p_id: String(f.get("respuesta")), p_vendedor: String(f.get("vendedor")), p_accion: accion, p_nota: nota })
+    : f.get("publicacion")
     ? await sb.rpc("moderar_publicacion", { p_id: Number(f.get("publicacion")), p_accion: accion, p_nota: nota })
     : f.get("resena")
     ? await sb.rpc("moderar_resena", { p_id: Number(f.get("resena")), p_accion: accion, p_nota: nota })
     : await sb.rpc("moderar_vendedor", { p_id: String(f.get("vendedor")), p_accion: accion, p_nota: nota });
   if (e) { console.error("moderar", e); error = /motivo/i.test(e.message) ? "Escribe el motivo." : "No se pudo guardar. Intenta de nuevo."; }
-  else aviso = { aprobar: "Listo: vuelve a estar publicada.", ocultar: "Listo: quedó oculta.", descartar: "Listo: reportes descartados.", suspender: "Listo: tienda suspendida." }[accion] ?? "Listo.";
+  else if (res?.avisos?.length) {
+    // Un pedido de presupuesto frenado por el filtro: se avisa a los negocios al aprobarlo.
+    await avisar(sb, res.avisos, avisoVendedor({ id: f.get("presupuesto"), categoria: f.get("categoria"), descripcion: f.get("descripcion") }));
+    aviso = "Listo: aprobado y enviado a los negocios.";
+  }
+  if (!e && !aviso) aviso = { aprobar: "Listo: vuelve a estar publicada.", ocultar: "Listo: quedó oculta.", descartar: "Listo: reportes descartados.", suspender: "Listo: tienda suspendida." }[accion] ?? "Listo.";
 }
 
 const [{ data: pubs, error: e1 }, { data: tiendas, error: e2 }, { data: resenas, error: e3 }] = await Promise.all([
@@ -27,7 +38,10 @@ const [{ data: pubs, error: e1 }, { data: tiendas, error: e2 }, { data: resenas,
   sb.rpc("cola_vendedores"),
   sb.rpc("cola_resenas"),
 ]);
-if (e1 || e2 || e3) console.error("cola", e1 || e2 || e3);
+const { data: colaP, error: e4 } = await sb.rpc("cola_presupuestos");
+if (e1 || e2 || e3 || e4) console.error("cola", e1 || e2 || e3 || e4);
+const presupuestos = colaP?.presupuestos ?? [];
+const respuestas = colaP?.respuestas ?? [];
 
 const ESTADO = {
   en_revision: "Frenada por el filtro de palabras",
@@ -99,6 +113,45 @@ const ESTADO = {
                 <button class="boton boton-claro" type="submit">Está bien</button></form>
               <form method="post"><input type="hidden" name="resena" value={r.id} /><input type="hidden" name="accion" value="ocultar" />
                 <button class="boton-texto" type="submit">Ocultar</button></form>
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    <h2 style="font-size:18px;margin:28px 0 8px">Pedidos de presupuesto ({presupuestos.length + respuestas.length})</h2>
+    {!presupuestos.length && !respuestas.length ? <p class="texto-2">Ningún pedido de presupuesto por revisar.</p> : (
+      <ul class="lista-mis-publicaciones">
+        {presupuestos.map((p) => (
+          <li class="tarjeta">
+            <strong style="display:block">{p.categoria} <span class="texto-2" style="font-weight:400;font-size:14px">· pedido de {p.nombre} · {hace(p.creado_en)}</span></strong>
+            <span class="etiqueta-estado" style="display:block;font-size:14px">{p.revisar ? "Frenado por el filtro de palabras (no ha llegado a los negocios)" : p.oculto ? "Oculto por reportes de los negocios" : "Visible, con reportes"}</span>
+            <p style="margin:6px 0 0;white-space:pre-line">{p.descripcion}</p>
+            {p.foto_url && <a href={p.foto_url}><img src={p.foto_url} alt="Foto del pedido" class="foto-presupuesto" loading="lazy" /></a>}
+            {p.reportes > 0 && <p style="margin:6px 0 0;font-size:14px"><strong>{p.reportes} {p.reportes === 1 ? "reporte" : "reportes"}:</strong> {resumirMotivos(p.motivos)}</p>}
+            <div class="acciones-publicacion" style="margin-top:10px">
+              <form method="post">
+                <input type="hidden" name="presupuesto" value={p.id} /><input type="hidden" name="accion" value="aprobar" />
+                <input type="hidden" name="categoria" value={p.categoria} /><input type="hidden" name="descripcion" value={p.descripcion} />
+                <button class="boton boton-claro" type="submit">{p.revisar ? "Está bien: enviarlo" : "Está bien"}</button>
+              </form>
+              <form method="post"><input type="hidden" name="presupuesto" value={p.id} /><input type="hidden" name="accion" value="ocultar" />
+                <button class="boton-texto" type="submit">Ocultar</button></form>
+            </div>
+          </li>
+        ))}
+        {respuestas.map((r) => (
+          <li class="tarjeta">
+            <strong style="display:block">Respuesta de <a href={`/${r.slug}`}>{r.vendedor}</a>: {textoPrecio(r)}</strong>
+            <span class="etiqueta-estado" style="display:block;font-size:14px">Reportada por el cliente (ya no la ve)</span>
+            {r.mensaje && <p style="margin:6px 0 0">"{r.mensaje}"</p>}
+            <p class="texto-2" style="margin:6px 0 0;font-size:14px">Pedido: {r.pedido}</p>
+            <p style="margin:6px 0 0;font-size:14px"><strong>Motivo:</strong> {resumirMotivos([r.motivo])}{r.detalle && ` — "${r.detalle}"`}</p>
+            <div class="acciones-publicacion" style="margin-top:10px">
+              <form method="post"><input type="hidden" name="respuesta" value={r.presupuesto_id} /><input type="hidden" name="vendedor" value={r.vendedor_id} /><input type="hidden" name="accion" value="aprobar" />
+                <button class="boton boton-claro" type="submit">Está bien: que la vea</button></form>
+              <form method="post"><input type="hidden" name="respuesta" value={r.presupuesto_id} /><input type="hidden" name="vendedor" value={r.vendedor_id} /><input type="hidden" name="accion" value="ocultar" />
+                <button class="boton-texto" type="submit">Dejarla oculta</button></form>
             </div>
           </li>
         ))}

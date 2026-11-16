@@ -1,0 +1,59 @@
+---
+// /admin/presupuestos — Lo que la gente pide (decisión 73).
+// Por categoría: cuántos pedidos no tuvieron a quién llegar (negocios por invitar)
+// y cuántos se quedaron sin respuesta. Sin nombres ni números de los clientes.
+import Base from "@/layouts/Base.astro";
+import { textoEstado, hace } from "@/lib/presupuesto.js";
+import { seccionPorClave } from "@/lib/listados.js";
+
+const { sb } = Astro.locals;
+const dias = [7, 30, 90].includes(Number(Astro.url.searchParams.get("dias"))) ? Number(Astro.url.searchParams.get("dias")) : 30;
+const { data, error } = await sb.rpc("resumen_presupuestos", { p_dias: dias });
+if (error) console.error("resumen_presupuestos", error);
+const r = data || { pedidos: 0, con_respuesta: 0, sin_vendedores: 0, por_categoria: [], recientes: [] };
+const sinAtender = r.por_categoria.filter((c) => c.sin_vendedores > 0 || c.sin_respuesta > 0);
+---
+<Base titulo="Presupuestos · Admin">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/admin">‹ Administración</a></p>
+    <h1 style="font-size:24px;margin:8px 0 4px">Pedidos de presupuesto</h1>
+    <ul class="chips" aria-label="Período">
+      {[7, 30, 90].map((d) => <li><a class="chip" href={`/admin/presupuestos?dias=${d}`} aria-current={dias === d ? "true" : undefined}>{d} días</a></li>)}
+    </ul>
+
+    <div class="rejilla-secciones" style="margin-top:12px">
+      <div class="tarjeta bloque" style="margin:0"><strong style="font-size:26px">{r.pedidos}</strong><br /><span class="texto-2" style="font-size:14px">pedidos ({r.con_respuesta} con respuesta)</span></div>
+      <div class="tarjeta bloque" style="margin:0"><strong style="font-size:26px" class:list={{ "texto-alerta": r.sin_vendedores > 0 }}>{r.sin_vendedores}</strong><br /><span class="texto-2" style="font-size:14px">no tuvieron a quién llegar</span></div>
+    </div>
+
+    <h2 style="font-size:18px;margin:22px 0 4px">Demanda sin atender</h2>
+    <p class="texto-2" style="margin:0 0 8px;font-size:14px">Qué negocios faltan por invitar a Lokl (o por animar a responder).</p>
+    {!sinAtender.length ? <p class="texto-2">Todo lo que se pidió tuvo respuesta. 🎉</p> : (
+      <ul class="lista-opciones">
+        {sinAtender.map((c) => (
+          <li class="tarjeta bloque" style="margin:0">
+            <strong>{c.categoria}</strong> <span class="texto-2" style="font-size:14px">· {seccionPorClave(c.seccion)?.nombre ?? c.seccion}</span>
+            <span style="display:block;font-size:14px">
+              {c.pedidos} {c.pedidos === 1 ? "pedido" : "pedidos"}
+              {c.sin_vendedores > 0 && <> · <strong class="texto-alerta">{c.sin_vendedores} sin negocios que lo reciban</strong></>}
+              {c.sin_respuesta > 0 && <> · {c.sin_respuesta} sin respuesta</>}
+            </span>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    <h2 style="font-size:18px;margin:22px 0 8px">Últimos pedidos</h2>
+    {!r.recientes.length ? <p class="texto-2">Todavía no hay pedidos.</p> : (
+      <ul class="lista-opciones">
+        {r.recientes.map((p) => (
+          <li class="tarjeta tarjeta-pedido">
+            <div class="fila-entre" style="gap:8px"><strong>{p.categoria}</strong><span class="chip-estado">{p.oculto ? "Oculto" : textoEstado(p)}</span></div>
+            <span style="font-size:15px">{p.descripcion}</span>
+            <span class="texto-2" style="font-size:14px">{hace(p.creado_en)}{p.zona && ` · ${p.zona}`} · enviado a {p.enviados} · {p.respuestas} {p.respuestas === 1 ? "respuesta" : "respuestas"}</span>
+          </li>
+        ))}
+      </ul>
+    )}
+  </main>
+</Base>

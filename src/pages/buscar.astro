@@ -6,6 +6,7 @@
 import Base from "@/layouts/Base.astro";
 import Cabecera from "@/components/Cabecera.astro";
 import Icono from "@/components/Icono.astro";
+import PedirPresupuesto from "@/components/PedirPresupuesto.astro";
 import TarjetaVendedor from "@/components/TarjetaVendedor.astro";
 import TarjetaProducto from "@/components/TarjetaProducto.astro";
 import { supabasePublico } from "@/lib/supabase/servidor.js";
@@ -164,6 +165,11 @@ const raiz = m ? `/${m.estado.slug}/${m.slug}` : null;
           {(sec || abiertos) && <li><a href={con({ seccion: null, abiertos: false })}>Buscar en todo Lokl, abierto o cerrado</a></li>}
           <li>¿Lo vendes tú? <a href="/panel/publicar">Publícalo gratis</a> y la próxima persona que lo busque te encuentra.</li>
         </ul>
+      </div>
+    )}
+    {q.length >= 2 && !fallo && total === 0 && !delSuper.length && (
+      <div style="margin-top:12px">
+        <PedirPresupuesto q={q} lugar={m ? `${m.estado.slug}/${m.slug}` : ""} titulo={`¿Nadie tiene "${q.length > 30 ? q.slice(0, 29) + "…" : q}"? Pide presupuesto`} texto="Dinos qué necesitas y los negocios que lo tengan te mandan su precio." />
       </div>
     )}
 

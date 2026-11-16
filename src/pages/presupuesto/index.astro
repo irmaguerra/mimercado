@@ -1,0 +1,170 @@
+---
+// /presupuesto — "Pide presupuesto a varios" (decisiones 64 a 66, 72).
+//   ?cat=<id de categoría>  ?lugar=estado/municipio  ?q=<lo que buscaba>  (todo opcional)
+// Sin cuenta: nombre y WhatsApp (que NO llega a los vendedores), qué necesita, foto opcional,
+// categoría y sector. Al enviar: la base lo reparte (hasta 8) y se avisa a los vendedores.
+// No se cachea. ~1,5 KB en línea: achica la foto en el teléfono y recuerda nombre y WhatsApp.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import { supabasePublico } from "@/lib/supabase/servidor.js";
+import { clienteDeCookie } from "@/lib/cliente-cookie.js";
+import { normalizarNumero, esCelularValido } from "@/lib/whatsapp.js";
+import { leerUbicacion, buscarMunicipio } from "@/lib/ubicacion.js";
+import { leerLugar, zonasDeMunicipio } from "@/lib/listados.js";
+import { avisar } from "@/lib/avisos-servidor.js";
+import {
+  gruposCategorias, avisoVendedor, revisarFoto, MAX_DESTINATARIOS, MAX_POR_DIA,
+  MENSAJE_PARA_MOSTRAR, SECCIONES_PRESUPUESTO,
+} from "@/lib/presupuesto.js";
+
+const pub = supabasePublico();
+const params = Astro.url.searchParams;
+
+// Municipio: el de la dirección, si no el que eligió la persona, si no San Fernando (donde está Lokl hoy).
+const lugar = leerLugar(params.get("lugar")) ?? leerUbicacion(Astro.cookies);
+const m = (lugar?.municipio && (await buscarMunicipio(lugar.estado, lugar.municipio))) || (await buscarMunicipio("apure", "san-fernando"));
+if (!m) return Astro.rewrite("/404");
+
+const [{ data: cats }, zonas] = await Promise.all([
+  pub.from("categorias").select("id, nombre, slug, padre_id, orden, seccion").in("seccion", SECCIONES_PRESUPUESTO).eq("activa", true),
+  zonasDeMunicipio(pub, m.id),
+]);
+const grupos = gruposCategorias(cats || []);
+const validas = new Map((cats || []).map((c) => [c.id, c]));
+
+let error = "";
+let enviado = {};
+if (Astro.request.method === "POST") {
+  const f = await Astro.request.formData();
+  enviado = Object.fromEntries([...f.entries()].filter(([, v]) => typeof v === "string"));
+  const whatsapp = normalizarNumero(enviado.whatsapp);
+  const categoria = validas.get(Number(enviado.categoria));
+  const zona = zonas.find((z) => z.id === Number(enviado.zona)) ?? null;
+  const foto = revisarFoto(f.get("foto"));
+  if (!esCelularValido(whatsapp)) error = "Escribe tu número de WhatsApp (ej. 0414 123 4567).";
+  else if (!categoria) error = "Elige qué tipo de negocio lo tiene.";
+  else if (foto.error) error = foto.error;
+  else {
+    const cliente = clienteDeCookie(Astro.cookies);
+    const { data, error: e } = await pub.rpc("presupuesto_crear", {
+      p_cliente: cliente, p_nombre: enviado.nombre, p_whatsapp: whatsapp, p_categoria_id: categoria.id,
+      p_municipio_id: m.id, p_zona_id: zona?.id ?? null, p_descripcion: enviado.descripcion,
+    });
+    if (e) {
+      console.error("presupuesto_crear", e);
+      error = MENSAJE_PARA_MOSTRAR.test(e.message || "") ? e.message : "No se pudo enviar tu pedido. Intenta de nuevo.";
+    } else {
+      // La foto va en la carpeta del pedido (la base solo lo permite en los primeros 15 minutos).
+      if (foto.ext) {
+        const ruta = `${data.id}/foto.${foto.ext}`;
+        const archivo = f.get("foto");
+        const { error: eSubir } = await pub.storage.from("presupuestos").upload(ruta, archivo, { contentType: archivo.type, upsert: false });
+        if (eSubir) console.error("foto presupuesto", eSubir);
+        else {
+          const url = pub.storage.from("presupuestos").getPublicUrl(ruta).data.publicUrl;
+          await pub.rpc("presupuesto_poner_foto", { p_cliente: cliente, p_id: data.id, p_url: url });
+        }
+      }
+      await avisar(pub, data.avisos, avisoVendedor({ id: data.id, categoria: categoria.nombre, descripcion: enviado.descripcion }));
+      return Astro.redirect(`/presupuesto/${data.id}?nuevo=1`, 303);
+    }
+  }
+}
+
+const catElegida = validas.get(Number(enviado.categoria ?? params.get("cat"))) ?? null;
+const { data: cuantos } = catElegida ? await pub.rpc("presupuesto_cuantos", { p_categoria_id: catElegida.id, p_municipio_id: m.id }) : { data: null };
+const zonaElegida = enviado.zona ?? zonas.find((z) => z.slug === params.get("zona"))?.id ?? "";
+const v = (k, porDefecto = "") => enviado[k] ?? porDefecto;
+---
+<Base titulo="Pedir presupuesto a varios" descripcion="Dinos qué necesitas y varios negocios de tu zona te mandan su precio. Gratis y sin cuenta.">
+  <main class="contenedor angosto">
+    <Cabecera lugar={m.nombre} />
+    <h1 style="font-size:24px;margin:16px 0 4px">Pide presupuesto a varios</h1>
+    <p class="texto-2" style="margin:0">Dinos qué necesitas y hasta {MAX_DESTINATARIOS} negocios de {m.nombre} te mandan su precio. Tú eliges a quién escribirle.</p>
+    <p style="margin:8px 0 0;font-size:14px"><a href="/presupuesto/mios">Mis presupuestos ›</a></p>
+
+    {error && <p class="mensaje error" role="alert">{error}</p>}
+
+    <form method="post" enctype="multipart/form-data" class="formulario tarjeta bloque" id="form-presupuesto" data-enviado={Astro.request.method === "POST" ? "1" : undefined} style="margin-top:14px">
+      <label>¿Qué necesitas?
+        <textarea name="descripcion" required minlength="10" maxlength="1000" rows="4" placeholder="Ej. Repuesto de bomba de agua de 1 HP, marca Pedrollo. O: pintar una casa de 3 cuartos.">{v("descripcion", params.get("q") ?? "")}</textarea>
+        <small class="texto-2">Mientras más detalle (marca, medida, cantidad, para cuándo), mejores precios.</small>
+      </label>
+
+      <label>Foto <small class="texto-2">(opcional)</small>
+        <input type="file" name="foto" accept="image/*" />
+        <small class="texto-2">Por ejemplo, del repuesto que se dañó.</small>
+      </label>
+
+      <label>¿Qué tipo de negocio lo tiene?
+        <select name="categoria" required>
+          <option value="">Elige una categoría</option>
+          {grupos.map((g) => (
+            <optgroup label={g.nombre}>
+              {g.opciones.map((o) => <option value={o.id} selected={catElegida?.id === o.id}>{o.sub ? `— ${o.nombre}` : o.nombre}</option>)}
+            </optgroup>
+          ))}
+        </select>
+        {catElegida && cuantos !== null && (
+          cuantos > 0
+            ? <small class="texto-2">Le llegará a {cuantos} {cuantos === 1 ? "negocio" : "negocios"} de {catElegida.nombre.toLowerCase()}.</small>
+            : <small class="texto-alerta">Todavía no hay negocios de {catElegida.nombre.toLowerCase()} en Lokl que lo reciban. Puedes enviarlo igual: así sabemos a quién invitar.</small>
+        )}
+      </label>
+
+      {zonas.length > 0 && (
+        <label>Tu sector
+          <select name="zona">
+            <option value="">Mi sector no está en la lista</option>
+            {zonas.map((z) => <option value={z.id} selected={String(zonaElegida) === String(z.id)}>{z.nombre}</option>)}
+          </select>
+          <small class="texto-2">Le llega primero a los negocios de tu sector.</small>
+        </label>
+      )}
+
+      <label>Tu nombre
+        <input type="text" name="nombre" required maxlength="60" autocomplete="name" value={v("nombre")} />
+      </label>
+      <label>Tu WhatsApp
+        <input type="tel" name="whatsapp" required maxlength="20" inputmode="tel" autocomplete="tel" placeholder="0414 123 4567" value={v("whatsapp")} />
+        <small class="texto-2">No se lo damos a los negocios: ellos te responden aquí en Lokl y tú decides a quién escribirle.</small>
+      </label>
+
+      <button class="boton ancho" type="submit">Pedir presupuesto</button>
+      <small class="texto-2" style="text-align:center">Gratis. Máximo {MAX_POR_DIA} pedidos por día. Vence en 3 días.</small>
+    </form>
+  </main>
+  <script is:inline>
+    (() => {
+      const form = document.getElementById("form-presupuesto");
+      if (!form) return;
+      // Nombre y WhatsApp: los mismos que usa el Súper.
+      const K = "lokl_datos_super";
+      let d = {};
+      try { d = JSON.parse(localStorage.getItem(K)) || {}; } catch {}
+      if (!form.dataset.enviado) for (const k of ["nombre", "whatsapp"]) if (d[k] && !form.elements[k].value) form.elements[k].value = d[k];
+      form.addEventListener("submit", () => {
+        try { localStorage.setItem(K, JSON.stringify({ ...d, nombre: form.elements.nombre.value, whatsapp: form.elements.whatsapp.value })); } catch {}
+      });
+      // La foto se achica en el teléfono (1000 px) antes de enviarla: gasta menos datos.
+      const campo = form.elements.foto;
+      campo.addEventListener("change", async () => {
+        const f = campo.files && campo.files[0];
+        if (!f || !window.DataTransfer || !window.createImageBitmap) return;
+        try {
+          const img = await createImageBitmap(f, { imageOrientation: "from-image" });
+          const r = Math.min(1, 1000 / Math.max(img.width, img.height));
+          const c = document.createElement("canvas");
+          c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+          let b = await new Promise((ok) => c.toBlob(ok, "image/webp", 0.78));
+          if (!b || b.type !== "image/webp") b = await new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.78));
+          if (!b || b.size >= f.size) return;
+          const dt = new DataTransfer();
+          dt.items.add(new File([b], b.type === "image/webp" ? "foto.webp" : "foto.jpg", { type: b.type }));
+          campo.files = dt.files;
+        } catch {}
+      });
+    })();
+  </script>
+</Base>

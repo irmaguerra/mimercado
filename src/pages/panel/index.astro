@@ -6,6 +6,7 @@ import { miTienda } from "@/lib/sesion.js";
 import { estaAbiertoAhora, dentroDeHorario } from "@/lib/horario.js";
 import { enlaceCompartir } from "@/lib/whatsapp.js";
 import { esServicio, textoAbierto } from "@/lib/vendedor.js";
+import { SECCIONES_PRESUPUESTO } from "@/lib/presupuesto.js";
 
 const { sb, usuario } = Astro.locals;
 const t = await miTienda(sb, usuario.id);
@@ -15,11 +16,13 @@ if (!t) {
   return Astro.redirect(admin ? "/admin" : "/panel/crear", 302);
 }
 
-const [{ data: semana }, { data: esAdmin }, { count: categorias }, { count: resenasTotal }] = await Promise.all([
+const recibePresupuestos = t.tipo !== "persona" && SECCIONES_PRESUPUESTO.includes(t.seccion_principal);
+const [{ data: semana }, { data: esAdmin }, { count: categorias }, { count: resenasTotal }, { data: presupuestosNuevos }] = await Promise.all([
   sb.rpc("mi_resumen_semana"),
   sb.rpc("es_admin"),
   sb.from("vendedor_categorias").select("categoria_id", { count: "exact", head: true }).eq("vendedor_id", t.id),
   sb.from("resenas").select("id", { count: "exact", head: true }).eq("vendedor_id", t.id).eq("estado", "publicada"),
+  recibePresupuestos ? sb.rpc("solicitudes_nuevas") : { data: 0 },
 ]);
 const s = semana?.[0] ?? { whatsapp: 0, llamadas: 0, personas: 0, favoritos: 0, resenas_nuevas: 0 };
 const veces = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
@@ -97,7 +100,15 @@ const suspendida = t.estado !== "activo";
       <button class="boton boton-claro ancho" type="button" data-copiar={url} hidden>Copiar mi enlace</button>
     </div>
 
+    {presupuestosNuevos > 0 && (
+      <a href="/panel/presupuestos" class="tarjeta bloque fila-entre enlace-tarjeta" style="margin-top:16px">
+        <span><strong style="font-size:20px" class="texto-alerta">{presupuestosNuevos}</strong> {presupuestosNuevos === 1 ? "cliente te pide presupuesto" : "clientes te piden presupuesto"}</span>
+        <span aria-hidden="true">›</span>
+      </a>
+    )}
+
     <nav class="menu-panel" aria-label="Opciones de mi tienda">
+      {recibePresupuestos && <a href="/panel/presupuestos">Pedidos de presupuesto{presupuestosNuevos > 0 ? ` (${presupuestosNuevos} ${presupuestosNuevos === 1 ? "nuevo" : "nuevos"})` : ""} <span aria-hidden="true">›</span></a>}
       <a href="/panel/tienda">Editar mi tienda <span aria-hidden="true">›</span></a>
       {t.tipo !== "persona" && <a href="/panel/mas">{servicio ? "Fotos, pagos, sectores y precios" : "Fotos de mi local y formas de pago"} <span aria-hidden="true">›</span></a>}
       <a href="/panel/publicar">Publicar <span aria-hidden="true">›</span></a>

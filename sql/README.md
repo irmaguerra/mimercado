@@ -29,6 +29,7 @@ Cada archivo se corre **una sola vez** y nunca se modifica después de correrlo:
 | 13 | `13-modulo-10a-super-catalogo.sql` | Súper: pasillos con su margen, precio = costo + margen (producto → pasillo → general 7%), tasa del día, reglas de envío y buscador del Súper | ✅ 15/11/2026 |
 | 14 | `14-modulo-10a-super-sugerencias.sql` | Súper: 213 productos sugeridos (154 con foto de Open Food Facts), sin precio y sin marcar. Correr después del 13 | ✅ 15/11/2026 |
 | 15 | `15-modulo-10b-super-pedidos.sql` | Súper: pedidos (precios y envío los calcula la base), WhatsApp 0424-3232671, horario 7:30 am a 8:00 pm todos los días, pagos digitales, "Mis pedidos" y tablero del admin | ✅ 15/11/2026 |
+| 16 | `16-modulo-11-presupuestos.sql` | Pedir presupuesto a varios: reparto a hasta 8 negocios (su sector y verificados primero), respuestas con precio, avisos en el teléfono, máximo 3 por día, reportes y "lo que piden y nadie atiende" | ⏳ |
 
 ## Para quien programa
 

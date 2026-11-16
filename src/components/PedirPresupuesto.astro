@@ -1,0 +1,17 @@
+---
+// Tarjeta "Pide presupuesto a varios" (decisión 73): en la portada, en cada listado y en el buscador sin resultados.
+import Icono from "./Icono.astro";
+
+/** cat: id de categoría; lugar: "estado/municipio"; q: lo que buscaba (llena "¿Qué necesitas?") */
+const { cat = null, lugar = "", q = "", titulo = "Pide presupuesto a varios", texto = "Dinos qué necesitas y varios negocios te mandan su precio. Gratis." } = Astro.props;
+const p = new URLSearchParams();
+if (cat) p.set("cat", String(cat));
+if (lugar) p.set("lugar", lugar);
+if (q) p.set("q", q);
+const href = `/presupuesto${p.toString() ? `?${p}` : ""}`;
+---
+<a href={href} class="tarjeta enlace-tarjeta fila pedir-presupuesto" rel="nofollow">
+  <span style="color:var(--marca)"><Icono nombre="presupuesto" tam={30} /></span>
+  <span style="flex:1"><strong style="display:block">{titulo}</strong><span class="texto-2" style="font-size:14px">{texto}</span></span>
+  <span aria-hidden="true">›</span>
+</a>

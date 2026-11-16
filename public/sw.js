@@ -129,3 +129,29 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(primeroRed(req));
   }
 });
+
+// ---- Avisos en el teléfono (Módulo 11): pedidos de presupuesto y sus respuestas ----
+self.addEventListener("push", (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch { d = { cuerpo: e.data ? e.data.text() : "" }; }
+  e.waitUntil(self.registration.showNotification(d.titulo || "Lokl", {
+    body: d.cuerpo || "",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+    tag: d.tag,
+    renotify: Boolean(d.tag),
+    data: { url: typeof d.url === "string" && d.url.startsWith("/") ? d.url : "/" },
+  }));
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const url = new URL(e.notification.data?.url || "/", self.location.origin).href;
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((ventanas) => {
+      const misma = ventanas.find((v) => v.url === url && "focus" in v);
+      if (misma) return misma.focus();
+      return self.clients.openWindow(url);
+    })
+  );
+});

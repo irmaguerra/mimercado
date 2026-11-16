@@ -1,0 +1,67 @@
+---
+// "Avísame en el teléfono" (decisión 71): pide permiso, suscribe el teléfono y lo guarda en Lokl.
+//  - Android: funciona desde el navegador.
+//  - iPhone: solo con Lokl instalada en la pantalla de inicio; si no, explica cómo instalarla.
+//  - Quien no acepte igual ve todo al entrar a Lokl.
+// Sin JavaScript no aparece. ~1,5 KB en línea.
+import { VAPID_PUBLICA } from "@/lib/push.js";
+
+/** guardar: dirección que recibe la suscripción (/panel/avisos o /presupuesto/avisos) */
+const { guardar, titulo = "Avísame en el teléfono", texto = "" } = Astro.props;
+---
+<section class="tarjeta bloque avisos-push" id="avisos-push" data-guardar={guardar} hidden>
+  <strong>{titulo}</strong>
+  {texto && <p class="texto-2" style="margin:4px 0 0;font-size:14px">{texto}</p>}
+  <button type="button" class="boton ancho" data-estado="pedir" style="margin-top:10px">Activar avisos</button>
+  <p data-estado="activo" class="etiqueta-estado" style="margin:8px 0 0" hidden>✓ Avisos activados en este teléfono.</p>
+  <p data-estado="bloqueado" class="texto-2" style="margin:8px 0 0;font-size:14px" hidden>Los avisos están bloqueados para Lokl. Actívalos en los ajustes del navegador (el candado junto a la dirección → Notificaciones → Permitir).</p>
+  <p data-estado="iphone" class="texto-2" style="margin:8px 0 0;font-size:14px" hidden>En iPhone los avisos llegan solo si Lokl está instalada: toca <strong>Compartir</strong> y luego <strong>"Agregar a inicio"</strong>, abre Lokl desde ahí y vuelve aquí. <a href="#instalar" data-instalar>Cómo instalarla</a></p>
+  <p data-estado="no" class="texto-2" style="margin:8px 0 0;font-size:14px" hidden>Este navegador no recibe avisos. Entra a Lokl de vez en cuando para ver lo nuevo.</p>
+  <p data-estado="error" class="texto-alerta" style="margin:8px 0 0;font-size:14px" hidden>No se pudieron activar. Revisa tu señal e intenta otra vez.</p>
+</section>
+<script is:inline define:vars={{ llave: VAPID_PUBLICA }}>
+  (() => {
+    const caja = document.getElementById("avisos-push");
+    if (!caja) return;
+    const ver = (estado) => {
+      caja.hidden = false;
+      caja.querySelectorAll("[data-estado]").forEach((el) => { el.hidden = el.dataset.estado !== estado; });
+      if (estado === "error") caja.querySelector('[data-estado="pedir"]').hidden = false;
+    };
+    const iphone = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const instalada = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+      return ver(iphone && !instalada ? "iphone" : "no");
+    }
+    if (Notification.permission === "denied") return ver("bloqueado");
+    const aBytes = (t) => {
+      const b = atob((t + "=".repeat((4 - (t.length % 4)) % 4)).replace(/-/g, "+").replace(/_/g, "/"));
+      return Uint8Array.from(b, (c) => c.charCodeAt(0));
+    };
+    const guardar = (sub) => fetch(caja.dataset.guardar, {
+      method: "POST", credentials: "same-origin",
+      headers: { "content-type": "application/json" }, body: JSON.stringify(sub),
+    }).then((r) => { if (!r.ok) throw new Error(String(r.status)); });
+    const registro = navigator.serviceWorker.register("/sw.js");
+    // Si ya estaba activo, se vuelve a guardar en silencio (por si cambió de cuenta o de pedido).
+    registro.then((reg) => reg.pushManager.getSubscription()).then((sub) => {
+      if (sub && Notification.permission === "granted") { ver("activo"); guardar(sub).catch(() => {}); }
+      else ver("pedir");
+    }).catch(() => ver("pedir"));
+    const boton = caja.querySelector('[data-estado="pedir"]');
+    boton.addEventListener("click", () => {
+      boton.disabled = true;
+      // El permiso se pide en el mismo toque (iPhone lo exige).
+      Notification.requestPermission()
+        .then((p) => {
+          if (p !== "granted") throw new Error(p);
+          return registro.then(() => navigator.serviceWorker.ready);
+        })
+        .then((reg) => reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: aBytes(llave) }))
+        .then(guardar)
+        .then(() => ver("activo"))
+        .catch(() => ver(Notification.permission === "denied" ? "bloqueado" : "error"))
+        .finally(() => { boton.disabled = false; });
+    });
+  })();
+</script>

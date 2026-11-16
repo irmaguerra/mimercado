@@ -1,0 +1,163 @@
+---
+// /panel/presupuestos — Pedidos de presupuesto que le llegaron al vendedor (decisiones 67 a 69, 71).
+// Responde con su precio (o "desde") y un mensaje corto; puede corregirlo mientras siga abierto.
+// "No lo tengo" lo saca de su lista. El WhatsApp del cliente nunca aparece aquí.
+// Al responder por primera vez se le avisa al cliente en su teléfono.
+import Base from "@/layouts/Base.astro";
+import AvisosPush from "@/components/AvisosPush.astro";
+import { miTienda } from "@/lib/sesion.js";
+import { leerPrecio, precioParaCampo } from "@/lib/precio.js";
+import { MOTIVOS_REPORTE } from "@/lib/moderacion.js";
+import { avisar } from "@/lib/avisos-servidor.js";
+import {
+  esIdPresupuesto, textoPrecio, textoEstado, hace, avisoCliente, MENSAJE_PARA_MOSTRAR, SECCIONES_PRESUPUESTO,
+} from "@/lib/presupuesto.js";
+
+const { sb, usuario } = Astro.locals;
+const t = await miTienda(sb, usuario.id);
+if (!t) return Astro.redirect("/panel/crear", 302);
+const puede = t.tipo !== "persona" && SECCIONES_PRESUPUESTO.includes(t.seccion_principal);
+
+let aviso = "";
+let error = "";
+let errorEn = "";
+if (Astro.request.method === "POST" && puede) {
+  const f = await Astro.request.formData();
+  const accion = String(f.get("accion"));
+  const id = String(f.get("id") || "");
+  if (accion === "recibir") {
+    const recibe = f.get("recibe") === "1";
+    const { error: e } = await sb.from("vendedores").update({ recibe_presupuestos: recibe }).eq("id", t.id);
+    if (e) { console.error("recibe_presupuestos", e); error = "No se pudo guardar."; }
+    else { t.recibe_presupuestos = recibe; aviso = recibe ? "Listo: vas a recibir pedidos de presupuesto." : "Listo: ya no te llegarán pedidos nuevos."; }
+  } else if (esIdPresupuesto(id) && accion === "responder") {
+    const precio = leerPrecio(f.get("precio"));
+    if (!(precio > 0)) { error = "Escribe tu precio en dólares (ej. 25)."; errorEn = id; }
+    else {
+      const { data, error: e } = await sb.rpc("responder_presupuesto", {
+        p_id: id, p_precio: precio, p_desde: f.get("desde") === "1", p_mensaje: String(f.get("mensaje") || ""),
+      });
+      if (e) {
+        console.error("responder_presupuesto", e);
+        error = MENSAJE_PARA_MOSTRAR.test(e.message || "") ? e.message : "No se pudo enviar. Intenta de nuevo.";
+        errorEn = id;
+      } else {
+        aviso = data.primera ? "¡Enviado! El cliente ya puede ver tu precio." : "Listo: corregiste tu precio.";
+        await avisar(sb, data.avisos, avisoCliente({ id, tienda: t.nombre, precio, desde: f.get("desde") === "1" }));
+      }
+    }
+  } else if (esIdPresupuesto(id) && accion === "descartar") {
+    const { error: e } = await sb.rpc("descartar_presupuesto", { p_id: id });
+    aviso = e ? "" : "Listo: lo quitamos de tu lista.";
+    if (e) { console.error("descartar_presupuesto", e); error = "No se pudo quitar."; }
+  } else if (esIdPresupuesto(id) && accion === "reportar" && MOTIVOS_REPORTE[String(f.get("motivo"))]) {
+    const { error: e } = await sb.rpc("reportar_presupuesto", {
+      p_id: id, p_motivo: String(f.get("motivo")), p_detalle: String(f.get("detalle") || "").slice(0, 500) || null,
+    });
+    if (e) { console.error("reportar_presupuesto", e); error = "No se pudo enviar el reporte."; }
+    else aviso = "Gracias por avisarnos. Lo quitamos de tu lista y Lokl lo va a revisar.";
+  }
+}
+
+const [{ data: lista, error: eLista }, { count: categorias }] = puede
+  ? await Promise.all([
+      sb.rpc("mis_solicitudes"),
+      sb.from("vendedor_categorias").select("categoria_id", { count: "exact", head: true }).eq("vendedor_id", t.id),
+    ])
+  : [{ data: [] }, { count: 0 }];
+if (eLista) console.error("mis_solicitudes", eLista);
+const pedidos = lista || [];
+const abiertos = pedidos.filter((p) => p.estado === "abierto");
+const pasados = pedidos.filter((p) => p.estado !== "abierto");
+const fecha = (x) => new Intl.DateTimeFormat("es-VE", { timeZone: "America/Caracas", weekday: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(x));
+---
+<Base titulo="Pedidos de presupuesto">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/panel">‹ Mi tienda</a></p>
+    <h1 style="font-size:24px;margin:8px 0 4px">Pedidos de presupuesto</h1>
+    {!puede ? (
+      <p class="tarjeta aviso">Los pedidos de presupuesto llegan a tiendas, comida, productores y servicios. Las ventas de una vez (Clasificados) no los reciben.</p>
+    ) : (
+      <>
+        <p class="texto-2" style="margin:0;font-size:14px">Clientes de {t.zonas?.municipios?.nombre ?? "tu zona"} que buscan algo que vendes. Mándales tu precio: el cliente compara y te escribe por WhatsApp si le interesa.</p>
+        {aviso && <p class="mensaje ok" role="status">{aviso}</p>}
+        {error && !errorEn && <p class="mensaje error" role="alert">{error}</p>}
+        {!categorias && (
+          <p class="mensaje">Para recibir pedidos, marca qué vendes. <a href="/panel/tienda#categorias">Elegir mis categorías</a></p>
+        )}
+
+        <form method="post" class="tarjeta bloque fila-entre" style="gap:10px">
+          <input type="hidden" name="accion" value="recibir" />
+          <input type="hidden" name="recibe" value={t.recibe_presupuestos ? "0" : "1"} />
+          <span><strong>{t.recibe_presupuestos ? "Estás recibiendo pedidos" : "No estás recibiendo pedidos"}</strong></span>
+          <button class="boton boton-claro" type="submit">{t.recibe_presupuestos ? "Pausar" : "Recibir pedidos"}</button>
+        </form>
+
+        {t.recibe_presupuestos && (
+          <AvisosPush guardar="/panel/avisos" titulo="Avísame en el teléfono" texto="Te llega un aviso apenas un cliente pida algo que vendes, aunque no tengas Lokl abierta. Gratis." />
+        )}
+
+        <h2 style="font-size:18px;margin:22px 0 8px">Abiertos ({abiertos.length})</h2>
+        {!abiertos.length ? <p class="texto-2" style="margin:0">No tienes pedidos abiertos ahora.</p> : (
+          <ul class="lista-opciones">
+            {abiertos.map((p) => (
+              <li class="tarjeta tarjeta-pedido" id={`p-${p.id}`}>
+                <div class="fila-entre" style="gap:8px">
+                  <strong>{p.categoria}</strong>
+                  {p.nuevo ? <span class="chip-estado nuevo">Nuevo</span> : p.respondido ? <span class="chip-estado">Respondiste</span> : null}
+                </div>
+                <span class="texto-2" style="font-size:14px">{p.cliente}{p.zona && ` · ${p.zona}`} · {hace(p.creado_en)} · {textoEstado(p).toLowerCase()}</span>
+                <p style="margin:4px 0 0;white-space:pre-line">{p.descripcion}</p>
+                {p.foto_url && <a href={p.foto_url}><img src={p.foto_url} alt="Foto del pedido" class="foto-presupuesto" loading="lazy" decoding="async" /></a>}
+                {errorEn === p.id && <p class="mensaje error" role="alert">{error}</p>}
+                <form method="post" class="formulario" action={`#p-${p.id}`}>
+                  <input type="hidden" name="accion" value="responder" />
+                  <input type="hidden" name="id" value={p.id} />
+                  <label>Tu precio ($)
+                    <input type="text" name="precio" inputmode="decimal" required placeholder="Ej. 25" value={p.precio != null ? precioParaCampo(p.precio) : ""} />
+                  </label>
+                  <label class="radio"><input type="checkbox" name="desde" value="1" checked={p.desde} /> Es un precio "desde" (puede variar)</label>
+                  <label>Mensaje corto <small class="texto-2">(opcional)</small>
+                    <input type="text" name="mensaje" maxlength="300" placeholder="Ej. Lo tengo original, te lo llevo hoy" value={p.mensaje ?? ""} />
+                  </label>
+                  <button class="boton ancho" type="submit">{p.respondido ? "Corregir mi precio" : "Enviar mi precio"}</button>
+                </form>
+                <div class="acciones-publicacion">
+                  <form method="post">
+                    <input type="hidden" name="accion" value="descartar" />
+                    <input type="hidden" name="id" value={p.id} />
+                    <button class="boton-texto" type="submit">{p.respondido ? "Retirar mi precio" : "No lo tengo"}</button>
+                  </form>
+                  <details class="confirmar-borrar">
+                    <summary class="boton-texto">Reportar</summary>
+                    <form method="post" class="formulario" style="margin-top:8px">
+                      <input type="hidden" name="accion" value="reportar" />
+                      <input type="hidden" name="id" value={p.id} />
+                      <select name="motivo" required aria-label="Motivo">
+                        <option value="">¿Qué pasa?</option>
+                        {Object.entries(MOTIVOS_REPORTE).filter(([k]) => k !== "no_existe").map(([k, x]) => <option value={k}>{x}</option>)}
+                      </select>
+                      <input type="text" name="detalle" maxlength="500" placeholder="Cuéntanos más (opcional)" />
+                      <button class="boton boton-claro" type="submit">Enviar reporte</button>
+                    </form>
+                  </details>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {pasados.length > 0 && (
+          <details class="tarjeta bloque" style="margin-top:18px">
+            <summary><strong>Cerrados y vencidos ({pasados.length})</strong></summary>
+            <ul style="margin:8px 0 0;padding-left:18px">
+              {pasados.map((p) => (
+                <li style="margin-bottom:6px">{p.categoria}: {p.descripcion.slice(0, 80)}{p.descripcion.length > 80 && "…"} <span class="texto-2">· {fecha(p.creado_en)} · {p.respondido ? `respondiste ${textoPrecio(p)}` : "sin responder"}</span></li>
+              ))}
+            </ul>
+          </details>
+        )}
+      </>
+    )}
+  </main>
+</Base>

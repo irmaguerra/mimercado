@@ -6,6 +6,7 @@ import Base from "@/layouts/Base.astro";
 import Cabecera from "@/components/Cabecera.astro";
 import Icono from "@/components/Icono.astro";
 import TarjetaProducto from "@/components/TarjetaProducto.astro";
+import PedirPresupuesto from "@/components/PedirPresupuesto.astro";
 import { buscarMunicipio } from "@/lib/ubicacion.js";
 import { supabasePublico } from "@/lib/supabase/servidor.js";
 import { SECCIONES, listarPublicaciones } from "@/lib/listados.js";
@@ -48,6 +49,8 @@ const base = `/${m.estado.slug}/${m.slug}`;
         Lokl está empezando en {m.nombre}. Aquí verás a los vendedores y productores de la zona a medida que se registren.
       </p>
     )}
+
+    {m.activo && <PedirPresupuesto lugar={`${m.estado.slug}/${m.slug}`} texto="Dinos qué necesitas y varios negocios te mandan su precio. Gratis y sin cuenta." />}
 
     <h2 style="font-size:18px;margin:24px 0 10px">Explora {m.nombre}</h2>
     <ul class="rejilla-secciones">

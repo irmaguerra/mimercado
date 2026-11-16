@@ -1,0 +1,138 @@
+---
+// /presupuesto/<id> — El pedido del cliente y las respuestas, de menor a mayor precio (decisión 70).
+// Solo lo ve el teléfono que lo pidió (código anónimo en la cookie). No se cachea.
+// Cada respuesta: tienda, verificado, estrellas y botón de WhatsApp con el mensaje ya escrito
+// (pasa por /c/<tienda>/whatsapp para contar el contacto en el panel del vendedor).
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import Icono from "@/components/Icono.astro";
+import AvisosPush from "@/components/AvisosPush.astro";
+import { supabasePublico } from "@/lib/supabase/servidor.js";
+import { leerCliente } from "@/lib/cliente-cookie.js";
+import { MOTIVOS_REPORTE } from "@/lib/moderacion.js";
+import { estrellas, promedioTexto, cuantasResenas, MIN_PARA_PROMEDIO } from "@/lib/resenas.js";
+import { esIdPresupuesto, textoPrecio, textoEstado, hace } from "@/lib/presupuesto.js";
+
+const { id } = Astro.params;
+if (!esIdPresupuesto(id)) return Astro.rewrite("/404");
+const pub = supabasePublico();
+const cliente = leerCliente(Astro.cookies);
+let aviso = "";
+
+if (Astro.request.method === "POST" && cliente) {
+  const f = await Astro.request.formData();
+  const accion = String(f.get("accion"));
+  if (accion === "cerrar") {
+    const { error } = await pub.rpc("presupuesto_cerrar", { p_cliente: cliente, p_id: id });
+    aviso = error ? "No se pudo cerrar. Intenta de nuevo." : "Listo: cerramos tu pedido. ¡Qué bueno que lo conseguiste!";
+  } else if (accion === "reportar" && MOTIVOS_REPORTE[String(f.get("motivo"))]) {
+    const { error } = await pub.rpc("reportar_respuesta", {
+      p_cliente: cliente, p_id: id, p_vendedor: String(f.get("vendedor")), p_motivo: String(f.get("motivo")),
+      p_detalle: String(f.get("detalle") || "").slice(0, 500) || null,
+    });
+    aviso = error ? "No se pudo enviar el reporte." : "Gracias por avisarnos. Quitamos esa respuesta y Lokl la va a revisar.";
+  }
+}
+
+const { data: p } = cliente ? await pub.rpc("presupuesto_ver", { p_cliente: cliente, p_id: id }) : { data: null };
+const nuevo = Astro.url.searchParams.get("nuevo") === "1";
+const abierto = p && p.estado === "abierto" && !p.oculto;
+const respuestas = p?.respuestas ?? [];
+const fecha = (t) => new Intl.DateTimeFormat("es-VE", { timeZone: "America/Caracas", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(t));
+---
+<Base titulo="Mi presupuesto">
+  <main class="contenedor angosto">
+    <Cabecera />
+    <p style="margin:14px 0 0"><a href="/presupuesto/mios">‹ Mis presupuestos</a></p>
+    {!p ? (
+      <section class="tarjeta bloque" style="text-align:center;margin-top:16px">
+        <p style="margin:0 0 12px">No encontramos ese pedido en este teléfono.</p>
+        <a class="boton" href="/presupuesto">Pedir presupuesto</a>
+      </section>
+    ) : (
+      <>
+        <div class="fila-entre" style="margin-top:8px;gap:8px">
+          <h1 style="font-size:22px;margin:0">Tu pedido</h1>
+          <span class:list={["chip-estado", { apagado: !abierto }]}>{textoEstado(p)}</span>
+        </div>
+        {aviso && <p class="mensaje ok" role="status">{aviso}</p>}
+
+        <section class="tarjeta bloque">
+          <span class="texto-2" style="font-size:14px">{p.categoria}{p.zona && ` · ${p.zona}`} · {fecha(p.creado_en)}</span>
+          <p style="margin:6px 0 0;white-space:pre-line">{p.descripcion}</p>
+          {p.foto_url && <a href={p.foto_url}><img src={p.foto_url} alt="Foto del pedido" class="foto-presupuesto" loading="lazy" decoding="async" /></a>}
+        </section>
+
+        {p.oculto && p.revisar ? (
+          <p class="mensaje">Lo estamos revisando antes de enviarlo a los negocios. Suele tardar poco.</p>
+        ) : p.oculto ? (
+          <p class="mensaje">Este pedido quedó oculto por los reportes de los negocios. Si crees que es un error, escríbenos.</p>
+        ) : p.enviados === 0 ? (
+          <div class="tarjeta aviso">
+            <strong style="display:block">Todavía no hay negocios de {p.categoria.toLowerCase()} en Lokl que reciban pedidos.</strong>
+            Lo anotamos: así sabemos qué negocios invitar. Mientras, puedes <a href={`/buscar?q=${encodeURIComponent(p.categoria)}`}>buscar en Lokl</a>.
+          </div>
+        ) : (
+          <p class="texto-2" style="margin:12px 0 0">
+            {nuevo ? "¡Listo! " : ""}Lo enviamos a {p.enviados} {p.enviados === 1 ? "negocio" : "negocios"}{p.vistos > 0 && `; ${p.vistos} ya lo ${p.vistos === 1 ? "vio" : "vieron"}`}.
+          </p>
+        )}
+
+        <h2 style="font-size:18px;margin:20px 0 8px">Respuestas ({respuestas.length})</h2>
+        {!respuestas.length ? (
+          <p class="texto-2" style="margin:0">{abierto ? "Todavía nadie responde. Los negocios suelen responder en unas horas." : "Nadie respondió este pedido."}</p>
+        ) : (
+          <ul class="lista-opciones">
+            {respuestas.map((r, i) => (
+              <li class="tarjeta respuesta-presupuesto">
+                <div class="fila" style="gap:10px;align-items:flex-start">
+                  {r.logo_url ? <img src={r.logo_url} alt="" width="44" height="44" class="logo-tienda" loading="lazy" />
+                    : <span class="logo-tienda logo-vacio" style="width:44px;height:44px">{r.nombre.slice(0, 1)}</span>}
+                  <div style="flex:1;min-width:0">
+                    <a href={`/${r.slug}`}><strong>{r.nombre}</strong></a>{r.verificado && <span class="etiqueta-estado" title="Verificado por Lokl"> ✓ Verificado</span>}
+                    {r.resenas >= MIN_PARA_PROMEDIO
+                      ? <span class="texto-2" style="display:block;font-size:14px"><span class="estrellas">{estrellas(r.estrellas)}</span> {promedioTexto(r.estrellas)} · {cuantasResenas(r.resenas)}</span>
+                      : r.resenas > 0 && <span class="texto-2" style="display:block;font-size:14px">{cuantasResenas(r.resenas)}</span>}
+                  </div>
+                  <span class="precio-respuesta">{textoPrecio(r)}{i === 0 && respuestas.length > 1 && <small>el más bajo</small>}</span>
+                </div>
+                {r.mensaje && <p style="margin:8px 0 0;white-space:pre-line">{r.mensaje}</p>}
+                <span class="texto-2" style="font-size:13px">{hace(r.respondido_en)}</span>
+                <div class="acciones-publicacion" style="margin-top:8px">
+                  <a class="boton fila" style="gap:6px" href={`/c/${r.slug}/whatsapp?pr=${p.id}`}><Icono nombre="whatsapp" tam={18} /> Escribirle</a>
+                  <details class="confirmar-borrar">
+                    <summary class="boton-texto">Reportar</summary>
+                    <form method="post" class="formulario" style="margin-top:8px">
+                      <input type="hidden" name="accion" value="reportar" />
+                      <input type="hidden" name="vendedor" value={r.vendedor_id} />
+                      <select name="motivo" required aria-label="Motivo">
+                        <option value="">¿Qué pasa?</option>
+                        {Object.entries(MOTIVOS_REPORTE).map(([k, t]) => <option value={k}>{t}</option>)}
+                      </select>
+                      <input type="text" name="detalle" maxlength="500" placeholder="Cuéntanos más (opcional)" />
+                      <button class="boton boton-claro" type="submit">Enviar reporte</button>
+                    </form>
+                  </details>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {abierto && p.enviados > 0 && (
+          <AvisosPush guardar="/presupuesto/avisos" titulo="Avísame cuando me respondan" texto="Te llega un aviso al teléfono con la primera respuesta de cada negocio." />
+        )}
+
+        {abierto && (
+          <form method="post" style="margin-top:16px">
+            <input type="hidden" name="accion" value="cerrar" />
+            <button class="boton boton-claro ancho" type="submit">Ya lo conseguí: cerrar el pedido</button>
+          </form>
+        )}
+        <div class="pila-botones" style="margin-top:12px">
+          <a class="boton boton-claro ancho" href="/presupuesto">Pedir otro presupuesto</a>
+        </div>
+      </>
+    )}
+  </main>
+</Base>

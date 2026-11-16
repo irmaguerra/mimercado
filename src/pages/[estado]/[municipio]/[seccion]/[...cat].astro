@@ -9,6 +9,7 @@ import Base from "@/layouts/Base.astro";
 import Cabecera from "@/components/Cabecera.astro";
 import TarjetaVendedor from "@/components/TarjetaVendedor.astro";
 import TarjetaProducto from "@/components/TarjetaProducto.astro";
+import PedirPresupuesto from "@/components/PedirPresupuesto.astro";
 import { buscarMunicipio } from "@/lib/ubicacion.js";
 import { supabasePublico } from "@/lib/supabase/servidor.js";
 import { PUBLICA } from "@/lib/cache.js";
@@ -149,6 +150,17 @@ const filtrando = aDomicilio || h24;
             ? <a href="/panel/publicar">¿Vendes algo? Publícalo gratis</a>
             : <a href="/panel/crear">¿Tienes uno? Crea tu tienda gratis</a>}
         </p>
+      </div>
+    )}
+
+    {sec.clave !== "clasificados" && m.activo && (
+      <div style="margin-top:20px">
+        <PedirPresupuesto
+          cat={actual?.id}
+          lugar={`${m.estado.slug}/${m.slug}`}
+          titulo={filas.length ? "¿Quieres comparar precios?" : "Pide presupuesto a varios"}
+          texto={actual ? `Dinos qué necesitas y varios negocios de ${actual.nombre.toLowerCase()} te mandan su precio.` : "Dinos qué necesitas y varios negocios te mandan su precio. Gratis."}
+        />
       </div>
     )}
 
