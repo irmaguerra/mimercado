@@ -26,8 +26,8 @@ Cada archivo se corre **una sola vez** y nunca se modifica después de correrlo:
 | 10 | `10-modulo-8-cliente.sql` | Cliente: favoritos, reseñas (solo quien escribió o llamó desde Lokl), respuesta del vendedor, reportar reseñas y contador semanal. Oculta a los vendedores el código del teléfono de sus clientes | ✅ 14/11/2026 |
 | 11 | `11-modulo-9-al-mayor.sql` | Al mayor: unidades, pedido mínimo, cuándo hay, fecha del precio y "Mi precio sigue igual", tabla de precios de origen y quienes envían a todo el país | ✅ 14/11/2026 |
 | 12 | `12-modulo-9-dos-precios.sql` | Al mayor (ajuste): tipos de Tiendas también al mayor, 3 tipos nuevos (Productos de limpieza, Artesanía, Alimentos procesados), "cirugía" y "alisado" en Belleza, y dos precios por publicación (detal y mayor) | ✅ 15/11/2026 |
-| 13 | `13-modulo-10a-super-catalogo.sql` | Súper: pasillos con su margen, precio = costo + margen (producto → pasillo → general 7%), tasa del día, reglas de envío y buscador del Súper | ⏳ |
-| 14 | `14-modulo-10a-super-sugerencias.sql` | Súper: 213 productos sugeridos (154 con foto de Open Food Facts), sin precio y sin marcar. Correr después del 13 | ⏳ |
+| 13 | `13-modulo-10a-super-catalogo.sql` | Súper: pasillos con su margen, precio = costo + margen (producto → pasillo → general 7%), tasa del día, reglas de envío y buscador del Súper | ✅ 15/11/2026 |
+| 14 | `14-modulo-10a-super-sugerencias.sql` | Súper: 213 productos sugeridos (154 con foto de Open Food Facts), sin precio y sin marcar. Correr después del 13 | ✅ 15/11/2026 |
 
 ## Para quien programa
 
