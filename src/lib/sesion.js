@@ -5,6 +5,15 @@ export function destinoSeguro(valor, porDefecto = "/panel") {
   return typeof valor === "string" && /^\/(?!\/)[\w\-/?=&%.]*$/.test(valor) ? valor : porDefecto;
 }
 
+/**
+ * ¿Es el navegador que traen Instagram, Facebook, TikTok u otra app (decisión 75)?
+ * Google no deja entrar desde ahí ("disallowed_useragent"): en vez del botón se explica
+ * cómo abrir Lokl en Chrome o Safari. El correo y la contraseña siguen funcionando.
+ */
+export function navegadorDeApp(ua) {
+  return /FBAN|FBAV|FB_IAB|FBIOS|Instagram|TikTok|musical_ly|BytedanceWebview|Line\/|Snapchat|; wv\)/i.test(ua || "");
+}
+
 /** URL base de esta instalación (localhost, vista previa o usalokl.com). */
 export function origen(url) {
   return url.origin;

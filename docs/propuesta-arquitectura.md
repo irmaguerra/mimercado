@@ -465,3 +465,6 @@ Meta: **tienda lista en menos de 2 minutos**, desde el teléfono.
 | 71 | **Avisos gratis en el teléfono**: al vendedor cuando le llega una solicitud y al cliente cuando le responden. Android desde el navegador; iPhone con la app instalada | **Aprobado** (16/11/2026) |
 | 72 | Máximo **3 solicitudes por día** por teléfono, **palabras prohibidas** y **reportes** que llegan a "Por revisar" | **Aprobado** (16/11/2026) |
 | 73 | Botón **"Pedir presupuesto a varios"** en los listados, en el buscador sin resultados y en la portada; si no hay vendedores se dice con honestidad y el admin lo ve como **demanda sin atender** | **Aprobado** (16/11/2026) |
+| 74 | **"Continuar con Google"** arriba de todo en Entrar y en "Crea tu tienda gratis"; correo y contraseña debajo. Si el correo de Google ya tenía cuenta, entra a **la misma cuenta** | **Aprobado** (16/11/2026) |
+| 75 | En el navegador de **Instagram, Facebook o TikTok** (donde Google no deja entrar) se cambia el botón por *"abre usalokl.com en Chrome o Safari"*; el correo y la contraseña siguen funcionando ahí | **Aprobado** (16/11/2026) |
+| 76 | La pantalla de Google dice **"Continuar a …supabase.co"** con el nombre Lokl; el dominio propio de Supabase (~$10/mes) se deja para después | **Aprobado** (16/11/2026) |

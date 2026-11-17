@@ -27,5 +27,5 @@
    - Site URL: `https://lokl.usalokl-app.workers.dev`
    - Redirect URLs: `https://lokl.usalokl-app.workers.dev/**`, `https://*-lokl.usalokl-app.workers.dev/**`, `http://localhost:4321/**`
 2. ✅ **Correo propio (SMTP)** — funcionando desde el 15/11/2026 (crear cuenta y recuperar contraseña probados en el teléfono): el correo de Supabase solo envía a los miembros del equipo del proyecto y unos pocos por hora. Para vendedores reales hace falta un servicio de correo. Elegido: **Resend** (gratis, 3.000 correos/mes; solo agrega registros en Namecheap, en el subdominio send.usalokl.com, sin tocar el reenvío de correo). Brevo se descartó el 15/11/2026 porque no acepta cuentas de Venezuela. Pasos en `docs/configurar-correo.md`. Mientras tanto, las cuentas de prueba se crean en Supabase → Authentication → Users → Add user → Create new user, con "Auto Confirm User" marcado.
-3. **Entrar con Google:** crear las credenciales en Google Cloud y pegarlas en Supabase (guía paso a paso cuando toque).
+3. **Entrar con Google** (decisiones 74-76): pasos en `docs/entrar-con-google.md`.
 4. Hacer admin a la cuenta de Irma (`sql/04`, después de que se registre).
