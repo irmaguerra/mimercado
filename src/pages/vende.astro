@@ -1,0 +1,99 @@
+---
+// /vende — Para vendedores: por qué y cómo crear su tienda gratis en Lokl (Módulo 12, plan de lanzamiento).
+// Es el enlace del perfil de Instagram y TikTok. HTML puro, sin JavaScript propio.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import Icono from "@/components/Icono.astro";
+import { INFORMATIVA } from "@/lib/cache.js";
+import { QUE_HACES } from "@/lib/vendedor.js";
+
+Astro.cache.set(INFORMATIVA);
+
+const CREAR = "/entrar?modo=registro";
+
+const beneficios = [
+  { icono: "tiendas", titulo: "Tu tienda con tu propio enlace", texto: "usalokl.com/tu-tienda, con tu logo, fotos, horario y productos. Compártelo en tus estados y grupos." },
+  { icono: "whatsapp", titulo: "Los clientes te escriben directo", texto: "Cada botón abre tu WhatsApp con el mensaje ya escrito. Tú atiendes y cobras como siempre." },
+  { icono: "buscar", titulo: "Te encuentran cuando buscan", texto: "Ya no se pierde tu publicación entre cientos de mensajes. Quien busca en tu zona, te ve." },
+];
+
+const pasos = [
+  "Toca \"Crear mi tienda gratis\" y entra con Google o con tu correo.",
+  "Elige qué haces y escribe el nombre de tu tienda, tu WhatsApp y tu zona.",
+  "Publica tu primer producto con foto y precio. ¡Listo!",
+];
+
+const extras = [
+  { icono: "presupuesto", texto: "Recibe <strong>pedidos de presupuesto</strong> de clientes que buscan lo que tú vendes." },
+  { icono: "verificado", texto: "Gana el sello <strong>Verificado por Lokl</strong> y las <strong>estrellas</strong> de tus clientes." },
+  { icono: "al-mayor", texto: "¿Vendes al mayor? Muestra <strong>precio detal y precio al mayor</strong> en la misma publicación." },
+  { icono: "inicio", texto: "Tu tienda dice sola si está <strong>abierta o cerrada</strong> según tu horario." },
+];
+
+const preguntas = [
+  { p: "¿Cuánto cuesta?", r: "Nada. Crear tu tienda y publicar es gratis, sin comisiones por venta." },
+  { p: "¿Lokl cobra por mí?", r: "No. Todo lo acuerdas directo con tu cliente por WhatsApp: precio, pago y entrega." },
+  { p: "¿Necesito un local?", r: "No. Puedes vender desde tu casa, un puesto o a domicilio. Si cocinas desde casa, solo se muestra tu zona, nunca tu dirección." },
+  { p: "¿Necesito computadora?", r: "No. Todo se hace desde el teléfono y gasta pocos datos." },
+];
+---
+<Base titulo="Vende gratis en Lokl" descripcion="Crea tu tienda gratis en Lokl: tu propio enlace, los clientes te escriben por WhatsApp y te encuentran cuando buscan en tu zona.">
+  <main class="contenedor angosto">
+    <Cabecera />
+
+    <section style="margin:24px 0 8px">
+      <h1 style="font-size:28px;line-height:1.15;margin:0 0 10px">Vende más en tu zona.<br /><span style="color:var(--acento)">Gratis.</span></h1>
+      <p style="margin:0 0 18px;font-size:17px">Deja de perderte en los grupos de WhatsApp. En Lokl tus clientes te encuentran ordenado, y te escriben directo a ti.</p>
+      <a href={CREAR} class="boton ancho">Crear mi tienda gratis</a>
+      <p class="texto-2" style="margin:8px 0 0;font-size:14px;text-align:center">Lista en menos de 2 minutos · Sin pagos · Sin aprobaciones</p>
+    </section>
+
+    <ul class="lista-opciones" style="margin-top:24px">
+      {beneficios.map((b) => (
+        <li class="tarjeta fila" style="padding:14px 16px;gap:14px;align-items:flex-start">
+          <span style="color:var(--marca);flex:none"><Icono nombre={b.icono} tam={28} /></span>
+          <span><strong style="display:block;font-size:17px">{b.titulo}</strong><span class="texto-2">{b.texto}</span></span>
+        </li>
+      ))}
+    </ul>
+
+    <h2 style="font-size:20px;margin:30px 0 10px">¿Quién puede vender?</h2>
+    <ul class="chips" style="flex-wrap:wrap;overflow:visible;margin:0;padding:0">
+      {Object.values(QUE_HACES).map((o) => (
+        <li class="chip fila" style="gap:6px"><Icono nombre={o.icono} tam={16} /> {o.texto}</li>
+      ))}
+    </ul>
+
+    <h2 style="font-size:20px;margin:30px 0 10px">Así de fácil</h2>
+    <ol style="margin:0;padding-left:22px;display:grid;gap:8px">
+      {pasos.map((p) => <li>{p}</li>)}
+    </ol>
+
+    <h2 style="font-size:20px;margin:30px 0 10px">Y además</h2>
+    <ul style="list-style:none;margin:0;padding:0;display:grid;gap:12px">
+      {extras.map((e) => (
+        <li class="fila" style="gap:12px;align-items:flex-start">
+          <span style="color:var(--acento);flex:none"><Icono nombre={e.icono} tam={22} /></span>
+          <span set:html={e.texto} />
+        </li>
+      ))}
+    </ul>
+
+    <h2 style="font-size:20px;margin:30px 0 10px">Preguntas</h2>
+    <div style="display:grid;gap:8px">
+      {preguntas.map((q) => (
+        <details class="tarjeta" style="padding:12px 16px">
+          <summary style="font-weight:700;cursor:pointer">{q.p}</summary>
+          <p style="margin:8px 0 0">{q.r}</p>
+        </details>
+      ))}
+    </div>
+
+    <section class="tarjeta" style="padding:20px 16px;margin:30px 0 8px;text-align:center">
+      <p style="margin:0 0 12px;font-size:18px"><strong>Tu tienda en Lokl, gratis.</strong></p>
+      <a href={CREAR} class="boton ancho">Crear mi tienda gratis</a>
+      <p class="texto-2" style="margin:12px 0 0;font-size:14px">¿Ya tienes tienda? <a href="/entrar">Entrar</a></p>
+    </section>
+    <p class="texto-2" style="font-size:14px;text-align:center;margin:16px 0 8px"><a href="/verificado">Verificado por Lokl</a> · <a href="/privacidad">Privacidad</a></p>
+  </main>
+</Base>
