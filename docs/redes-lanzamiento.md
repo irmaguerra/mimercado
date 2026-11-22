@@ -2,6 +2,10 @@
 
 Decisión 78: lanzamiento el **20/12/2026**; hasta entonces las redes le hablan **a los vendedores**. Enlace de los perfiles: **usalokl.com/vende**.
 
+## Lema de la campaña: **"Uno nos lleva a todos"**
+
+Decisión 79. Cada vendedor comparte su enlace y trae a sus clientes a Lokl; esos clientes descubren a otros vendedores, y así crecemos todos. Va en la descripción del perfil, en el cierre de cada publicación y como hashtag **#UnoNosLlevaATodos**.
+
 ## Perfil
 
 | Campo | Instagram | TikTok |
@@ -16,15 +20,15 @@ Decisión 78: lanzamiento el **20/12/2026**; hasta entonces las redes le hablan 
 
 ```
 📍 San Fernando de Apure
-🛍️ Lo que se vende en tu zona, ordenado
-💬 Crea tu tienda gratis y recibe clientes por WhatsApp
-🚀 Abrimos el 20/12 👇
+🛍️ Lo que se vende en tu zona
+💬 Tu tienda gratis, tus clientes por WhatsApp
+🤝 Uno nos lleva a todos · Abrimos el 20/12 👇
 ```
 
 **Descripción de TikTok** (máx. 80 caracteres):
 
 ```
-Vende gratis en San Fernando 🛍️ Abrimos el 20/12 👉 usalokl.com/vende
+Uno nos lleva a todos 🤝 Vende gratis · 20/12 👉 usalokl.com/vende
 ```
 
 **Historias destacadas** (Instagram): *Cómo vender* · *Preguntas* · *Tiendas* (se llenan con las publicaciones).
@@ -71,10 +75,13 @@ Publicar las 3 primeras el mismo día que se abre la cuenta (un perfil vacío no
 - **Descripción:**
   > Tu tienda tiene su propio enlace, con tu logo, fotos, horario y productos. Pásalo en tus estados, en los grupos o ponlo en tu perfil.
   > Y dice sola si estás **abierto o cerrado** según tu horario. ⏰
+  > Y aquí está el secreto: **uno nos lleva a todos** 🤝. Cuando compartes tu enlace, tus clientes llegan a Lokl y descubren a otros vendedores; cuando otros comparten el suyo, sus clientes te descubren a ti. Así crecemos todos.
   > Créala gratis 👉 enlace en el perfil.
 
+**Cierre de todas las publicaciones** (antes de los hashtags): `🤝 Uno nos lleva a todos.`
+
 **Hashtags** (al final de cada descripción, 5 o 6):
-`#SanFernandoDeApure #Apure #EmprendedoresApure #VendeEnApure #ComercioLocal #Lokl`
+`#SanFernandoDeApure #Apure #EmprendedoresApure #VendeEnApure #ComercioLocal #UnoNosLlevaATodos #Lokl`
 
 ## Para TikTok
 Las mismas ideas sirven como videos cortos (15–30 s): grabar la pantalla del teléfono creando una tienda (publicación 4) y un video "de problema" (publicación 2) hablando a la cámara. Los guiones se preparan en la semana 2.
