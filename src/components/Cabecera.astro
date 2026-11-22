@@ -3,7 +3,9 @@
 import Logo from "./Logo.astro";
 import Icono from "./Icono.astro";
 
-const { lugar } = Astro.props; // texto a mostrar, ej. "San Fernando"; vacío = "Elegir ubicación"
+const { lugar, volver = true } = Astro.props; // lugar: ej. "San Fernando"; vacío = "Elegir ubicación"
+// "‹ Volver" en todas las páginas menos la portada: regresa a la página anterior de Lokl; si la persona
+// llegó de afuera (WhatsApp, la app instalada) o no hay JavaScript, la lleva al inicio.
 ---
 <header class="fila-entre" style="padding-top:16px">
   <a href="/" aria-label="Lokl, inicio" style="color:var(--texto)"><Logo alto={34} /></a>
@@ -16,3 +18,6 @@ const { lugar } = Astro.props; // texto a mostrar, ej. "San Fernando"; vacío = 
     </a>
   </span>
 </header>
+{volver && (
+  <a href="/" class="volver" onclick="if(document.referrer.indexOf(location.origin)===0&&history.length>1){history.back();return false}">‹ Volver</a>
+)}

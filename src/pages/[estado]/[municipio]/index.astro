@@ -25,7 +25,7 @@ const base = `/${m.estado.slug}/${m.slug}`;
   descripcion={`Tiendas, comida, servicios, productores y clasificados de ${m.nombre}, ${m.estado.nombre}. Todo termina en WhatsApp.`}
 >
   <main class="contenedor">
-    <Cabecera lugar={m.nombre} />
+    <Cabecera lugar={m.nombre} volver={false} />
 
     <form action="/buscar" style="margin-top:18px">
       <label for="q" class="texto-2" style="font-size:14px">¿Qué buscas en {m.nombre}?</label>
