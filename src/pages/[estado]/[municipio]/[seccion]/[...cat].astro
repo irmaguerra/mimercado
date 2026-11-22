@@ -76,10 +76,62 @@ const vacio = actual
   ? `Todavía no hay ${plural} de ${actual.nombre.toLowerCase()} en ${m.nombre}.`
   : `Todavía no hay ${plural} en ${m.nombre}.`;
 const filtrando = aDomicilio || h24;
-// Portada de Servicios (decisión 84): bienvenida que invita a buscar y cuadrícula con todos los oficios a la vista
-const portadaServicios = esServicios && !cat1;
-const servicioVacio = esServicios && actual && !filtrando
-  ? `Todavía nadie ofrece ${actual.nombre.toLowerCase()} en Lokl en ${m.nombre}.` : null;
+// Portada de cada sección (decisiones 84 y 85): bienvenida que invita a buscar y todas las categorías a la vista.
+// Mensajes que enganchan sin prometer nada falso (no se inventan cifras).
+const BIENVENIDA = {
+  servicios: {
+    titulo: "¿Qué necesitas resolver hoy?",
+    texto: "El mototaxi, el plomero o la doctora que buscas está más cerca de lo que crees.",
+    fuerte: `Encuéntralo en ${m.nombre} y escríbele directo por WhatsApp.`,
+    ejemplo: "Plomero, mototaxi, uñas, abogado…", pose: "busca",
+    ventajas: ["Directo con quien te atiende", "Sin intermediarios", "Gratis"],
+    elige: "Elige lo que necesitas", lista: `Quiénes ofrecen servicios en ${m.nombre}`,
+  },
+  tiendas: {
+    titulo: "¿Qué estás buscando hoy?",
+    texto: "Ropa, repuestos, víveres, celulares… Mira qué tienen las tiendas antes de salir de tu casa.",
+    fuerte: "Ahorra vueltas: pregunta por WhatsApp y ve directo a lo seguro.",
+    ejemplo: "Zapatos, repuestos, cargador…", pose: "busca",
+    ventajas: ["Ves qué tienen antes de ir", "Directo con la tienda", "Gratis"],
+    elige: "¿Qué tipo de tienda?", lista: `Tiendas en ${m.nombre}`,
+  },
+  comida: {
+    titulo: "¿Qué se te antoja hoy?",
+    texto: "Arepas, pizza, pollo, comida casera… Primero ves lo que está abierto ahora.",
+    fuerte: "Pide directo por WhatsApp, sin comisiones.",
+    ejemplo: "Pizza, empanadas, pabellón…", pose: "saluda",
+    ventajas: ["Abiertos primero", "Pides por WhatsApp", "Sin comisiones"],
+    elige: "¿Qué te provoca?", lista: `Dónde comer en ${m.nombre}`,
+  },
+  al_mayor: {
+    titulo: "Compra directo al que produce",
+    texto: "Queso, ganado, pescado y cosechas de la zona, al precio de origen.",
+    fuerte: "Habla directo con el productor, sin intermediarios.",
+    ejemplo: "Queso, ganado, cachama…", pose: "saluda",
+    ventajas: ["Directo del productor", "Precio de origen", "Gratis"],
+    elige: "¿Qué quieres comprar al mayor?", lista: `Productores y mayoristas de ${m.nombre}`,
+  },
+  clasificados: {
+    titulo: "Lo que buscas, alguien lo está vendiendo",
+    texto: `Carros, celulares, muebles, animales… lo que la gente de ${m.nombre} vende de una vez.`,
+    fuerte: "Si te gusta, escríbele al vendedor y cuadra directo.",
+    ejemplo: "Moto, nevera, celular…", pose: "busca",
+    ventajas: ["Lo más nuevo primero", "Directo con el vendedor", "Gratis"],
+    elige: "¿Qué buscas?", lista: "Lo más nuevo",
+  },
+}[sec.clave];
+const portada = Boolean(BIENVENIDA) && !cat1;
+const conHijos = arbol.some((g) => g.hijos.length);
+const nombreActual = actual?.nombre.toLowerCase();
+const nadieVerbo = sec.clave === "tiendas" || sec.clave === "al_mayor" ? "vende" : "ofrece";
+const categoriaVacia = actual && !filtrando
+  ? (sec.clave === "clasificados"
+      ? `Todavía nadie ha publicado ${nombreActual} en ${m.nombre}.`
+      : `Todavía nadie ${nadieVerbo} ${nombreActual} en Lokl en ${m.nombre}.`)
+  : null;
+const llamado = sec.clave === "clasificados" ? { texto: "Publicar gratis", ruta: "/panel/publicar" }
+  : esServicios ? { texto: "Ofrecer mi servicio gratis", ruta: "/vende" }
+  : { texto: "Crear mi tienda gratis", ruta: "/vende" };
 ---
 <Base titulo={titulo} descripcion={`${titulo}, ${m.estado.nombre}. Míralos en Lokl y escríbeles por WhatsApp.`}>
   <main class="contenedor">
@@ -90,27 +142,38 @@ const servicioVacio = esServicios && actual && !filtrando
       {actual ? <a href={conZona(base)}>{sec.nombre}</a> : <span>{sec.nombre}</span>}
       {cat2 && <> › <a href={conZona(`${base}/${cat1.slug}`)}>{cat1.nombre}</a></>}
     </nav>
-    {portadaServicios ? (
+    {portada ? (
       <section class="tarjeta portada-servicios">
-        <div style="float:right;margin:0 0 4px 8px"><Mascota pose="busca" tam={72} /></div>
-        <h1 style="font-size:24px;line-height:1.2;margin:0 0 8px">¿Qué necesitas resolver hoy?</h1>
-        <p style="margin:0 0 14px">El mototaxi, el plomero o la doctora que buscas está más cerca de lo que crees. <strong>Encuéntralo en {m.nombre} y escríbele directo por WhatsApp.</strong></p>
+        <div style="float:right;margin:0 0 4px 8px"><Mascota pose={BIENVENIDA.pose} tam={72} /></div>
+        <p class="texto-2" style="margin:0 0 4px;font-size:14px">{sec.nombre}</p>
+        <h1 style="font-size:24px;line-height:1.2;margin:0 0 8px">{BIENVENIDA.titulo}</h1>
+        <p style="margin:0 0 14px">{BIENVENIDA.texto} <strong>{BIENVENIDA.fuerte}</strong></p>
         <form action="/buscar" class="tarjeta fila" style="padding:0 12px;clear:both">
           <Icono nombre="buscar" tam={20} class="texto-2" />
-          <input name="q" type="search" class="campo-limpio" placeholder="Plomero, mototaxi, uñas, abogado…" aria-label="¿Qué servicio buscas?" />
+          <input name="q" type="search" class="campo-limpio" placeholder={BIENVENIDA.ejemplo} aria-label={`Buscar en ${sec.nombre}`} />
           <input type="hidden" name="lugar" value={`${m.estado.slug}/${m.slug}`} />
-          <input type="hidden" name="seccion" value="servicios" />
+          <input type="hidden" name="seccion" value={sec.slug} />
         </form>
-        <p class="texto-2" style="margin:10px 0 0;font-size:14px">✓ Directo con quien te atiende &nbsp;✓ Sin intermediarios &nbsp;✓ Gratis</p>
+        <p class="texto-2" style="margin:10px 0 0;font-size:14px">{BIENVENIDA.ventajas.map((v) => <span style="white-space:nowrap;margin-right:10px">✓ {v}</span>)}</p>
       </section>
     ) : (
       <h1 style="font-size:24px;margin:4px 0 0">{actual?.nombre ?? sec.nombre}</h1>
     )}
 
-    {portadaServicios && (
+    {portada && (
       <>
-        <h2 style="font-size:18px;margin:24px 0 10px">Elige lo que necesitas</h2>
-        <ul class="rejilla-oficios">
+        <h2 style="font-size:18px;margin:24px 0 10px">{BIENVENIDA.elige}</h2>
+        {!conHijos && (
+          <ul class="rejilla-categorias">
+            {arbol.map((g) => (
+              <li><a href={conZona(`${base}/${g.slug}`)} class="tarjeta enlace-tarjeta fila">
+                <span style="color:var(--marca);flex:none"><Icono nombre={g.icono || sec.icono} tam={22} /></span>
+                <span>{g.nombre}</span>
+              </a></li>
+            ))}
+          </ul>
+        )}
+        {conHijos && <ul class="rejilla-oficios">
           {arbol.map((g) => (
             <li class="tarjeta">
               <a href={conZona(`${base}/${g.slug}`)} class="fila oficio-grupo">
@@ -124,12 +187,12 @@ const servicioVacio = esServicios && actual && !filtrando
               )}
             </li>
           ))}
-        </ul>
-        <h2 style="font-size:18px;margin:26px 0 0">{filas.length ? `Disponibles en ${m.nombre}` : `Quiénes ofrecen servicios en ${m.nombre}`}</h2>
+        </ul>}
+        <h2 style="font-size:18px;margin:26px 0 0">{esServicios && filas.length ? `Disponibles en ${m.nombre}` : BIENVENIDA.lista}</h2>
       </>
     )}
 
-    {chips.length > 1 && !portadaServicios && (
+    {chips.length > 1 && !portada && (
       <ul class="chips" aria-label="Categorías">
         {chips.map((c) => (
           <li><a href={conZona(c.ruta)} class="chip" aria-current={c.activa ? "page" : undefined}>{c.nombre}</a></li>
@@ -186,25 +249,22 @@ const servicioVacio = esServicios && actual && !filtrando
 
     {filas.length === 0 && (
       <div class="tarjeta aviso" style="text-align:center">
-        {servicioVacio ? (
+        {categoriaVacia ? (
           <>
-            <p style="margin:0"><strong>{servicioVacio}</strong></p>
-            <p style="margin:8px 0 0">¿Lo haces tú? <strong>Sé el primero:</strong> quien busque {actual.nombre.toLowerCase()} en {m.nombre} te va a encontrar a ti.</p>
+            <p style="margin:0"><strong>{categoriaVacia}</strong></p>
+            <p style="margin:8px 0 0">{sec.clave === "clasificados" ? "¿Tienes uno para vender?" : esServicios ? "¿Lo haces tú?" : "¿Lo vendes tú?"} <strong>Sé el primero:</strong> quien busque {nombreActual} en {m.nombre} te va a encontrar a ti.</p>
           </>
-        ) : portadaServicios && !filtrando ? (
+        ) : portada && !filtrando ? (
           <>
-            <p style="margin:0"><strong>Aquí van a estar los mejores de {m.nombre}.</strong></p>
-            <p style="margin:8px 0 0">¿Ofreces un servicio? Los clientes empiezan a buscar aquí: que te encuentren a ti primero.</p>
+            <p style="margin:0"><strong>{sec.clave === "clasificados" ? `Aquí aparece lo que la gente de ${m.nombre} vende.` : `Aquí van a estar los mejores de ${m.nombre}.`}</strong></p>
+            <p style="margin:8px 0 0">{sec.clave === "clasificados" ? "¿Tienes algo que ya no usas? Publícalo gratis y véndelo rápido." : `${{ tiendas: "¿Tienes una tienda?", comida: "¿Vendes comida?", al_mayor: "¿Produces o vendes al mayor?", servicios: "¿Ofreces un servicio?" }[sec.clave]} Los clientes empiezan a buscar aquí: que te encuentren a ti primero.`}</p>
           </>
         ) : (
           <p style="margin:0">{filtrando ? `No hay ${plural} con ese filtro todavía.` : vacio}</p>
         )}
         {filtrando && <p style="margin:8px 0 0"><a href={conZona(ruta, "", { domicilio: false, h24: false })}>Quitar los filtros</a></p>}
         <p style="margin:8px 0 0">
-          {sec.clave === "clasificados"
-            ? <a href="/panel/publicar">¿Vendes algo? Publícalo gratis</a>
-            : esServicios ? <a href="/vende" class="boton ancho" style="margin-top:4px">Ofrecer mi servicio gratis</a>
-            : <a href="/panel/crear">¿Tienes uno? Crea tu tienda gratis</a>}
+          <a href={llamado.ruta} class="boton ancho" style="margin-top:4px">{llamado.texto}</a>
         </p>
       </div>
     )}
@@ -220,7 +280,7 @@ const servicioVacio = esServicios && actual && !filtrando
       </div>
     )}
 
-    {!portadaServicios && (
+    {!portada && (
     <form action="/buscar" style="margin-top:24px">
       <div class="tarjeta fila" style="padding:0 12px">
         <input name="q" type="search" class="campo-limpio" placeholder={`Buscar en ${m.nombre}…`} aria-label="Buscar" />
