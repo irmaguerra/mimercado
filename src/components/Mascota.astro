@@ -1,5 +1,5 @@
 ---
-// El pin de Lokl con vida (decisión 82): el mismo pin del logo con cara y bracitos.
+// Lokl, el pin con vida (decisión 82; el personaje se llama igual que la app): el mismo pin del logo con cara y bracitos.
 // SVG en línea, sin imágenes ni JavaScript (~1 KB). Los colores salen de la identidad de Lokl (globals.css).
 // pose: "saluda" | "busca" | "celebra" | "sin-senal" | "perdido"
 const { pose = "saluda", tam = 96 } = Astro.props;
@@ -20,7 +20,7 @@ const boca = {
 }[pose] ?? "M39 56q11 10 22 0";
 const bocaRellena = pose === "celebra" || pose === "perdido";
 ---
-<svg viewBox="0 0 100 112" width={tam} height={(tam * 112) / 100} role="img" aria-label="El pin de Lokl" class="mascota">
+<svg viewBox="0 0 100 112" width={tam} height={(tam * 112) / 100} role="img" aria-label="Lokl" class="mascota">
   <g fill="none" stroke="var(--marca)" stroke-width="6" stroke-linecap="round">
     {brazos.map((d) => <path d={d} />)}
   </g>
