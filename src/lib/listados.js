@@ -100,7 +100,7 @@ export function leerLugar(valor) {
 export async function categoriasDeSeccion(sb, clave) {
   const { data, error } = await sb
     .from("categorias")
-    .select("id, nombre, slug, padre_id, orden")
+    .select("id, nombre, slug, padre_id, orden, icono")
     .eq("seccion", clave)
     .eq("activa", true);
   if (error) console.error("categoriasDeSeccion", error);

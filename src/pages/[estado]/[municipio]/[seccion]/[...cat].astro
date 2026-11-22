@@ -10,6 +10,8 @@ import Cabecera from "@/components/Cabecera.astro";
 import TarjetaVendedor from "@/components/TarjetaVendedor.astro";
 import TarjetaProducto from "@/components/TarjetaProducto.astro";
 import PedirPresupuesto from "@/components/PedirPresupuesto.astro";
+import Icono from "@/components/Icono.astro";
+import Mascota from "@/components/Mascota.astro";
 import { buscarMunicipio } from "@/lib/ubicacion.js";
 import { supabasePublico } from "@/lib/supabase/servidor.js";
 import { PUBLICA } from "@/lib/cache.js";
@@ -74,6 +76,10 @@ const vacio = actual
   ? `Todavía no hay ${plural} de ${actual.nombre.toLowerCase()} en ${m.nombre}.`
   : `Todavía no hay ${plural} en ${m.nombre}.`;
 const filtrando = aDomicilio || h24;
+// Portada de Servicios (decisión 84): bienvenida que invita a buscar y cuadrícula con todos los oficios a la vista
+const portadaServicios = esServicios && !cat1;
+const servicioVacio = esServicios && actual && !filtrando
+  ? `Todavía nadie ofrece ${actual.nombre.toLowerCase()} en Lokl en ${m.nombre}.` : null;
 ---
 <Base titulo={titulo} descripcion={`${titulo}, ${m.estado.nombre}. Míralos en Lokl y escríbeles por WhatsApp.`}>
   <main class="contenedor">
@@ -84,9 +90,46 @@ const filtrando = aDomicilio || h24;
       {actual ? <a href={conZona(base)}>{sec.nombre}</a> : <span>{sec.nombre}</span>}
       {cat2 && <> › <a href={conZona(`${base}/${cat1.slug}`)}>{cat1.nombre}</a></>}
     </nav>
-    <h1 style="font-size:24px;margin:4px 0 0">{actual?.nombre ?? sec.nombre}</h1>
+    {portadaServicios ? (
+      <section class="tarjeta portada-servicios">
+        <div style="float:right;margin:0 0 4px 8px"><Mascota pose="busca" tam={72} /></div>
+        <h1 style="font-size:24px;line-height:1.2;margin:0 0 8px">¿Qué necesitas resolver hoy?</h1>
+        <p style="margin:0 0 14px">El mototaxi, el plomero o la doctora que buscas está más cerca de lo que crees. <strong>Encuéntralo en {m.nombre} y escríbele directo por WhatsApp.</strong></p>
+        <form action="/buscar" class="tarjeta fila" style="padding:0 12px;clear:both">
+          <Icono nombre="buscar" tam={20} class="texto-2" />
+          <input name="q" type="search" class="campo-limpio" placeholder="Plomero, mototaxi, uñas, abogado…" aria-label="¿Qué servicio buscas?" />
+          <input type="hidden" name="lugar" value={`${m.estado.slug}/${m.slug}`} />
+          <input type="hidden" name="seccion" value="servicios" />
+        </form>
+        <p class="texto-2" style="margin:10px 0 0;font-size:14px">✓ Directo con quien te atiende &nbsp;✓ Sin intermediarios &nbsp;✓ Gratis</p>
+      </section>
+    ) : (
+      <h1 style="font-size:24px;margin:4px 0 0">{actual?.nombre ?? sec.nombre}</h1>
+    )}
 
-    {chips.length > 1 && (
+    {portadaServicios && (
+      <>
+        <h2 style="font-size:18px;margin:24px 0 10px">Elige lo que necesitas</h2>
+        <ul class="rejilla-oficios">
+          {arbol.map((g) => (
+            <li class="tarjeta">
+              <a href={conZona(`${base}/${g.slug}`)} class="fila oficio-grupo">
+                <span style="color:var(--marca);flex:none"><Icono nombre={g.icono || "servicios"} tam={26} /></span>
+                <strong>{g.nombre}</strong>
+              </a>
+              {g.hijos.length > 0 && (
+                <p class="oficio-hijos">
+                  {g.hijos.map((h, i) => <>{i > 0 && " · "}<a href={conZona(`${base}/${g.slug}/${h.slug}`)}>{h.nombre}</a></>)}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+        <h2 style="font-size:18px;margin:26px 0 0">{filas.length ? `Disponibles en ${m.nombre}` : `Quiénes ofrecen servicios en ${m.nombre}`}</h2>
+      </>
+    )}
+
+    {chips.length > 1 && !portadaServicios && (
       <ul class="chips" aria-label="Categorías">
         {chips.map((c) => (
           <li><a href={conZona(c.ruta)} class="chip" aria-current={c.activa ? "page" : undefined}>{c.nombre}</a></li>
@@ -143,11 +186,24 @@ const filtrando = aDomicilio || h24;
 
     {filas.length === 0 && (
       <div class="tarjeta aviso" style="text-align:center">
-        <p style="margin:0">{filtrando ? `No hay ${plural} con ese filtro todavía.` : vacio}</p>
+        {servicioVacio ? (
+          <>
+            <p style="margin:0"><strong>{servicioVacio}</strong></p>
+            <p style="margin:8px 0 0">¿Lo haces tú? <strong>Sé el primero:</strong> quien busque {actual.nombre.toLowerCase()} en {m.nombre} te va a encontrar a ti.</p>
+          </>
+        ) : portadaServicios && !filtrando ? (
+          <>
+            <p style="margin:0"><strong>Aquí van a estar los mejores de {m.nombre}.</strong></p>
+            <p style="margin:8px 0 0">¿Ofreces un servicio? Los clientes empiezan a buscar aquí: que te encuentren a ti primero.</p>
+          </>
+        ) : (
+          <p style="margin:0">{filtrando ? `No hay ${plural} con ese filtro todavía.` : vacio}</p>
+        )}
         {filtrando && <p style="margin:8px 0 0"><a href={conZona(ruta, "", { domicilio: false, h24: false })}>Quitar los filtros</a></p>}
         <p style="margin:8px 0 0">
           {sec.clave === "clasificados"
             ? <a href="/panel/publicar">¿Vendes algo? Publícalo gratis</a>
+            : esServicios ? <a href="/vende" class="boton ancho" style="margin-top:4px">Ofrecer mi servicio gratis</a>
             : <a href="/panel/crear">¿Tienes uno? Crea tu tienda gratis</a>}
         </p>
       </div>
@@ -158,12 +214,13 @@ const filtrando = aDomicilio || h24;
         <PedirPresupuesto
           cat={actual?.id}
           lugar={`${m.estado.slug}/${m.slug}`}
-          titulo={filas.length ? "¿Quieres comparar precios?" : "Pide presupuesto a varios"}
+          titulo={esServicios ? (filas.length ? "¿No quieres llamar a uno por uno?" : "¿Lo necesitas ya? Pide presupuesto a varios") : filas.length ? "¿Quieres comparar precios?" : "Pide presupuesto a varios"}
           texto={actual ? `Dinos qué necesitas y varios negocios de ${actual.nombre.toLowerCase()} te mandan su precio.` : "Dinos qué necesitas y varios negocios te mandan su precio. Gratis."}
         />
       </div>
     )}
 
+    {!portadaServicios && (
     <form action="/buscar" style="margin-top:24px">
       <div class="tarjeta fila" style="padding:0 12px">
         <input name="q" type="search" class="campo-limpio" placeholder={`Buscar en ${m.nombre}…`} aria-label="Buscar" />
@@ -171,5 +228,6 @@ const filtrando = aDomicilio || h24;
         <button type="submit" class="boton-texto">Buscar</button>
       </div>
     </form>
+    )}
   </main>
 </Base>
