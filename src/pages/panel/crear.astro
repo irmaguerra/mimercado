@@ -107,6 +107,11 @@ if (que && que !== "clasificados" && !arbol.length) arbol = await categoriasDeSe
             </li>
           ))}
         </ul>
+        {/* Decisión 77: para comprar no hace falta cuenta; quien entró creyendo que sí, vuelve a buscar. */}
+        <a href="/" class="tarjeta enlace-tarjeta opcion-grande" style="margin-top:22px">
+          <span class="texto-2"><Icono nombre="buscar" tam={30} /></span>
+          <span><strong style="display:block;font-size:17px">Solo quiero buscar o comprar</strong><span class="texto-2">No necesitas cuenta. Busca y escríbele al vendedor por WhatsApp.</span></span>
+        </a>
       </>
     ) : (
       <>

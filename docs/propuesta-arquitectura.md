@@ -468,3 +468,4 @@ Meta: **tienda lista en menos de 2 minutos**, desde el teléfono.
 | 74 | **"Continuar con Google"** arriba de todo en Entrar y en "Crea tu tienda gratis"; correo y contraseña debajo. Si el correo de Google ya tenía cuenta, entra a **la misma cuenta** | **Aprobado** (16/11/2026) |
 | 75 | En el navegador de **Instagram, Facebook o TikTok** (donde Google no deja entrar) se cambia el botón por *"abre usalokl.com en Chrome o Safari"*; el correo y la contraseña siguen funcionando ahí | **Aprobado** (16/11/2026) |
 | 76 | La pantalla de Google dice **"Continuar a …supabase.co"** con el nombre Lokl; el dominio propio de Supabase (~$10/mes) se deja para después | **Aprobado** (16/11/2026) |
+| 77 | En **"¿Qué haces?"** (crear tienda) se agrega al final **"Solo quiero buscar o comprar"**: *"No necesitas cuenta. Busca y escríbele al vendedor por WhatsApp."* Lleva a la página principal; la cuenta queda sin tienda | **Aprobado** (21/11/2026) |
