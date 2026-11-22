@@ -1,0 +1,87 @@
+---
+// /conoce — Qué es Lokl y cómo funciona, para clientes (Módulo 12). HTML puro, sin JavaScript propio.
+import Base from "@/layouts/Base.astro";
+import Cabecera from "@/components/Cabecera.astro";
+import Icono from "@/components/Icono.astro";
+import { INFORMATIVA } from "@/lib/cache.js";
+
+Astro.cache.set(INFORMATIVA);
+
+const pasos = [
+  { icono: "buscar", titulo: "Busca", texto: "Escribe lo que necesitas o entra por sección: Tiendas, Comida, Servicios, Al mayor y Clasificados. Primero ves lo que está cerca y abierto." },
+  { icono: "tiendas", titulo: "Compara", texto: "Mira fotos, precios, horario, zona y opiniones de otros clientes. Los precios son los que pone cada vendedor, sin recargos." },
+  { icono: "whatsapp", titulo: "Escribe por WhatsApp", texto: "Un toque abre el WhatsApp del vendedor con el mensaje listo. El precio, el pago y la entrega los acuerdas directo con él." },
+];
+
+const extras = [
+  { icono: "presupuesto", titulo: "Pide presupuesto a varios", texto: "Cuenta qué necesitas y se lo enviamos a varios negocios a la vez. Te responden con precio y tú eliges. Tu WhatsApp no se lo mostramos a nadie." },
+  { icono: "favorito", titulo: "Guarda tus favoritos", texto: "Toca el ♡ para tener a mano tus tiendas y productos preferidos." },
+  { icono: "verificado", titulo: "Compra con confianza", texto: "El sello Verificado por Lokl significa que comprobamos que el negocio existe. Las opiniones las dejan solo quienes contactaron al vendedor desde Lokl." },
+];
+---
+<Base titulo="Conoce Lokl" descripcion="Qué es Lokl y cómo funciona: lo que se vende y se ofrece en tu zona, ordenado, y todo contacto por WhatsApp. Gratis y sin cuenta.">
+  <main class="contenedor angosto">
+    <Cabecera />
+
+    <section style="margin:24px 0 8px">
+      <h1 style="font-size:28px;line-height:1.15;margin:0 0 10px">Lo que se vende en tu zona, <span style="color:var(--acento)">ordenado.</span></h1>
+      <p style="margin:0 0 18px;font-size:17px">Lokl reúne en un solo lugar lo que se vende y se ofrece en tu ciudad, para que no tengas que buscarlo en decenas de grupos de WhatsApp. Hoy estamos en <strong>San Fernando de Apure</strong>.</p>
+      <a href="/" class="boton ancho">Empezar a buscar</a>
+      <p class="texto-2" style="margin:8px 0 0;font-size:14px;text-align:center">Gratis · Sin crear cuenta · Gasta pocos datos</p>
+    </section>
+
+    <h2 style="font-size:20px;margin:30px 0 10px">Cómo funciona</h2>
+    <ol class="lista-opciones" style="margin:0">
+      {pasos.map((p, i) => (
+        <li class="tarjeta fila" style="padding:14px 16px;gap:14px;align-items:flex-start">
+          <span style="color:var(--marca);flex:none"><Icono nombre={p.icono} tam={28} /></span>
+          <span><strong style="display:block;font-size:17px">{i + 1}. {p.titulo}</strong><span class="texto-2">{p.texto}</span></span>
+        </li>
+      ))}
+    </ol>
+
+    <h2 style="font-size:20px;margin:30px 0 10px">Y además</h2>
+    <ul style="list-style:none;margin:0;padding:0;display:grid;gap:14px">
+      {extras.map((e) => (
+        <li class="fila" style="gap:12px;align-items:flex-start">
+          <span style="color:var(--acento);flex:none"><Icono nombre={e.icono} tam={22} /></span>
+          <span><strong>{e.titulo}.</strong> {e.texto}</span>
+        </li>
+      ))}
+    </ul>
+
+    <section class="tarjeta" style="padding:16px;margin:30px 0 0">
+      <h2 class="fila" style="font-size:20px;margin:0 0 8px;gap:8px"><span style="color:var(--marca)"><Icono nombre="super" tam={24} /></span> Lokl Súper</h2>
+      <p style="margin:0 0 10px">Víveres y productos de la casa con entrega a domicilio. Arma tu pedido, envíalo por WhatsApp y paga con pago móvil, transferencia, Zelle o Binance cuando te lo confirmemos.</p>
+      <p class="texto-2" style="margin:0 0 12px;font-size:15px">Es el único negocio propio de Lokl: así mantenemos gratis todo lo demás.</p>
+      <a href="/super" class="boton boton-claro ancho">Ver el Súper</a>
+    </section>
+
+    <h2 style="font-size:20px;margin:30px 0 10px">Preguntas</h2>
+    <div style="display:grid;gap:8px">
+      <details class="tarjeta" style="padding:12px 16px">
+        <summary style="font-weight:700;cursor:pointer">¿Tengo que crear una cuenta?</summary>
+        <p style="margin:8px 0 0">No. Para buscar, comprar y pedir presupuesto no necesitas cuenta. Solo los vendedores crean una para su tienda.</p>
+      </details>
+      <details class="tarjeta" style="padding:12px 16px">
+        <summary style="font-weight:700;cursor:pointer">¿Lokl cobra algo?</summary>
+        <p style="margin:8px 0 0">No. Usar Lokl es gratis para clientes y vendedores. Lokl no cobra comisiones ni recibe los pagos de las tiendas.</p>
+      </details>
+      <details class="tarjeta" style="padding:12px 16px">
+        <summary style="font-weight:700;cursor:pointer">No estoy en San Fernando, ¿puedo usarlo?</summary>
+        <p style="margin:8px 0 0">Sí. Tu ubicación solo ordena lo que ves primero, no esconde nada. Puedes ver todo lo que hay en Apure desde cualquier lugar.</p>
+      </details>
+      <details class="tarjeta" style="padding:12px 16px">
+        <summary style="font-weight:700;cursor:pointer">¿Qué hago si algo no está bien?</summary>
+        <p style="margin:8px 0 0">Toca <strong>"Reportar"</strong> en la tienda o el producto. Es anónimo y lo revisamos.</p>
+      </details>
+    </div>
+
+    <section class="tarjeta" style="padding:20px 16px;margin:30px 0 8px;text-align:center">
+      <p style="margin:0 0 4px;font-size:18px"><strong>¿Vendes algo?</strong></p>
+      <p class="texto-2" style="margin:0 0 12px">Crea tu tienda gratis en menos de 2 minutos.</p>
+      <a href="/vende" class="boton ancho">Quiero vender en Lokl</a>
+    </section>
+    <p class="texto-2" style="font-size:14px;text-align:center;margin:16px 0 8px"><a href="/verificado">Verificado por Lokl</a> · <a href="/privacidad">Privacidad</a></p>
+  </main>
+</Base>

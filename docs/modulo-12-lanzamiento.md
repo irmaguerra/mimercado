@@ -18,7 +18,7 @@
 |---|---|---|
 | `/privacidad` | ✅ publicada 21/11 (la exige Google) | ~8,1 KB, sin JS propio |
 | `/vende` | ✅ aprobada por Irma 22/11 | ~8,8 KB, sin JS propio |
-| `/conoce` | pendiente | |
+| `/conoce` | 🛠️ publicada 22/11, falta visto bueno y la parte "quién está detrás" | ~9,0 KB, sin JS propio |
 | `/verificado` completa | pendiente | |
 
 Textos de redes: `docs/redes-lanzamiento.md`.
