@@ -4,11 +4,11 @@
 import Base from "@/layouts/Base.astro";
 import Cabecera from "@/components/Cabecera.astro";
 import { INFORMATIVA } from "@/lib/cache.js";
+import { WHATSAPP_LOKL as WHATSAPP } from "@/lib/moderacion.js";
 
 Astro.cache.set(INFORMATIVA);
 
 const CORREO = "usalokl.app@gmail.com";
-const WHATSAPP = "584243232671";
 const mensaje = encodeURIComponent("Hola Lokl, quiero borrar mis datos.");
 ---
 <Base titulo="Privacidad" descripcion="Qué datos guarda Lokl, para qué los usa y cómo pedir que se borren.">

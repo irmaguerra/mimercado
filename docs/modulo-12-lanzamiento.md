@@ -19,6 +19,6 @@
 | `/privacidad` | ✅ publicada 21/11 (la exige Google) | ~8,1 KB, sin JS propio |
 | `/vende` | ✅ aprobada por Irma 22/11 | ~8,8 KB, sin JS propio |
 | `/conoce` | ✅ aprobada por Irma 22/11 (quién está detrás: "un equipo de apureños", sin nombre) | ~9,0 KB, sin JS propio |
-| `/verificado` completa | pendiente | |
+| `/verificado` completa | 🛠️ publicada 22/11 (sello gratis, pedirlo por WhatsApp; botón también en Mi tienda), falta visto bueno | |
 
 Textos de redes: `docs/redes-lanzamiento.md`.

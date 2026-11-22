@@ -18,6 +18,14 @@ export const METODOS_VERIFICACION = {
   referencia: "Referencia de alguien de confianza",
 };
 
+/** WhatsApp de Lokl para pedir el sello y borrar datos (decisión 80; hoy es el mismo del Súper). */
+export const WHATSAPP_LOKL = "584243232671";
+
+/** Mensaje para pedir el sello Verificado (gratis, decisión 80). Sin slug, la persona completa su enlace. */
+export function mensajePedirSello(slug) {
+  return `Hola Lokl, quiero el sello Verificado para mi tienda: usalokl.com/${slug || ""}`;
+}
+
 /** Acciones de la bitácora, en palabras ("Aprobó la opinión…"). */
 export const ACCIONES = {
   aprobar: "Aprobó",

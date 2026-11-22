@@ -1,15 +1,18 @@
 ---
-// /verificado — Qué significa el sello "Verificado por Lokl" (versión corta, decisión 21).
-// La versión completa llega con las páginas informativas del Módulo 12. HTML puro.
+// /verificado — Qué significa el sello "Verificado por Lokl", qué gana el vendedor y cómo pedirlo (Módulo 12, decisión 80).
+// HTML puro, cacheada como página informativa.
 import Base from "@/layouts/Base.astro";
 import Cabecera from "@/components/Cabecera.astro";
 import Icono from "@/components/Icono.astro";
 import { INFORMATIVA } from "@/lib/cache.js";
-import { METODOS_VERIFICACION } from "@/lib/moderacion.js";
+import { METODOS_VERIFICACION, WHATSAPP_LOKL, mensajePedirSello } from "@/lib/moderacion.js";
+import { enlaceWhatsApp } from "@/lib/whatsapp.js";
 
 Astro.cache.set(INFORMATIVA);
+
+const pedir = enlaceWhatsApp(WHATSAPP_LOKL, mensajePedirSello());
 ---
-<Base titulo="Verificado por Lokl" descripcion="Qué significa el sello verde de Verificado por Lokl.">
+<Base titulo="Verificado por Lokl" descripcion="Qué significa el sello verde de Verificado por Lokl, qué gana tu tienda y cómo pedirlo gratis.">
   <main class="contenedor angosto">
     <Cabecera />
     <h1 class="fila" style="font-size:24px;margin:20px 0 8px;gap:8px;color:var(--acento)">
@@ -18,6 +21,7 @@ Astro.cache.set(INFORMATIVA);
     <p>El sello verde significa que <strong>Lokl comprobó que este negocio existe</strong> y que su WhatsApp es de verdad suyo.</p>
 
     <h2 style="font-size:18px;margin:22px 0 6px">Cómo lo comprobamos</h2>
+    <p style="margin:0 0 6px">Con al menos una de estas formas:</p>
     <ul style="margin:0;padding-left:20px">
       {Object.values(METODOS_VERIFICACION).map((m) => <li>{m}</li>)}
     </ul>
@@ -29,8 +33,21 @@ Astro.cache.set(INFORMATIVA);
       <li>El sello se puede quitar si el negocio deja de cumplir.</li>
     </ul>
 
+    <section class="tarjeta" style="padding:16px;margin:26px 0 0">
+      <h2 style="font-size:18px;margin:0 0 8px">¿Vendes en Lokl? Pide tu sello</h2>
+      <p style="margin:0 0 8px"><strong>Es gratis.</strong> Con el sello:</p>
+      <ul style="margin:0 0 14px;padding-left:20px">
+        <li>Tus clientes ven el sello verde en tu tienda y en los resultados.</li>
+        <li>Sales un poco más arriba en el buscador.</li>
+        <li>Recibes primero los pedidos de presupuesto de tu categoría.</li>
+      </ul>
+      <a href={pedir} class="boton boton-whatsapp ancho"><Icono nombre="whatsapp" tam={20} /> Pedir mi sello por WhatsApp</a>
+      <p class="texto-2" style="margin:10px 0 0;font-size:14px">Escribe el enlace de tu tienda en el mensaje. Si ya entraste a Lokl, también lo pides desde <a href="/panel">Mi tienda</a> y el mensaje sale completo.</p>
+    </section>
+
     <p class="tarjeta aviso">
       Si algo no está bien con un vendedor, toca <strong>"Reportar"</strong> al final de su tienda o de su producto. Es anónimo.
     </p>
+    <p class="texto-2" style="font-size:14px;text-align:center;margin:16px 0 8px"><a href="/conoce">Conoce Lokl</a> · <a href="/vende">Vende en Lokl</a> · <a href="/privacidad">Privacidad</a></p>
   </main>
 </Base>
