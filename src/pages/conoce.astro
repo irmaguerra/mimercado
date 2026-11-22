@@ -3,6 +3,7 @@
 import Base from "@/layouts/Base.astro";
 import Cabecera from "@/components/Cabecera.astro";
 import Icono from "@/components/Icono.astro";
+import Mascota from "@/components/Mascota.astro";
 import { INFORMATIVA } from "@/lib/cache.js";
 
 Astro.cache.set(INFORMATIVA);
@@ -24,11 +25,14 @@ const extras = [
     <Cabecera />
 
     <section style="margin:24px 0 8px">
+      <div style="float:right;margin:0 0 0 8px"><Mascota pose="saluda" tam={84} /></div>
       <h1 style="font-size:28px;line-height:1.15;margin:0 0 10px">Lo que se vende en tu zona, <span style="color:var(--acento)">ordenado.</span></h1>
       <p style="margin:0 0 18px;font-size:17px">Lokl reúne en un solo lugar lo que se vende y se ofrece en tu ciudad, para que no tengas que buscarlo en decenas de grupos de WhatsApp. Hoy estamos en <strong>San Fernando de Apure</strong>.</p>
       <a href="/" class="boton ancho">Empezar a buscar</a>
       <p class="texto-2" style="margin:8px 0 0;font-size:14px;text-align:center">Gratis · Sin crear cuenta · Gasta pocos datos</p>
     </section>
+
+    <p class="tarjeta aviso" style="margin-top:24px"><strong>lokear</strong> <span class="texto-2">(verbo)</span>: buscar en Lokl lo que se vende cerca de ti. <em>"¿Necesitas un plomero? ¡Lokéalo!"</em></p>
 
     <h2 style="font-size:20px;margin:30px 0 10px">Cómo funciona</h2>
     <ol class="lista-opciones" style="margin:0">

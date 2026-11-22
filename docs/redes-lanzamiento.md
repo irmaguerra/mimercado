@@ -6,6 +6,12 @@ Decisión 78: lanzamiento el **20/12/2026**; hasta entonces las redes le hablan 
 
 Decisión 79. Cada vendedor comparte su enlace y trae a sus clientes a Lokl; esos clientes descubren a otros vendedores, y así crecemos todos. Va en la descripción del perfil, en el cierre de cada publicación y como hashtag **#UnoNosLlevaATodos**.
 
+## Personaje y verbo (decisión 82)
+
+- **El pin con vida** acompaña todas las publicaciones (saluda, busca, celebra…). En la app ya está en `src/components/Mascota.astro`.
+- **lokear**: buscar en Lokl. Frases: *"¿Necesitas un plomero? ¡Lokéalo!"*, *"Que tus clientes te lokeen"*. Hashtag **#Lokéalo** junto a #UnoNosLlevaATodos.
+- Idea grande para después: **stickers de WhatsApp** del pin.
+
 ## Perfil
 
 | Campo | Instagram | TikTok |

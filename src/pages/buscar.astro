@@ -7,6 +7,7 @@ import Base from "@/layouts/Base.astro";
 import Cabecera from "@/components/Cabecera.astro";
 import Icono from "@/components/Icono.astro";
 import PedirPresupuesto from "@/components/PedirPresupuesto.astro";
+import Mascota from "@/components/Mascota.astro";
 import TarjetaVendedor from "@/components/TarjetaVendedor.astro";
 import TarjetaProducto from "@/components/TarjetaProducto.astro";
 import { supabasePublico } from "@/lib/supabase/servidor.js";
@@ -159,6 +160,7 @@ const raiz = m ? `/${m.estado.slug}/${m.slug}` : null;
 
     {q.length >= 2 && !fallo && total === 0 && !delSuper.length && (
       <div class="tarjeta aviso">
+        <div style="float:right;margin:0 0 4px 8px"><Mascota pose="busca" tam={64} /></div>
         <strong style="display:block">No encontramos "{q}"{sec && ` en ${sec.nombre}`}{abiertos && " abierto ahora"}.</strong>
         <ul style="margin:8px 0 0;padding-left:20px">
           <li>Prueba con una palabra más corta o más general (por ejemplo "queso" en vez de "queso llanero de 1 kilo").</li>

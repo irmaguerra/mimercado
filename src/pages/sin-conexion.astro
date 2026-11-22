@@ -3,13 +3,15 @@
 // Lista las páginas que sí están guardadas en el teléfono para abrirlas sin conexión.
 import Base from "@/layouts/Base.astro";
 import Logo from "@/components/Logo.astro";
+import Mascota from "@/components/Mascota.astro";
 
 export const prerender = true;
 ---
 <Base titulo="Sin conexión" barra={false}>
   <main class="contenedor angosto" style="padding-top:48px">
     <div style="display:flex;justify-content:center"><Logo alto={40} /></div>
-    <h1 style="font-size:22px;text-align:center">No hay señal</h1>
+    <div style="display:flex;justify-content:center;margin-top:20px"><Mascota pose="sin-senal" tam={88} /></div>
+    <h1 style="font-size:22px;text-align:center;margin-top:8px">No hay señal</h1>
     <p class="texto-2" style="text-align:center">
       Esta página todavía no estaba guardada en tu teléfono. Las que ya visitaste sí se pueden ver sin conexión.
     </p>

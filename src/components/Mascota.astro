@@ -1,0 +1,49 @@
+---
+// El pin de Lokl con vida (decisión 82): el mismo pin del logo con cara y bracitos.
+// SVG en línea, sin imágenes ni JavaScript (~1 KB). Los colores salen de la identidad de Lokl (globals.css).
+// pose: "saluda" | "busca" | "celebra" | "sin-senal" | "perdido"
+const { pose = "saluda", tam = 96 } = Astro.props;
+
+const brazos = {
+  saluda:      ["M24 60q-10 6-13 17", "M76 54q12-6 15-21"],
+  busca:       ["M24 60q-10 6-13 17", "M76 58q8 2 12 8"],
+  celebra:     ["M24 52q-12-8-13-23", "M76 52q12-8 13-23"],
+  "sin-senal": ["M24 58q-12 0-16-8", "M76 58q12 0 16-8"],
+  perdido:     ["M24 58q-12 0-16-8", "M76 58q12 0 16-8"],
+}[pose] ?? [];
+// Hacia dónde miran los ojos (desplazamiento de las pupilas)
+const [mx, my] = { busca: [2, 2], celebra: [0, -1], "sin-senal": [0, 1] }[pose] ?? [0, 0];
+const boca = {
+  celebra: "M38 55q12 14 24 0Z",
+  "sin-senal": "M41 60h18",
+  perdido: "M46 59a4 4 0 1 0 8 0a4 4 0 1 0-8 0",
+}[pose] ?? "M39 56q11 10 22 0";
+const bocaRellena = pose === "celebra" || pose === "perdido";
+---
+<svg viewBox="0 0 100 112" width={tam} height={(tam * 112) / 100} role="img" aria-label="El pin de Lokl" class="mascota">
+  <g fill="none" stroke="var(--marca)" stroke-width="6" stroke-linecap="round">
+    {brazos.map((d) => <path d={d} />)}
+  </g>
+  <path fill="var(--marca)" d="M50 106C50 106 20 78 20 46a30 30 0 1 1 60 0C80 78 50 106 50 106Z" />
+  <circle cx="40" cy="42" r="7" fill="#fff" /><circle cx="60" cy="42" r="7" fill="#fff" />
+  <circle cx={40 + mx} cy={42 + my} r="3.4" fill="#1C1A17" /><circle cx={60 + mx} cy={42 + my} r="3.4" fill="#1C1A17" />
+  <path d={boca} fill={bocaRellena ? "#fff" : "none"} stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+  {pose === "saluda" && <path d="M91 25l5-3M92 33h5" stroke="var(--marca)" stroke-width="2.5" stroke-linecap="round" />}
+  {pose === "busca" && (
+    <g fill="none" stroke="var(--texto)" stroke-width="3.5" stroke-linecap="round">
+      <circle cx="90" cy="76" r="8" /><path d="M85 82l-6 7" />
+    </g>
+  )}
+  {pose === "celebra" && (
+    <g>
+      <circle cx="10" cy="14" r="3" fill="var(--precio-fondo)" /><circle cx="90" cy="12" r="3" fill="var(--acento)" />
+      <circle cx="96" cy="30" r="2.5" fill="var(--precio-fondo)" /><circle cx="4" cy="32" r="2.5" fill="var(--acento)" />
+    </g>
+  )}
+  {pose === "perdido" && <text x="84" y="22" font-size="20" font-weight="800" fill="var(--marca)">?</text>}
+  {pose === "sin-senal" && (
+    <g fill="none" stroke="var(--texto-2)" stroke-width="3" stroke-linecap="round">
+      <path d="M78 14a16 16 0 0 1 20 0M82 20a9 9 0 0 1 12 0" /><path d="M76 8l24 20" />
+    </g>
+  )}
+</svg>

@@ -4,6 +4,7 @@
 import Base from "@/layouts/Base.astro";
 import Cabecera from "@/components/Cabecera.astro";
 import Icono from "@/components/Icono.astro";
+import Mascota from "@/components/Mascota.astro";
 import { INFORMATIVA } from "@/lib/cache.js";
 import { QUE_HACES } from "@/lib/vendedor.js";
 
@@ -42,8 +43,9 @@ const preguntas = [
     <Cabecera />
 
     <section style="margin:24px 0 8px">
+      <div style="float:right;margin:0 0 0 8px"><Mascota pose="saluda" tam={84} /></div>
       <h1 style="font-size:28px;line-height:1.15;margin:0 0 10px">Vende más en tu zona.<br /><span style="color:var(--acento)">Gratis.</span></h1>
-      <p style="margin:0 0 18px;font-size:17px">Deja de perderte en los grupos de WhatsApp. En Lokl tus clientes te encuentran ordenado, y te escriben directo a ti.</p>
+      <p style="margin:0 0 18px;font-size:17px">Deja de perderte en los grupos de WhatsApp. En Lokl tus clientes <strong>te lokean</strong>: te encuentran ordenado y te escriben directo a ti.</p>
       <a href={CREAR} class="boton ancho">Crear mi tienda gratis</a>
       <p class="texto-2" style="margin:8px 0 0;font-size:14px;text-align:center">Lista en menos de 2 minutos · Sin pagos · Sin aprobaciones</p>
     </section>
