@@ -17,7 +17,7 @@ import { supabasePublico } from "@/lib/supabase/servidor.js";
 import { PUBLICA } from "@/lib/cache.js";
 import {
   seccionPorSlug, categoriasDeSeccion, idsDeCategoria, zonasDeMunicipio,
-  listarVendedores, listarPublicaciones, cuantosVer, POR_PAGINA, NOMBRE_TIENDAS,
+  listarVendedores, listarPublicaciones, cuantosVer, POR_PAGINA, NOMBRE_TIENDAS, contarCategorias,
 } from "@/lib/listados.js";
 
 const { estado, municipio, seccion, cat } = Astro.params;
@@ -122,6 +122,12 @@ const BIENVENIDA = {
 }[sec.clave];
 const portada = Boolean(BIENVENIDA) && !cat1;
 const conHijos = arbol.some((g) => g.hijos.length);
+// Decisión 86: cuántos negocios hay en cada categoría, y los primeros negocios arriba de las categorías
+const cuantos = portada && sec.lista === "tiendas" ? await contarCategorias(sb, m.id, sec.clave) : new Map();
+const arriba = portada && sec.lista === "tiendas" ? filas.slice(0, 3) : [];
+const abajo = filas.slice(arriba.length);
+// Con 3 negocios o menos en la portada, los filtros sobran (ya se ven todos arriba)
+const sinFiltros = arriba.length > 0 && abajo.length === 0 && !filtrando;
 const nombreActual = actual?.nombre.toLowerCase();
 const nadieVerbo = sec.clave === "tiendas" || sec.clave === "al_mayor" ? "vende" : "ofrece";
 const categoriaVacia = actual && !filtrando
@@ -160,15 +166,26 @@ const llamado = sec.clave === "clasificados" ? { texto: "Publicar gratis", ruta:
       <h1 style="font-size:24px;margin:4px 0 0">{actual?.nombre ?? sec.nombre}</h1>
     )}
 
+    {arriba.length > 0 && (
+      <>
+        <h2 style="font-size:18px;margin:24px 0 10px">{BIENVENIDA.lista}</h2>
+        <ul class="lista-vendedores">
+          {arriba.map((v) => <li><TarjetaVendedor v={v} /></li>)}
+        </ul>
+        {abajo.length > 0 && <p style="margin:10px 0 0"><a href="#todos">Ver todos ›</a></p>}
+      </>
+    )}
+
     {portada && (
       <>
         <h2 style="font-size:18px;margin:24px 0 10px">{BIENVENIDA.elige}</h2>
         {!conHijos && (
           <ul class="rejilla-categorias">
             {arbol.map((g) => (
-              <li><a href={conZona(`${base}/${g.slug}`)} class="tarjeta enlace-tarjeta fila">
+              <li><a href={conZona(`${base}/${g.slug}`)} class:list={["tarjeta enlace-tarjeta fila", { "sin-negocios": sec.lista === "tiendas" && !cuantos.get(g.id) }]}>
                 <span style="color:var(--marca);flex:none"><Icono nombre={g.icono || sec.icono} tam={22} /></span>
-                <span>{g.nombre}</span>
+                <span style="flex:1">{g.nombre}</span>
+                {cuantos.get(g.id) > 0 && <span class="cuantos" title="Negocios">{cuantos.get(g.id)}</span>}
               </a></li>
             ))}
           </ul>
@@ -178,17 +195,20 @@ const llamado = sec.clave === "clasificados" ? { texto: "Publicar gratis", ruta:
             <li class="tarjeta">
               <a href={conZona(`${base}/${g.slug}`)} class="fila oficio-grupo">
                 <span style="color:var(--marca);flex:none"><Icono nombre={g.icono || "servicios"} tam={26} /></span>
-                <strong>{g.nombre}</strong>
+                <strong style="flex:1">{g.nombre}</strong>
+                {cuantos.get(g.id) > 0 && <span class="cuantos" title="Negocios">{cuantos.get(g.id)}</span>}
               </a>
               {g.hijos.length > 0 && (
                 <p class="oficio-hijos">
-                  {g.hijos.map((h, i) => <>{i > 0 && " · "}<a href={conZona(`${base}/${g.slug}/${h.slug}`)}>{h.nombre}</a></>)}
+                  {g.hijos.map((h, i) => <>{i > 0 && " · "}<a href={conZona(`${base}/${g.slug}/${h.slug}`)} class:list={{ "con-negocios": cuantos.get(h.id) > 0 }}>{h.nombre}{cuantos.get(h.id) > 0 && ` (${cuantos.get(h.id)})`}</a></>)}
                 </p>
               )}
             </li>
           ))}
         </ul>}
-        <h2 style="font-size:18px;margin:26px 0 0">{esServicios && filas.length ? `Disponibles en ${m.nombre}` : BIENVENIDA.lista}</h2>
+        {(abajo.length > 0 || filas.length === 0) && (
+          <h2 id="todos" style="font-size:18px;margin:26px 0 0">{arriba.length ? `Más ${plural} en ${m.nombre}` : esServicios && filas.length ? `Disponibles en ${m.nombre}` : BIENVENIDA.lista}</h2>
+        )}
       </>
     )}
 
@@ -200,14 +220,14 @@ const llamado = sec.clave === "clasificados" ? { texto: "Publicar gratis", ruta:
       </ul>
     )}
 
-    {esServicios && (
+    {esServicios && !sinFiltros && (
       <ul class="chips" aria-label="Filtrar" style="margin-top:8px">
         <li><a href={conZona(ruta, "", { domicilio: !aDomicilio })} class="chip" aria-current={aDomicilio ? "true" : undefined}>{aDomicilio && "✓ "}A domicilio</a></li>
         <li><a href={conZona(ruta, "", { h24: !h24 })} class="chip" aria-current={h24 ? "true" : undefined}>{h24 && "✓ "}24 horas</a></li>
       </ul>
     )}
 
-    {zonas.length > 1 && (
+    {zonas.length > 1 && !sinFiltros && (
       <form method="get" action={ruta} class="filtro-sector">
         {aDomicilio && <input type="hidden" name="domicilio" value="1" />}
         {h24 && <input type="hidden" name="h24" value="1" />}
@@ -228,10 +248,10 @@ const llamado = sec.clave === "clasificados" ? { texto: "Publicar gratis", ruta:
       <p class="tarjeta aviso">Lokl está empezando en {m.nombre}. Aquí verás a los vendedores de la zona a medida que se registren.</p>
     )}
 
-    {filas.length > 0 && sec.lista === "tiendas" && (
+    {abajo.length > 0 && sec.lista === "tiendas" && (
       <ul class="lista-vendedores">
-        {filas.map((v, i) => (
-          <li id={i === primeroNuevo && i > 0 ? "mas" : undefined}><TarjetaVendedor v={v} /></li>
+        {abajo.map((v, i) => (
+          <li id={i + arriba.length === primeroNuevo && i + arriba.length > 0 ? "mas" : undefined}><TarjetaVendedor v={v} /></li>
         ))}
       </ul>
     )}

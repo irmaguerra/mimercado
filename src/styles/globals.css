@@ -123,6 +123,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @media (min-width: 520px) { .rejilla-oficios { grid-template-columns: 1fr 1fr; } }
 .rejilla-categorias { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .rejilla-categorias a { gap: 10px; padding: 12px; min-height: 52px; font-weight: 600; line-height: 1.25; }
+.cuantos { flex: none; min-width: 24px; padding: 1px 8px; border-radius: 12px; background: var(--acento); color: var(--tarjeta); font-size: 13px; font-weight: 800; text-align: center; }
+.sin-negocios { opacity: .72; }
+.oficio-hijos a.con-negocios { font-weight: 700; }
 .rejilla-oficios > li { padding: 12px 14px; }
 .oficio-grupo { gap: 10px; color: var(--texto); text-decoration: none; font-size: 17px; min-height: 40px; }
 .oficio-hijos { margin: 6px 0 0; font-size: 14px; line-height: 1.9; color: var(--texto-2); }

@@ -8,7 +8,7 @@ import { miTienda } from "@/lib/sesion.js";
 import { MODALIDAD_COCINA, ALCANCE_ENVIO, resolverZona } from "@/lib/vendedor.js";
 import { crearSlug, esSlugValido } from "@/lib/slug.js";
 import { normalizarNumero, esCelularValido } from "@/lib/whatsapp.js";
-import { categoriasDeSeccion, categoriasMarcables, leerCategorias } from "@/lib/listados.js";
+import { categoriasDeSeccion, categoriasMarcables, leerCategorias, seccionPorClave } from "@/lib/listados.js";
 import { esPalabraBloqueada, MENSAJE_PALABRA } from "@/lib/moderacion.js";
 
 const { sb, usuario } = Astro.locals;
@@ -20,10 +20,15 @@ let ok = Astro.url.searchParams.get("ok") ? "Cambios guardados." : "";
 
 // Categorías ("¿Qué vendes?"): hasta 10 de su sección. Los clasificados eligen una por anuncio.
 const conCategorias = t.seccion_principal && t.seccion_principal !== "clasificados";
-const [arbol, { data: marcadas }] = await Promise.all([
+// Decisión 86: también puede marcar categorías de otras secciones para salir allí (DORCAS: Tiendas y Servicios).
+const OTRAS = conCategorias ? ["tiendas", "comida", "al_mayor", "servicios"].filter((c) => c !== t.seccion_principal) : [];
+const [arbol, { data: marcadas }, ...arbolesOtras] = await Promise.all([
   conCategorias ? categoriasDeSeccion(sb, t.seccion_principal) : [],
   sb.from("vendedor_categorias").select("categoria_id").eq("vendedor_id", t.id),
+  ...OTRAS.map((c) => categoriasDeSeccion(sb, c)),
 ]);
+const otras = OTRAS.map((clave, i) => ({ clave, nombre: seccionPorClave(clave).nombre, arbol: arbolesOtras[i] }));
+const permitidas = [...categoriasMarcables(arbol), ...otras.flatMap((o) => categoriasMarcables(o.arbol))];
 let elegidas = new Set((marcadas ?? []).map((x) => x.categoria_id));
 
 if (Astro.request.method === "POST") {
@@ -45,7 +50,7 @@ if (Astro.request.method === "POST") {
   if (t.seccion_principal === "comida" && MODALIDAD_COCINA[txt("modalidad")]) cambios.modalidad_cocina = txt("modalidad");
   if (cambios.modalidad_cocina === "desde_casa" || t.modalidad_cocina === "desde_casa") cambios.direccion = null;
   const slugNuevo = crearSlug(txt("slug", 60));
-  const cats = conCategorias ? leerCategorias(f, categoriasMarcables(arbol)) : null;
+  const cats = conCategorias ? leerCategorias(f, permitidas) : null;
   if (cats) elegidas = new Set(cats.ids);
 
   if (cats?.error) error = cats.error;
@@ -119,6 +124,18 @@ const local = (n) => (/^58\d{10}$/.test(n || "") ? "0" + n.slice(2) : n || "");
         <textarea name="descripcion" rows="3" maxlength="500" placeholder="Qué vendes, desde cuándo, qué te hace especial">{t.descripcion}</textarea>
       </label>
       <CampoCategorias arbol={arbol} elegidas={elegidas} titulo={t.seccion_principal === "servicios" ? "¿Qué servicios ofreces?" : "¿Qué vendes?"} />
+      {otras.length > 0 && (
+        <details class="tarjeta" style="padding:12px 14px" open={otras.some((o) => categoriasMarcables(o.arbol).some((c) => elegidas.has(c.id)))}>
+          <summary style="font-weight:700;cursor:pointer">¿También haces otras cosas? Aparece en otras secciones</summary>
+          <p class="texto-2" style="font-size:14px;margin:8px 0 0">
+            Por ejemplo, si vendes cosméticos y también haces alisados, marca "Estética" en Servicios y sales en las dos.
+            Entre todas las secciones puedes marcar hasta 10.
+          </p>
+          {otras.map((o) => (
+            <CampoCategorias arbol={o.arbol} elegidas={elegidas} titulo={o.nombre} id={`categorias-${o.clave}`} ayuda={false} />
+          ))}
+        </details>
+      )}
 
       <label>WhatsApp
         <input type="tel" name="whatsapp" value={local(t.whatsapp)} required inputmode="tel" />

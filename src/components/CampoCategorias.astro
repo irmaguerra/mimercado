@@ -4,14 +4,14 @@
 import { MAX_CATEGORIAS } from "@/lib/listados.js";
 
 /** arbol: categorías de la sección (arbolCategorias); elegidas: Set de ids marcados. */
-const { arbol = [], elegidas = new Set(), titulo = "¿Qué vendes?" } = Astro.props;
+const { arbol = [], elegidas = new Set(), titulo = "¿Qué vendes?", id = "categorias", ayuda = true } = Astro.props;
 const conHijos = arbol.filter((c) => c.hijos.length);
 const sueltas = arbol.filter((c) => !c.hijos.length);
 ---
 {arbol.length > 0 && (
-  <fieldset class="opciones-radio" id="categorias">
+  <fieldset class="opciones-radio" id={id}>
     <legend>{titulo}</legend>
-    <small class="texto-2">Marca hasta {MAX_CATEGORIAS}. Así sales en esas listas y en el buscador.</small>
+    {ayuda && <small class="texto-2">Marca hasta {MAX_CATEGORIAS}. Así sales en esas listas y en el buscador.</small>}
     {sueltas.length > 0 && (
       <div class="casillas">
         {sueltas.map((c) => (

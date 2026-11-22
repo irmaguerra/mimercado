@@ -107,6 +107,13 @@ export async function categoriasDeSeccion(sb, clave) {
   return arbolCategorias(data ?? []);
 }
 
+/** Cuántos negocios activos hay por categoría en un municipio (decisión 86). Map id → total. */
+export async function contarCategorias(sb, municipioId, seccion) {
+  const { data, error } = await sb.rpc("contar_categorias", { p_municipio_id: municipioId, p_seccion: seccion });
+  if (error) console.error("contar_categorias", error);
+  return new Map((data ?? []).map((x) => [x.categoria_id, x.total]));
+}
+
 /** Sectores activos de un municipio, por nombre. */
 export async function zonasDeMunicipio(sb, municipioId) {
   const { data } = await sb.from("zonas").select("id, nombre, slug").eq("municipio_id", municipioId).eq("activa", true).order("nombre");
