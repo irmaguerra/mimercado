@@ -1,6 +1,6 @@
 # Módulo 11 — Pedir presupuesto a varios
 
-**Estado:** 🛠️ construido y probado en la computadora. Falta: correr `sql/16`, guardar la llave de los avisos en Cloudflare y la prueba de Irma.
+**Estado:** ✅ aprobado por Irma el 21/11/2026 (prueba completa en la computadora: cliente en incógnito, vendedor y admin). Pendiente con teléfono: comprobar que llegan los avisos.
 
 ## Decisiones de Irma (16/11/2026): 64 a 73
 
@@ -51,8 +51,8 @@ El botón de WhatsApp pasa por `/c/<tienda>/whatsapp?pr=<id>`: cuenta el contact
 
 ## Pruebas
 
-- [ ] En un listado (por ejemplo Comida → Pizza) tocar **Pide presupuesto a varios**, llenarlo y enviarlo.
+- [x] En un listado (por ejemplo Comida → Pizza) tocar **Pide presupuesto a varios**, llenarlo y enviarlo.
 - [ ] Ver el pedido en **Mis presupuestos**; tocar **Activar avisos**.
-- [ ] Con la cuenta de una tienda de esa categoría: **Mi tienda → Pedidos de presupuesto**, activar avisos y responder con un precio.
-- [ ] Al cliente le llega el aviso; ve la respuesta y toca **Escribirle** (abre WhatsApp con el mensaje).
-- [ ] Admin → **Pedidos de presupuesto**: aparece el pedido.
+- [x] Con la cuenta de una tienda de esa categoría: **Mi tienda → Pedidos de presupuesto**, activar avisos y responder con un precio.
+- [x] (Aviso pendiente de probar en teléfono) El cliente ve la respuesta y toca **Escribirle** (abre WhatsApp con el mensaje).
+- [x] Admin → **Pedidos de presupuesto**: aparece el pedido.
