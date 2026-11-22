@@ -16,6 +16,7 @@ import { PUBLICA } from "@/lib/cache.js";
 import { SECCIONES, seccionPorSlug, agruparResultados, leerLugar, contar } from "@/lib/listados.js";
 import { MUNICIPIO_SUPER, municipioSuper } from "@/lib/super.js";
 import { mostrarPrecio } from "@/lib/precio.js";
+import { enlaceCompartir } from "@/lib/whatsapp.js";
 
 const params = Astro.url.searchParams;
 
@@ -172,6 +173,18 @@ const raiz = m ? `/${m.estado.slug}/${m.slug}` : null;
     {q.length >= 2 && !fallo && total === 0 && !delSuper.length && (
       <div style="margin-top:12px">
         <PedirPresupuesto q={q} lugar={m ? `${m.estado.slug}/${m.slug}` : ""} titulo={`¿Nadie tiene "${q.length > 30 ? q.slice(0, 29) + "…" : q}"? Pide presupuesto`} texto="Dinos qué necesitas y los negocios que lo tengan te mandan su precio." />
+      </div>
+    )}
+
+    {q.length >= 2 && !fallo && (total > 0 || delSuper.length > 0) && (
+      <div class="tarjeta bloque compartir-busqueda">
+        <p style="margin:0 0 4px"><strong>¿Alguien en tu grupo pregunta "¿quién vende {q.length > 30 ? q.slice(0, 29) + "…" : q}?"</strong></p>
+        <p class="texto-2" style="margin:0 0 10px;font-size:14px">Respóndele con esta búsqueda: ve todos los que lo tienen, con precio y WhatsApp.</p>
+        <a class="boton boton-claro ancho" href={enlaceCompartir(`¿Buscas ${q}${nombreLugar ? ` en ${nombreLugar}` : ""}? Mira quién lo tiene, con precios y WhatsApp 👉 ${Astro.url.origin}/buscar?q=${encodeURIComponent(q)}${valorLugar ? `&lugar=${valorLugar}` : ""}
+
+🤝 Uno nos lleva a todos · #Lokéalo`)}>
+          <Icono nombre="compartir" tam={20} /> Compartir esta búsqueda
+        </a>
       </div>
     )}
 

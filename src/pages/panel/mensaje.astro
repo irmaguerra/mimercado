@@ -1,0 +1,84 @@
+---
+// /panel/mensaje — "Mensaje para mis grupos" (decisión 88): el vendedor elige qué productos van
+// y comparte un solo mensaje ordenado (precios + su enlace) en sus grupos de WhatsApp.
+// Elegir productos es un formulario normal (GET); "Copiar" usa unas líneas de JavaScript si el teléfono lo permite.
+import Base from "@/layouts/Base.astro";
+import Icono from "@/components/Icono.astro";
+import { miTienda } from "@/lib/sesion.js";
+import { enlaceCompartir } from "@/lib/whatsapp.js";
+import { precioVisible } from "@/lib/al-mayor.js";
+import { mensajeParaGrupos, MAX_EN_MENSAJE } from "@/lib/mensaje-grupos.js";
+
+const { sb, usuario } = Astro.locals;
+const t = await miTienda(sb, usuario.id);
+if (!t) return Astro.redirect("/panel/crear", 302);
+
+const { data } = await sb
+  .from("publicaciones")
+  .select("id, titulo, precio, moneda, precio_mayor, unidad")
+  .eq("vendedor_id", t.id)
+  .eq("estado", "publicada")
+  .eq("agotado", false)
+  .order("creado_en", { ascending: false })
+  .limit(40);
+const productos = data ?? [];
+
+// Por defecto, los más nuevos; si la persona eligió, los que marcó (en el orden de la lista)
+const pedidos = Astro.url.searchParams.getAll("p").map(Number).filter(Boolean);
+const elegidos = pedidos.length
+  ? productos.filter((p) => pedidos.includes(p.id)).slice(0, MAX_EN_MENSAJE)
+  : productos.slice(0, Math.min(5, MAX_EN_MENSAJE));
+const marcados = new Set(elegidos.map((p) => p.id));
+
+const url = `${Astro.url.origin}/${t.slug}`;
+const texto = mensajeParaGrupos(t, elegidos, url, t.zonas?.nombre);
+---
+<Base titulo="Mensaje para mis grupos">
+  <main class="contenedor angosto" style="padding-top:20px">
+    <p style="margin:0"><a href="/panel">‹ Mi tienda</a></p>
+    <h1 style="font-size:24px;margin:10px 0 6px">Mensaje para mis grupos</h1>
+    <p class="texto-2" style="margin:0 0 14px">
+      En vez de mandar 10 fotos que se pierden en el grupo, manda <strong>un solo mensaje</strong> con tus precios y tu enlace.
+      Quien lo abra ve todo ordenado y te escribe directo.
+    </p>
+
+    <pre class="tarjeta mensaje-grupo">{texto}</pre>
+
+    <div class="pila-botones" style="margin-top:12px">
+      <a class="boton ancho" href={enlaceCompartir(texto)}><Icono nombre="whatsapp" tam={20} /> Enviar a mis grupos</a>
+      <button class="boton boton-claro ancho" type="button" data-copiar={texto} hidden>Copiar mensaje</button>
+    </div>
+    <p class="texto-2" style="font-size:14px;margin:10px 0 0">
+      💡 Mándalo de <strong>8 a 10 de la mañana</strong> o de <strong>6 a 9 de la noche</strong>: es cuando más gente lee los grupos.
+    </p>
+
+    {productos.length > 0 ? (
+      <form method="get" style="margin-top:22px">
+        <fieldset class="opciones-radio">
+          <legend>¿Qué productos van hoy? (hasta {MAX_EN_MENSAJE})</legend>
+          <div class="casillas">
+            {productos.map((p) => (
+              <label class="radio">
+                <input type="checkbox" name="p" value={p.id} checked={marcados.has(p.id)} />
+                {p.titulo}{precioVisible(p) && <span class="texto-2"> · {precioVisible(p)}</span>}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <button class="boton boton-claro ancho" type="submit" style="margin-top:10px">Cambiar el mensaje</button>
+      </form>
+    ) : (
+      <p class="tarjeta aviso">
+        Todavía no tienes productos publicados: el mensaje lleva tu descripción y tu enlace.
+        <a href="/panel/publicar">Publica tu primer producto</a> y aparecerá aquí con su precio.
+      </p>
+    )}
+  </main>
+  <script is:inline>
+    document.querySelectorAll("[data-copiar]").forEach((b) => {
+      if (!navigator.clipboard) return;
+      b.hidden = false;
+      b.addEventListener("click", () => navigator.clipboard.writeText(b.dataset.copiar).then(() => { b.textContent = "¡Mensaje copiado! Pégalo en tu grupo"; }));
+    });
+  </script>
+</Base>
