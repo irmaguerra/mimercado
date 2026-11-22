@@ -15,6 +15,7 @@ Decisiones 74 a 76 (16/11/2026):
 | Orígenes de JavaScript autorizados | `https://usalokl.com` |
 | URI de redireccionamiento autorizado | `https://qzhfvsornkoakdeubstv.supabase.co/auth/v1/callback` |
 | Dominio autorizado (pantalla de consentimiento) | `usalokl.com` |
+| Política de privacidad (la exige Google para publicar) | `https://usalokl.com/privacidad` |
 
 El **ID de cliente** y el **secreto de cliente** se pegan directo en Supabase; nunca en el chat ni en el código.
 
@@ -30,6 +31,7 @@ El **ID de cliente** y el **secreto de cliente** se pegan directo en Supabase; n
 4. Menú de la izquierda → **Público** (Audience) → **Publicar app** → **Confirmar**. *(Si no se publica, solo las cuentas de prueba pueden entrar.)*
 5. Menú de la izquierda → **Desarrollo de la marca** (Branding):
    - Página principal: `https://usalokl.com`
+   - Vínculo a la Política de Privacidad: `https://usalokl.com/privacidad` *(sin esto no se activa "Publicar app")*
    - Dominios autorizados → **Agregar dominio** → `usalokl.com`
    - **Guardar**. *(No subir logo: eso pide una revisión de Google de varios días.)*
 6. Menú de la izquierda → **Clientes** → **Crear cliente**:
