@@ -1,0 +1,26 @@
+---
+// Carrusel de negocios (decisión 87): se desliza de lado, con logo, nombre y abierto/cerrado.
+// Solo CSS (scroll-snap), 0 KB de JavaScript. Los logos se bajan cuando van a verse (loading="lazy").
+// El orden viene de la base: abiertos primero, luego los de tu sector y los verificados.
+import Icono from "./Icono.astro";
+
+/** negocios: filas de listar_vendedores */
+const { negocios = [] } = Astro.props;
+const estado = (v) => (v.servicio ? (v.abierto ? "Disponible" : "No disponible") : v.abierto ? "Abierto" : "Cerrado");
+---
+<ul class="carrusel-negocios" aria-label="Negocios">
+  {negocios.map((v) => (
+    <li>
+      <a href={`/${v.slug}`} class="tarjeta enlace-tarjeta negocio-carrusel">
+        {v.logo_url ? <img src={v.logo_url} alt="" width="72" height="72" class="logo-tienda logo-carrusel" loading="lazy" decoding="async" />
+          : <span class="logo-tienda logo-carrusel logo-vacio" aria-hidden="true">{v.nombre.slice(0, 1)}</span>}
+        <strong class="nombre-carrusel">{v.nombre}</strong>
+        <span class:list={["estado-abierto", { cerrado: !v.abierto }]} style="font-size:14px;font-weight:700">● {estado(v)}</span>
+        <span class="texto-2 fila" style="font-size:13px;gap:3px;justify-content:center">
+          {v.verificado && <span style="color:var(--acento);display:inline-flex" title="Verificado"><Icono nombre="verificado" tam={13} /></span>}{v.zona}
+        </span>
+      </a>
+    </li>
+  ))}
+</ul>
+{negocios.length > 2 && <p class="texto-2" style="margin:4px 0 0;font-size:13px;text-align:right">Desliza para ver más →</p>}

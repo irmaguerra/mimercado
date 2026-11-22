@@ -12,6 +12,7 @@ import TarjetaProducto from "@/components/TarjetaProducto.astro";
 import PedirPresupuesto from "@/components/PedirPresupuesto.astro";
 import Icono from "@/components/Icono.astro";
 import Mascota from "@/components/Mascota.astro";
+import CarruselNegocios from "@/components/CarruselNegocios.astro";
 import { buscarMunicipio } from "@/lib/ubicacion.js";
 import { supabasePublico } from "@/lib/supabase/servidor.js";
 import { PUBLICA } from "@/lib/cache.js";
@@ -124,7 +125,8 @@ const portada = Boolean(BIENVENIDA) && !cat1;
 const conHijos = arbol.some((g) => g.hijos.length);
 // Decisión 86: cuántos negocios hay en cada categoría, y los primeros negocios arriba de las categorías
 const cuantos = portada && sec.lista === "tiendas" ? await contarCategorias(sb, m.id, sec.clave) : new Map();
-const arriba = portada && sec.lista === "tiendas" ? filas.slice(0, 3) : [];
+// Decisión 87: hasta 8 en un carrusel (abiertos primero); el resto, en la lista de abajo
+const arriba = portada && sec.lista === "tiendas" ? filas.slice(0, 8) : [];
 const abajo = filas.slice(arriba.length);
 // Con 3 negocios o menos en la portada, los filtros sobran (ya se ven todos arriba)
 const sinFiltros = arriba.length > 0 && abajo.length === 0 && !filtrando;
@@ -169,9 +171,7 @@ const llamado = sec.clave === "clasificados" ? { texto: "Publicar gratis", ruta:
     {arriba.length > 0 && (
       <>
         <h2 style="font-size:18px;margin:24px 0 10px">{BIENVENIDA.lista}</h2>
-        <ul class="lista-vendedores">
-          {arriba.map((v) => <li><TarjetaVendedor v={v} /></li>)}
-        </ul>
+        <CarruselNegocios negocios={arriba} />
         {abajo.length > 0 && <p style="margin:10px 0 0"><a href="#todos">Ver todos ›</a></p>}
       </>
     )}
