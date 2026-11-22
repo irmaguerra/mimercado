@@ -1,17 +1,47 @@
 ---
 // La muestra el service worker cuando no hay señal y la página pedida no estaba guardada.
+// Lista las páginas que sí están guardadas en el teléfono para abrirlas sin conexión.
 import Base from "@/layouts/Base.astro";
 import Logo from "@/components/Logo.astro";
 
 export const prerender = true;
 ---
 <Base titulo="Sin conexión" barra={false}>
-  <main class="contenedor" style="padding-top:48px;text-align:center">
+  <main class="contenedor angosto" style="padding-top:48px">
     <div style="display:flex;justify-content:center"><Logo alto={40} /></div>
-    <h1 style="font-size:22px">No hay señal</h1>
-    <p class="texto-2">
+    <h1 style="font-size:22px;text-align:center">No hay señal</h1>
+    <p class="texto-2" style="text-align:center">
       Esta página todavía no estaba guardada en tu teléfono. Las que ya visitaste sí se pueden ver sin conexión.
     </p>
-    <a href="/" class="boton" style="margin-top:12px">Volver a intentar</a>
+    <div style="text-align:center"><a href="/" class="boton" style="margin-top:4px">Volver a intentar</a></div>
+
+    <section id="guardadas" hidden style="margin-top:28px">
+      <h2 style="font-size:18px;margin:0 0 8px">Puedes ver sin señal</h2>
+      <ul id="lista-guardadas" class="lista-opciones"></ul>
+    </section>
   </main>
+  <script is:inline>
+    (async () => {
+      if (!("caches" in window)) return;
+      const nombre = (await caches.keys()).find((k) => k.endsWith("-paginas"));
+      if (!nombre) return;
+      const cache = await caches.open(nombre);
+      const claves = (await cache.keys()).reverse().slice(0, 20); // las más recientes primero
+      const lista = document.getElementById("lista-guardadas");
+      for (const req of claves) {
+        const resp = await cache.match(req);
+        const html = resp ? await resp.text() : "";
+        const titulo = (html.match(/<title>([^<]*)<\/title>/) || [])[1];
+        if (!titulo) continue;
+        const a = document.createElement("a");
+        a.href = req.url;
+        a.className = "tarjeta enlace-tarjeta";
+        a.style.cssText = "display:block;padding:12px 14px";
+        const t = document.createElement("textarea"); t.innerHTML = titulo.replace(" · Lokl", ""); // decodifica &amp; etc.
+        a.textContent = t.value;
+        const li = document.createElement("li"); li.appendChild(a); lista.appendChild(li);
+      }
+      if (lista.children.length) document.getElementById("guardadas").hidden = false;
+    })().catch(() => {});
+  </script>
 </Base>

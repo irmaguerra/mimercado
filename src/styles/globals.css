@@ -217,6 +217,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* ───────── Listados y buscador (Módulo 5) ───────── */
 .migas { margin: 18px 0 0; font-size: 14px; }
 .pie-enlaces { font-size: 14px; text-align: center; margin: 24px 0 8px; line-height: 2; }
+.franja-sin-senal { margin: 0; padding: 10px 16px; background: var(--precio-fondo); color: var(--precio-texto); font-size: 14px; font-weight: 600; text-align: center; }
 .volver { display: inline-flex; align-items: center; min-height: 44px; margin-top: 6px; color: var(--acento); font-weight: 700; text-decoration: none; }
 .chips { list-style: none; display: flex; gap: 8px; overflow-x: auto; margin: 14px -16px 0; padding: 0 16px 4px; scrollbar-width: none; }
 .chips::-webkit-scrollbar { display: none; }

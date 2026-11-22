@@ -1,7 +1,8 @@
 // Service worker de Lokl (hecho a mano, sin librerías). Objetivo: gastar menos datos.
 //  - Archivos de la app (/_astro, íconos): se guardan para siempre (cambian de nombre en cada versión).
 //  - Fotos de Supabase Storage: se guardan al verlas (máximo 300).
-//  - Páginas públicas: red primero con límite de 4 s; si no hay señal, la última copia guardada.
+//  - Páginas públicas: red primero con límite de 4 s; si no hay señal, la última copia guardada,
+//    con una franja "Sin señal" y la fecha de la copia. En "/" se muestra la última portada vista.
 //  - Panel, admin y entrar: nunca se guardan (datos privados).
 //  - Publicar sin señal: lo que quedó guardado en el teléfono (src/lib/cola-envios.js) se envía
 //    la próxima vez que la persona abre cualquier página de Lokl con señal.
@@ -57,8 +58,33 @@ async function primeroRed(req) {
     }
     return resp;
   } catch {
-    return (await cache.match(req)) || (await caches.match("/sin-conexion")) || Response.error();
+    const guardada = (await cache.match(req)) || (new URL(req.url).pathname === "/" ? await ultimaPortada(cache) : null);
+    if (guardada) return marcarCopia(guardada);
+    return (await caches.match("/sin-conexion")) || Response.error();
   }
+}
+
+// Sin señal en "/": la última portada de ciudad que se vio (/estado/municipio).
+async function ultimaPortada(cache) {
+  const claves = await cache.keys();
+  for (let i = claves.length - 1; i >= 0; i--) {
+    const ruta = new URL(claves[i].url).pathname;
+    if (/^\/[a-z0-9-]+\/[a-z0-9-]+$/.test(ruta) && !/^\/(p|c|super|panel|admin|presupuesto|ubicacion|entrar)\//.test(ruta)) {
+      return cache.match(claves[i]);
+    }
+  }
+  return null;
+}
+
+// Copia guardada: se le agrega arriba una franja "Sin señal" con la fecha de la copia.
+async function marcarCopia(resp) {
+  const html = await resp.text();
+  const fecha = new Date(resp.headers.get("date") || Date.now());
+  const cuando = fecha.toLocaleString("es-VE", { day: "numeric", month: "numeric", hour: "numeric", minute: "2-digit" });
+  const franja = `<p class="franja-sin-senal" role="status">Sin señal · Estás viendo lo que guardaste el ${cuando} · Precios y horarios pueden haber cambiado</p>`;
+  return new Response(html.replace(/<body([^>]*)>/, `<body$1>${franja}`), {
+    headers: { "content-type": "text/html; charset=utf-8" },
+  });
 }
 
 // ---- Cola de "publicar sin señal" (mismo formato que src/lib/cola-envios.js) ----

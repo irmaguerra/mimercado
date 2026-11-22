@@ -19,6 +19,18 @@
 | `/privacidad` | ✅ publicada 21/11 (la exige Google) | ~8,1 KB, sin JS propio |
 | `/vende` | ✅ aprobada por Irma 22/11 | ~8,8 KB, sin JS propio |
 | `/conoce` | ✅ aprobada por Irma 22/11 (quién está detrás: "un equipo de apureños", sin nombre) | ~9,0 KB, sin JS propio |
-| `/verificado` completa | 🛠️ publicada 22/11 (sello gratis, pedirlo por WhatsApp; botón también en Mi tienda), falta visto bueno | |
+| `/verificado` completa | ✅ aprobada 22/11 (sello gratis, pedirlo por WhatsApp; botón también en Mi tienda) | |
 
 Textos de redes: `docs/redes-lanzamiento.md`.
+
+## PWA (app instalable)
+
+Ya existía: manifest, ícono con zona segura (maskable), aviso "Instala Lokl", atajos, service worker que guarda páginas, fotos y archivos, publicar sin señal y avisos.
+
+Agregado el 22/11/2026:
+- **Franja "Sin señal"** arriba de toda página que se abre desde lo guardado, con la fecha de la copia ("Precios y horarios pueden haber cambiado").
+- Sin señal en **usalokl.com** (la app instalada abre "/"): muestra la **última portada de ciudad** vista en vez de la pantalla "No hay señal".
+- **"No hay señal"** ahora lista hasta 20 páginas guardadas para abrirlas sin conexión.
+- **"‹ Volver"** en todas las páginas (la app instalada no tiene flecha de atrás).
+
+Prueba (teléfono): visitar la portada, una tienda y el Súper → modo avión → abrir Lokl instalado: debe verse la portada con la franja amarilla; abrir una página no visitada: "No hay señal" con la lista.
