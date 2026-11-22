@@ -34,3 +34,30 @@ Agregado el 22/11/2026:
 - **"‹ Volver"** en todas las páginas (la app instalada no tiene flecha de atrás).
 
 Prueba (teléfono): visitar la portada, una tienda y el Súper → modo avión → abrir Lokl instalado: debe verse la portada con la franja amarilla; abrir una página no visitada: "No hay señal" con la lista.
+
+## Medición final (22/11/2026, usalokl.com en producción)
+
+Peso que baja el teléfono por página (HTML comprimido; el CSS va dentro del HTML y no hay JavaScript externo en las páginas públicas):
+
+| Página | Peso | Respuesta | Caché |
+|---|---|---|---|
+| Portada San Fernando | 9,6 KB | 0,35 s | sí |
+| Sección (Comida) | 9,2 KB | 0,57 s | sí |
+| Categoría (Pizza) | 9,2 KB | 0,41 s | sí |
+| Tienda | 9,2 KB | 0,38 s | sí |
+| Producto | 9,0 KB | 0,46 s | sí |
+| Súper | 10,2 KB | 0,39 s | sí |
+| Buscar | 8,7 KB | 0,88 s | no (cada búsqueda es distinta) |
+| Pedir presupuesto | 10,9 KB | 0,63 s | no |
+| Favoritos | 8,3 KB | 0,38 s | no |
+| Entrar | 7,8 KB | 0,75 s | no (privada) |
+| /vende · /conoce · /verificado · /privacidad | 9,2–10,7 KB | 0,34–0,49 s | sí |
+| Sin conexión | 7,2 KB | — | guardada en el teléfono |
+
+- De cada página, ~4,7 KB son el CSS (dentro del HTML), ~1,1 KB los íconos SVG y ~0,9 KB el poco JavaScript en línea (registrar la app, "Instala Lokl", "‹ Volver").
+- Fotos: miniatura de producto ~6 KB (WebP); Súper ~5,3 KB por foto; todas con carga diferida (`loading="lazy"`).
+- Islas (panel, carrito, publicar): base Preact ~10 KB comprimido, se guarda para siempre; la más grande (fotos de publicación) 2,2 KB.
+- Service worker 1,4 KB.
+- Tiempos medidos desde fuera de Venezuela; en Apure dependen de la señal, pero el peso es lo que más cuenta con datos móviles.
+
+Referencia: abrir 10 páginas de Lokl ≈ 100 KB + fotos; una sola foto reenviada en un grupo de WhatsApp suele pesar 100–200 KB.
