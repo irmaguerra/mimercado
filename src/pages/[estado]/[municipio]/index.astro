@@ -82,5 +82,17 @@ const base = `/${m.estado.slug}/${m.slug}`;
     <p class="texto-2" style="font-size:14px;margin-top:24px">
       <a href={`/${m.estado.slug}`}>Ver todo {m.estado.nombre}</a>
     </p>
+
+    <a href="/vende" class="tarjeta enlace-tarjeta fila-entre" style="gap:12px;margin-top:20px;padding:16px">
+      <span class="fila" style="gap:12px">
+        <span style="color:var(--marca)"><Icono nombre="tiendas" tam={28} /></span>
+        <span><strong style="display:block">¿Vendes algo?</strong><span class="texto-2" style="font-size:14px">Crea tu tienda gratis</span></span>
+      </span>
+      <span aria-hidden="true">›</span>
+    </a>
+
+    <p class="texto-2 pie-enlaces">
+      <a href="/conoce">Conoce Lokl</a> · <a href="/vende">Vende en Lokl</a> · <a href="/verificado">Verificado</a> · <a href="/privacidad">Privacidad</a>
+    </p>
   </main>
 </Base>

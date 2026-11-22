@@ -113,6 +113,7 @@ const enlace = (m) => `/entrar?modo=${m}${siguiente !== "/panel" ? `&siguiente=$
       {modo === "entrar" && <a href={enlace("olvide")}>Olvidé mi contraseña</a>}
       {modo === "registro" && <a href={enlace("entrar")}>¿Ya tienes cuenta? Entrar</a>}
       {modo === "olvide" && <a href={enlace("entrar")}>Volver a entrar</a>}
+      <a href="/conoce">¿Qué es Lokl?</a>
     </p>
   </main>
 </Base>
