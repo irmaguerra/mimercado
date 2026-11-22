@@ -17,6 +17,8 @@
 | Página | Estado | Peso (gzip) |
 |---|---|---|
 | `/privacidad` | ✅ publicada 21/11 (la exige Google) | ~8,1 KB, sin JS propio |
-| `/vende` | 🛠️ publicada 21/11, falta visto bueno | ~8,8 KB, sin JS propio |
+| `/vende` | ✅ aprobada por Irma 22/11 | ~8,8 KB, sin JS propio |
 | `/conoce` | pendiente | |
 | `/verificado` completa | pendiente | |
+
+Textos de redes: `docs/redes-lanzamiento.md`.
