@@ -21,7 +21,7 @@ if (Astro.request.method === "POST") {
 ---
 <Base titulo="Nueva contraseña" barra={false}>
   <main class="contenedor angosto" style="padding-top:28px">
-    <Logo alto={36} />
+    <a href="/" aria-label="Lokl, inicio" style="color:var(--texto)"><Logo alto={36} /></a>
     <h1 style="font-size:24px;margin:20px 0 12px">Crea tu contraseña nueva</h1>
     {error && <p class="mensaje error" role="alert">{error}</p>}
     <form method="post" class="formulario">

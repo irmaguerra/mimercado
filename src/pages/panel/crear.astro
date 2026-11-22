@@ -88,7 +88,7 @@ if (que && que !== "clasificados" && !arbol.length) arbol = await categoriasDeSe
 <Base titulo="Crea tu tienda" barra={false}>
   <main class="contenedor angosto" style="padding-top:20px">
     <div class="fila-entre">
-      <Logo alto={30} />
+      <a href="/" aria-label="Lokl, inicio" style="color:var(--texto)"><Logo alto={30} /></a>
       <form method="post" action="/salir" style="margin:0"><button type="submit" class="boton-texto">Salir</button></form>
     </div>
     <p class="texto-2" style="margin:8px 0 0;font-size:14px">Entraste como {usuario.email}</p>

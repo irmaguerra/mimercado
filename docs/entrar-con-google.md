@@ -1,6 +1,6 @@
 # Entrar con Google
 
-**Estado:** 🛠️ código listo (botón, aviso en Instagram/Facebook/TikTok). Falta que Irma cree las credenciales en Google Cloud y las pegue en Supabase. Después se publica y se prueba.
+**Estado:** ✅ funcionando desde el 21/11/2026 (proyecto `lokl-515423` en Google Cloud, app En producción, credenciales en Supabase). Falta solo probar el aviso desde Instagram en el teléfono.
 
 Decisiones 74 a 76 (16/11/2026):
 - Botón **"Continuar con Google"** arriba en Entrar y en "Crea tu tienda gratis"; correo y contraseña siguen debajo. Mismo correo = misma cuenta.
@@ -50,6 +50,6 @@ El **ID de cliente** y el **secreto de cliente** se pegan directo en Supabase; n
 
 ## Pruebas
 
-- [ ] En la computadora (Chrome), usalokl.com → **Entrar** → **Continuar con Google** → elegir la cuenta → llega a "Mi tienda".
-- [ ] Con un correo de Gmail que ya tenía cuenta en Lokl: entra a la misma tienda.
+- [x] En la computadora (Chrome), usalokl.com → **Entrar** → **Continuar con Google** → elegir la cuenta → llega a "Mi tienda".
+- [x] Con un correo de Gmail que ya tenía cuenta en Lokl: entra a la misma tienda.
 - [ ] En el teléfono, abrir un enlace de Lokl desde Instagram: sale el aviso de abrir en el navegador.
