@@ -11,3 +11,6 @@ supabase/.branches/
 dist/
 .wrangler/
 .dev.vars
+
+# Exportaciones de chats (datos personales de terceros): nunca subir
+casos de estudio/
