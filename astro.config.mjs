@@ -15,6 +15,8 @@ export default defineConfig({
   cache: { provider: cacheCloudflare() },
   integrations: [preact()],
   trailingSlash: "never",
-  build: { inlineStylesheets: "always", format: "file" }, // CSS dentro del HTML; /pagina sin barra final
+  // CSS en archivo aparte (/_astro/*.css, caché inmutable): el teléfono lo baja una vez y cada página
+  // siguiente pesa ~5 KB menos (medición final, Módulo 12). /pagina sin barra final.
+  build: { inlineStylesheets: "never", format: "file" },
   prefetch: false, // no gastar datos adivinando a dónde va la persona
 });

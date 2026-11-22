@@ -61,3 +61,6 @@ Peso que baja el teléfono por página (HTML comprimido; el CSS va dentro del HT
 - Tiempos medidos desde fuera de Venezuela; en Apure dependen de la señal, pero el peso es lo que más cuenta con datos móviles.
 
 Referencia: abrir 10 páginas de Lokl ≈ 100 KB + fotos; una sola foto reenviada en un grupo de WhatsApp suele pesar 100–200 KB.
+
+### Mejora aplicada (22/11/2026): CSS en archivo aparte
+`inlineStylesheets: "never"`: un solo CSS (~4,7 KB comprimido, caché inmutable) que el teléfono baja una vez; el service worker lo guarda al instalarse para que las páginas guardadas se vean bien sin señal. Desde la segunda página: portada ~4,0 KB, Súper ~4,6 KB, /vende ~4,8 KB, /conoce ~5,3 KB, Entrar ~2,4 KB (antes 8–11 KB).

@@ -16,7 +16,18 @@ const PRIVADAS = ["/panel", "/admin", "/entrar", "/auth", "/api"];
 const PRECARGA = ["/sin-conexion", "/favicon.svg", "/icon-192.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(ESTATICO).then((c) => c.addAll(PRECARGA)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches.open(ESTATICO)
+      .then(async (c) => {
+        await c.addAll(PRECARGA);
+        // El CSS va en un archivo aparte con nombre que cambia en cada versión: se guarda el que usa
+        // /sin-conexion para que las páginas guardadas se vean bien sin señal.
+        const html = await (await c.match("/sin-conexion")).text();
+        const css = [...html.matchAll(/href="(\/_astro\/[^"]+\.css)"/g)].map((m) => m[1]);
+        if (css.length) await c.addAll(css);
+      })
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", (e) => {
